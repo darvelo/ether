@@ -3,7 +3,6 @@ import Outletable from './outletable';
 class Namespaceable {
     constructor(klass, namespaceName) {
         this.klass = klass;
-        this.construct = klass;
         this.namespaceName = namespaceName;
     }
 
