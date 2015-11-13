@@ -98,11 +98,11 @@ describe('Outlet', function() {
             expect(() => outlet.querySelectorAll(element)).to.throw(Error, 'Ether.Outlet#querySelectorAll() was called but the outlet is not holding an element.');
             outlet.hold(element, owner);
             outlet.querySelector('p.even');
-            outlet.querySelectorAll('p.even');
+            outlet.querySelectorAll('p.odd');
             qs.should.have.been.calledOnce;
             qs.should.have.been.calledWith('p.even');
             qsa.should.have.been.calledOnce;
-            qsa.should.have.been.calledWith('p.even');
+            qsa.should.have.been.calledWith('p.odd');
         });
     });
 });
