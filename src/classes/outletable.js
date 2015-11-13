@@ -4,7 +4,7 @@ class Outletable {
         this.names = names;
     }
 
-    createInstance(opts) {
+    createInstance(opts, ...args) {
         let outlets = opts.outlets;
         let names = this.names;
         let newOpts = {};
@@ -23,7 +23,7 @@ class Outletable {
             }
         }
 
-        return new this.klass(newOpts);
+        return new this.klass(newOpts, ...args);
     }
 }
 
