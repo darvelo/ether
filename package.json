@@ -22,7 +22,7 @@
     "url": "git://github.com/darvelo/ether.git"
   },
   "scripts": {
-    "test": "./node_modules/mocha/bin/mocha --recursive"
+    "test": "./node_modules/mocha/bin/mocha --compilers js:babel-core/register --recursive"
   },
   "devDependencies": {
     "babel": "^6.0.15",

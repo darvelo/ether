@@ -1,4 +1,4 @@
-import OutletNameIterable from '../../../../src/classes/outlet-name-iterable';
+import OutletNameIterable from '../../../src/classes/outlet-name-iterable';
 
 class TestClass {
     constructor(...args) {

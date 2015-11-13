@@ -12,7 +12,3 @@ global.sinon = sinon;
 
 // mock Element for browser environment
 global.Element = function () { };
-
-// put babel options here
-require('babel-core/register')({
-});

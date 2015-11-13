@@ -1,4 +1,4 @@
-import Outletable from '../../../../src/classes/outletable';
+import Outletable from '../../../src/classes/outletable';
 
 class TestClass {
     constructor(...args) {

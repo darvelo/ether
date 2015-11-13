@@ -1,4 +1,4 @@
-import Outlet from '../../../../src/classes/outlet.js';
+import Outlet from '../../../src/classes/outlet.js';
 
 class Owner { }
 

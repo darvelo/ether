@@ -1,4 +1,4 @@
-import Namespaceable from '../../../../src/classes/namespaceable';
+import Namespaceable from '../../../src/classes/namespaceable';
 import { OutletableTestClass } from './outletable.spec';
 
 class TestClass {

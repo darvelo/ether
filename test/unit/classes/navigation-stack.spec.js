@@ -1,4 +1,4 @@
-import NavigationStack from '../../../../src/classes/navigation-stack';
+import NavigationStack from '../../../src/classes/navigation-stack';
 
 describe('NavigationStack', function() {
     var stack;
