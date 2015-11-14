@@ -20,13 +20,11 @@ class OutletsReceivable {
                 newOpts.outlets[name] = outlets[name];
             } else {
                 let quote = function(s) { return '"' + s + '"'; };
-                outlets = Object.keys(outlets);
-                outlets.sort();
                 throw new Error([
                     'Route expected outlets [',
                         names.map(quote),
                     '] but received [',
-                        outlets.map(quote),
+                        Object.keys(outlets).sort().map(quote),
                     '].'
                 ].join(''));
             }

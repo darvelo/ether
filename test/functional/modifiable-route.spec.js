@@ -138,8 +138,69 @@ describe('ModifiableRoute Class Static Modifiers', () => {
         });
     });
 
-    describe.skip('Chaining', () => {
-        it('yay', () => {
+    describe('Chaining', () => {
+        it('calls transform method for any permutation of modifiers', () => {
+            let modifiers = [
+                { prop: 'address', klass: Addressable },
+                { prop: 'outlets', klass: OutletsReceivable },
+            ];
+
+            if (modifiers.length > 7)  {
+                throw new Error('Number of permutations will be too high.');
+            }
+
+            function swap(array, i, j) {
+                let tmp = array[i];
+                array[i] = array[j];
+                array[j] = tmp;
+            }
+
+            // my own implementation of the Steinhaus–Johnson–Trotter algorithm
+            function* permute(array) {
+                let permutations;
+                if (array.length < 2) {
+                    yield array;
+                    permutations = [];
+                } else {
+                    permutations = permute(array.slice(0, -1));
+                }
+
+                let n = array.length;
+                let direction = -1;
+                let j = n-1;
+                let bound;
+
+                for (let p of permutations) {
+                    if (direction === -1) {
+                        p.push(array[n-1]);
+                        bound = -1;
+                    } else {
+                        p.unshift(array[n-1]);
+                        bound = n;
+                    }
+
+                    yield p;
+                    while (j+direction !== bound) {
+                        swap(p, j, j+direction);
+                        yield p;
+                        j += direction;
+                    }
+                    direction *= -1;
+                }
+            }
+
+            for (let p of permute(modifiers)) {
+                let modified = ModifiableRoute;
+                for (let {prop, klass} of p) {
+                    let spy = sinon.spy(klass, 'transform');
+                    modified = modified[prop]();
+                    spy.should.have.been.calledOnce;
+                    spy.should.have.been.calledWith(modified);
+                    spy.restore();
+                }
+                let instance = modified._createInstance({outlets: {one: 1}});
+                instance.should.be.an.instanceof(ModifiableRoute);
+            }
         });
     });
 });

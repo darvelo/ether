@@ -13,3 +13,5 @@ global.sinon = sinon;
 // mock Element for browser environment
 global.Element = function () { };
 global.Element.prototype.parentNode = {removeChild: function () { }};
+
+require('babel-polyfill');
