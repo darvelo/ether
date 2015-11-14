@@ -16,6 +16,42 @@ class TestRoute extends ModifiableRoute {
     }
 }
 
+let transformTests = {
+    address: {
+        klass: Addressable,
+        prop: 'address',
+        arg: 'addy',
+        run: function(addressable) {
+            let modified = addressable[this.prop](this.arg);
+            expect(modified._address).to.equal(this.arg);
+            return modified;
+        },
+    },
+    outlet: {
+        klass: OutletsReceivable,
+        prop: 'outlets',
+        args: ['one', 'three'],
+        instanceArgs: [{
+            outlets: {
+                one: 1,
+                two: 2,
+                three: 3,
+            }
+        }, 4, 5, 6],
+        run: function(outletable) {
+            let modified = outletable[this.prop](...this.args);
+            let klass = outletable.klass || modified.klass;
+            let spy = sinon.spy(modified, 'klass');
+            let route = modified._createInstance(...this.instanceArgs);
+            expect(route).to.be.an.instanceof(klass);
+            spy.should.have.been.calledWithNew;
+            spy.should.have.been.calledWith({outlets: {one: 1, three: 3}}, 4, 5, 6);
+            spy.restore();
+            return modified;
+        }
+    },
+};
+
 describe('ModifiableRoute Class Static Modifiers', () => {
     describe('Addressable', () => {
         it('static fn returns a ModifiedRoute', () => {
@@ -48,8 +84,7 @@ describe('ModifiableRoute Class Static Modifiers', () => {
         });
 
         it('applies the proper transformation', () => {
-            let modified = ModifiableRoute.address('addy');
-            expect(modified._address).to.equal('addy');
+            transformTests.address.run(ModifiableRoute);
         });
 
         it('creates an instance of ModifiableRoute with args passed', () => {
@@ -91,17 +126,7 @@ describe('ModifiableRoute Class Static Modifiers', () => {
         });
 
         it('applies the proper transformation', () => {
-            let args = [{
-                outlets: {
-                    one: 1,
-                    two: 2,
-                    three: 3,
-                }
-            }, 4, 5, 6];
-            let modified = TestRoute.outlets('one', 'three');
-            let route = modified._createInstance(...args);
-            expect(route.args).to.have.length.above(0);
-            expect(route.args[0]).to.deep.equal({outlets: {one: 1, three: 3}});
+            transformTests.outlet.run(ModifiableRoute);
         });
 
         it('creates an instance of ModifiableRoute with args passed', () => {
@@ -140,10 +165,13 @@ describe('ModifiableRoute Class Static Modifiers', () => {
 
     describe('Chaining', () => {
         it('calls transform method for any permutation of modifiers', () => {
-            let modifiers = [
-                { prop: 'address', klass: Addressable },
-                { prop: 'outlets', klass: OutletsReceivable },
-            ];
+            let modifiers = [];
+
+            for (let prop in transformTests) {
+                if (transformTests.hasOwnProperty(prop)) {
+                    modifiers.push(transformTests[prop]);
+                }
+            }
 
             if (modifiers.length > 7)  {
                 throw new Error('Number of permutations will be too high.');
@@ -191,15 +219,9 @@ describe('ModifiableRoute Class Static Modifiers', () => {
 
             for (let p of permute(modifiers)) {
                 let modified = ModifiableRoute;
-                for (let {prop, klass} of p) {
-                    let spy = sinon.spy(klass, 'transform');
-                    modified = modified[prop]();
-                    spy.should.have.been.calledOnce;
-                    spy.should.have.been.calledWith(modified);
-                    spy.restore();
+                for (let test of p) {
+                    modified = test.run(modified);
                 }
-                let instance = modified._createInstance({outlets: {one: 1}});
-                instance.should.be.an.instanceof(ModifiableRoute);
             }
         });
     });
