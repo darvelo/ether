@@ -179,10 +179,10 @@ describe('ModifiableRoute Class Static Modifiers', () => {
                         bound = n;
                     }
 
-                    yield p;
+                    yield p.slice();
                     while (j+direction !== bound) {
                         swap(p, j, j+direction);
-                        yield p;
+                        yield p.slice();
                         j += direction;
                     }
                     direction *= -1;
