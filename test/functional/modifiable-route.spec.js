@@ -185,35 +185,26 @@ describe('ModifiableRoute Class Static Modifiers', () => {
 
             // my own implementation of the Steinhaus–Johnson–Trotter algorithm
             function* permute(array) {
+                let n = array.length;
+                let bound = -1;
                 let permutations;
-                if (array.length < 2) {
+
+                if (n < 2) {
                     yield array;
                     permutations = [];
                 } else {
                     permutations = permute(array.slice(0, -1));
                 }
 
-                let n = array.length;
-                let direction = -1;
-                let j = n-1;
-                let bound;
-
                 for (let p of permutations) {
-                    if (direction === -1) {
-                        p.push(array[n-1]);
-                        bound = -1;
-                    } else {
-                        p.unshift(array[n-1]);
-                        bound = n;
-                    }
-
+                    let j = n-1;
+                    p.push(array[n-1]);
                     yield p.slice();
-                    while (j+direction !== bound) {
-                        swap(p, j, j+direction);
+                    while (j-1 !== bound) {
+                        swap(p, j, j-1);
                         yield p.slice();
-                        j += direction;
+                        j -= -1;
                     }
-                    direction *= -1;
                 }
             }
 
