@@ -21,4 +21,30 @@ export class Element {
     }
     querySelector() { }
     querySelectorAll() { }
+    fire(evtName) {
+        this._events = this._events || {};
+        let evtList = this._events[evtName] || (this._events[evtName] = []);
+        for (let callback of evtList) {
+            callback();
+        }
+    }
+    addEventListener(evtName, callback) {
+        this._events = this._events || {};
+        let evtList = this._events[evtName] || (this._events[evtName] = []);
+        if (!evtList.some(cb => cb === callback)) {
+            evtList.push(callback);
+        }
+    }
+    removeEventListener(evtName, callback) {
+        this._events = this._events || {};
+        let evtList = this._events[evtName] || (this._events[evtName] = []);
+        if (!callback) {
+            evtList.length = 0;
+        } else {
+            let idx = evtList.indexOf(callback);
+            if (idx !== -1) {
+                evtList.splice(idx, 1);
+            }
+        }
+    }
 }
