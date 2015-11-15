@@ -19,7 +19,7 @@ class OutletsReceivable {
             if (outlets.hasOwnProperty(name)) {
                 newOpts.outlets[name] = outlets[name];
             } else {
-                let quote = function(s) { return '"' + s + '"'; };
+                let quote = function(s) { return ['"',s,'"'].join(''); };
                 throw new Error([
                     'Route expected outlets [',
                         names.map(quote),

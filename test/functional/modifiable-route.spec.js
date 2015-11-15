@@ -27,7 +27,7 @@ let transformTests = {
             return modified;
         },
     },
-    outlet: {
+    outlets: {
         klass: OutletsReceivable,
         prop: 'outlets',
         args: ['one', 'three'],
@@ -75,8 +75,8 @@ describe('ModifiableRoute Class Static Modifiers', () => {
         });
 
         it('instance fn calls transform', () => {
-            let mock = sinon.mock(Addressable);
             let modified = new ModifiedRoute(null, IdentityModifier);
+            let mock = sinon.mock(Addressable);
             mock.expects('transform').once().withArgs(modified, 'addy');
             modified.address('addy');
             mock.verify();
@@ -115,15 +115,15 @@ describe('ModifiableRoute Class Static Modifiers', () => {
         });
 
         it('instance fn calls transform', () => {
-            let mock = sinon.mock(OutletsReceivable);
             let modified = new ModifiedRoute(null, IdentityModifier);
+            let mock = sinon.mock(OutletsReceivable);
             mock.expects('transform').once().withArgs(modified, 'one', 'two');
             modified.outlets('one', 'two');
             mock.verify();
         });
 
         it('applies the proper transformation', () => {
-            transformTests.outlet.run(ModifiableRoute);
+            transformTests.outlets.run(ModifiableRoute);
         });
 
         it('creates an instance of ModifiableRoute with args passed', () => {
@@ -182,7 +182,7 @@ describe('ModifiableRoute Class Static Modifiers', () => {
 
             // efficient permutations generation algorithm
             // modified from: http://stackoverflow.com/a/20906510
-            function* permute(arr, pos){
+            function* permute(arr, pos=0){
                 let n = arr.length;
                 if (n-pos === 1) {
                     yield arr;
@@ -195,7 +195,7 @@ describe('ModifiableRoute Class Static Modifiers', () => {
                 }
             }
 
-            for (let p of permute(modifiers, 0)) {
+            for (let p of permute(modifiers)) {
                 let modified = ModifiableRoute;
                 for (let test of p) {
                     modified = test.run(modified);
