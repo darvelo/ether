@@ -7,16 +7,22 @@ export class Element {
         return this._parentNode;
     }
     appendChild(element) {
+        if (!(element instanceof Element)) {
+            throw new TypeError('Element#appendChild() was not passed an Element instance.');
+        }
         this.children = this.children || [];
         this.children.push(element);
     }
     removeChild(element) {
+        if (!(element instanceof Element)) {
+            throw new TypeError('Element#removeChild() was not passed an Element instance.');
+        }
         this.children = this.children || [];
         let idx = this.children.indexOf(element);
         if (idx !== -1) {
             return this.children.splice(idx, 1)[0];
         } else {
-            throw new Error('child not found in Element');
+            throw new Error('Element#removeChild(): child not found in element.');
         }
     }
     querySelector() { }
@@ -29,6 +35,9 @@ export class Element {
         }
     }
     addEventListener(evtName, callback) {
+        if (typeof callback !== 'function') {
+            throw new Error('Element#addEventListener() was not passed a callback function.');
+        }
         this._events = this._events || {};
         let evtList = this._events[evtName] || (this._events[evtName] = []);
         if (!evtList.some(cb => cb === callback)) {
