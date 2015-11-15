@@ -183,32 +183,22 @@ describe('ModifiableRoute Class Static Modifiers', () => {
                 array[j] = tmp;
             }
 
-            // my own implementation of the Steinhaus–Johnson–Trotter algorithm
-            function* permute(array) {
-                let n = array.length;
-                let bound = -1;
-                let permutations;
-
-                if (n < 2) {
-                    yield array;
-                    permutations = [];
+            // efficient permutations generation algorithm
+            // modified from: http://stackoverflow.com/a/20906510
+            function* permute(arr, pos){
+                let n = arr.length;
+                if (n-pos === 1) {
+                    yield arr;
                 } else {
-                    permutations = permute(array.slice(0, -1));
-                }
-
-                for (let p of permutations) {
-                    let j = n-1;
-                    p.push(array[n-1]);
-                    yield p.slice();
-                    while (j-1 !== bound) {
-                        swap(p, j, j-1);
-                        yield p.slice();
-                        j -= -1;
+                    for (var i = pos; i < n; i++){
+                        swap(arr, pos, i);
+                        yield* permute(arr, pos+1);
+                        swap(arr, pos, i);
                     }
                 }
             }
 
-            for (let p of permute(modifiers)) {
+            for (let p of permute(modifiers, 0)) {
                 let modified = ModifiableRoute;
                 for (let test of p) {
                     modified = test.run(modified);
