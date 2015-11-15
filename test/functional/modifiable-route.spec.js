@@ -187,7 +187,7 @@ describe('ModifiableRoute Class Static Modifiers', () => {
                 if (n-pos === 1) {
                     yield arr;
                 } else {
-                    for (var i = pos; i < n; i++){
+                    for (let i = pos; i < n; i++){
                         swap(arr, pos, i);
                         yield* permute(arr, pos+1);
                         swap(arr, pos, i);

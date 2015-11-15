@@ -10,7 +10,7 @@ class NavigationStack {
     }
 
     pop() {
-        var lastState = this._stack.pop();
+        let lastState = this._stack.pop();
         if (lastState) {
             this._lastParams[lastState.path] = lastState.params;
         }
