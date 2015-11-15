@@ -30,26 +30,30 @@ describe('MutableOutlet', function() {
             expect(() => outlet.hold({})).to.throw(TypeError, 'Ether.MutableOutlet#hold() was not passed an "Element" instance.');
         });
 
-        it('clears its element', function() {
+        it('clears its element from internal storage', function() {
             let element = new Element();
             let outlet = new MutableOutlet(element);
-            let spy = sinon.spy();
-            element.parentNode = {removeChild: spy};
             expect(outlet.get()).to.equal(element);
             outlet.clear();
-            spy.should.have.been.calledOnce;
-            spy.should.have.been.calledWith(element);
             expect(outlet.get()).to.not.be.ok;
+        });
+
+        it('clears its element from the DOM', function() {
+            let element = new Element();
+            let outlet = new MutableOutlet(element);
+            let mock = sinon.mock(element.parentNode);
+            mock.expects('removeChild').once().withArgs(element);
+            outlet.clear();
+            mock.verify();
         });
 
         it('clears its element when made to hold a new one', function() {
             let element = new Element();
             let outlet = new MutableOutlet(element);
-            let spy = sinon.spy(outlet, 'clear');
+            let stub = sinon.stub(outlet, 'clear');
             let newElement = new Element();
             outlet.hold(newElement);
-            spy.should.have.been.calledOnce;
-            expect(outlet.get()).to.equal(newElement);
+            stub.should.have.been.calledOnce;
         });
     });
 
@@ -114,17 +118,13 @@ describe('MutableOutlet', function() {
 
         it('passes through CSS selectors', function() {
             let element = new Element();
-            let qs = element.querySelector = sinon.spy();
-            let qsa = element.querySelectorAll = sinon.spy();
             let outlet = new MutableOutlet(element);
-
-            outlet.hold(element);
+            let mock = sinon.mock(element);
+            mock.expects('querySelector').once().withArgs('p.even');
+            mock.expects('querySelectorAll').once().withArgs('p.odd');
             outlet.querySelector('p.even');
             outlet.querySelectorAll('p.odd');
-            qs.should.have.been.calledOnce;
-            qs.should.have.been.calledWith('p.even');
-            qsa.should.have.been.calledOnce;
-            qsa.should.have.been.calledWith('p.odd');
+            mock.verify();
         });
     });
 });
