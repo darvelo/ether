@@ -36,17 +36,19 @@ let transformTests = {
                 one: 1,
                 two: 2,
                 three: 3,
-            }
+            },
         }, 4, 5, 6],
         run: function(outletable) {
             let modified = outletable[this.prop](...this.args);
-            let klass = outletable.klass || modified.klass;
-            let spy = sinon.spy(modified, 'klass');
-            let route = modified._createInstance(...this.instanceArgs);
-            expect(route).to.be.an.instanceof(klass);
-            spy.should.have.been.calledWithNew;
-            spy.should.have.been.calledWith({outlets: {one: 1, three: 3}}, 4, 5, 6);
-            spy.restore();
+            let stub = sinon.stub(modified, 'klass');
+            modified._createInstance(...this.instanceArgs);
+            stub.should.have.been.calledOnce;
+            stub.should.have.been.calledWithNew;
+            let callArgs = stub.getCall(0).args;
+            callArgs.should.have.length.above(1);
+            callArgs[0].should.have.property('outlets');
+            callArgs[0].outlets.should.deep.equal({one: 1, three: 3});
+            stub.restore();
             return modified;
         }
     },
@@ -60,27 +62,24 @@ describe('ModifiableRoute Class Static Modifiers', () => {
         });
 
         it('static fn calls transform', () => {
-            let spy = sinon.spy(Addressable, 'transform');
+            let stub = sinon.stub(Addressable, 'transform');
             let route = ModifiableRoute.address('addy');
-            spy.should.have.been.calledOnce;
-            spy.should.have.been.calledWith(route, 'addy');
-            spy.restore();
+            stub.should.have.been.calledOnce;
+            stub.should.have.been.calledWith(route, 'addy');
+            stub.restore();
         });
 
         it('instance fn returns a ModifiedRoute', () => {
             let modified = new ModifiedRoute(null, IdentityModifier);
-            modified = modified.address('addy');
-            modified.should.be.an.instanceof(ModifiedRoute);
+            modified.address('addy').should.be.an.instanceof(ModifiedRoute);
         });
 
         it('instance fn calls transform', () => {
-            let spy = sinon.spy(Addressable, 'transform');
+            let mock = sinon.mock(Addressable);
             let modified = new ModifiedRoute(null, IdentityModifier);
-            spy.should.not.have.been.called;
+            mock.expects('transform').once().withArgs(modified, 'addy');
             modified.address('addy');
-            spy.should.have.been.calledOnce;
-            spy.should.have.been.calledWith(modified, 'addy');
-            spy.restore();
+            mock.verify();
         });
 
         it('applies the proper transformation', () => {
@@ -102,11 +101,11 @@ describe('ModifiableRoute Class Static Modifiers', () => {
         });
 
         it('static fn calls transform', () => {
-            let spy = sinon.spy(OutletsReceivable, 'transform');
+            let stub = sinon.stub(OutletsReceivable, 'transform');
             let route = ModifiableRoute.outlets('one', 'two');
-            spy.should.have.been.calledOnce;
-            spy.should.have.been.calledWith(route, 'one', 'two');
-            spy.restore();
+            stub.should.have.been.calledOnce;
+            stub.should.have.been.calledWith(route, 'one', 'two');
+            stub.restore();
         });
 
         it('instance fn returns a ModifiedRoute', () => {
@@ -116,13 +115,11 @@ describe('ModifiableRoute Class Static Modifiers', () => {
         });
 
         it('instance fn calls transform', () => {
-            let spy = sinon.spy(OutletsReceivable, 'transform');
+            let mock = sinon.mock(OutletsReceivable);
             let modified = new ModifiedRoute(null, IdentityModifier);
-            spy.should.not.have.been.called;
+            mock.expects('transform').once().withArgs(modified, 'one', 'two');
             modified.outlets('one', 'two');
-            spy.should.have.been.calledOnce;
-            spy.should.have.been.calledWith(modified, 'one', 'two');
-            spy.restore();
+            mock.verify();
         });
 
         it('applies the proper transformation', () => {
