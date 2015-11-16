@@ -9,8 +9,8 @@ describe('MutableOutlet', function() {
         });
 
         it('throws when passed a non-Element', function() {
-            expect(() => new MutableOutlet()).to.throw(TypeError, 'Ether.MutableOutlet constructor was not passed an "Element" instance.');
-            expect(() => new MutableOutlet({})).to.throw(TypeError, 'Ether.MutableOutlet constructor was not passed an "Element" instance.');
+            expect(() => new MutableOutlet()).to.throw(TypeError, 'MutableOutlet constructor was not passed an "Element" instance.');
+            expect(() => new MutableOutlet({})).to.throw(TypeError, 'MutableOutlet constructor was not passed an "Element" instance.');
         });
     });
 
@@ -26,8 +26,8 @@ describe('MutableOutlet', function() {
         it('only allows holding an Element', function() {
             let element = new Element();
             let outlet = new MutableOutlet(element);
-            expect(() => outlet.hold()).to.throw(TypeError, 'Ether.MutableOutlet#hold() was not passed an "Element" instance.');
-            expect(() => outlet.hold({})).to.throw(TypeError, 'Ether.MutableOutlet#hold() was not passed an "Element" instance.');
+            expect(() => outlet.hold()).to.throw(TypeError, 'MutableOutlet#hold() was not passed an "Element" instance.');
+            expect(() => outlet.hold({})).to.throw(TypeError, 'MutableOutlet#hold() was not passed an "Element" instance.');
         });
 
         it('clears its element from internal storage', function() {
@@ -62,28 +62,28 @@ describe('MutableOutlet', function() {
             let element = new Element();
             let outlet = new MutableOutlet(element);
             outlet.clear();
-            expect(() => outlet.append(new Element())).to.throw(Error, 'Ether.MutableOutlet#append() was called but the outlet is not holding an element.');
+            expect(() => outlet.append(new Element())).to.throw(Error, 'MutableOutlet#append() was called but the outlet is not holding an element.');
         });
 
         it('throws on remove() when not holding an element', function() {
             let element = new Element();
             let outlet = new MutableOutlet(element);
             outlet.clear();
-            expect(() => outlet.remove(new Element())).to.throw(Error, 'Ether.MutableOutlet#remove() was called but the outlet is not holding an element.');
+            expect(() => outlet.remove(new Element())).to.throw(Error, 'MutableOutlet#remove() was called but the outlet is not holding an element.');
         });
 
         it('throws on querySelector() when not holding an element', function() {
             let element = new Element();
             let outlet = new MutableOutlet(element);
             outlet.clear();
-            expect(() => outlet.querySelector(new Element())).to.throw(Error, 'Ether.MutableOutlet#querySelector() was called but the outlet is not holding an element.');
+            expect(() => outlet.querySelector(new Element())).to.throw(Error, 'MutableOutlet#querySelector() was called but the outlet is not holding an element.');
         });
 
         it('throws on querySelectorAll() when not holding an element', function() {
             let element = new Element();
             let outlet = new MutableOutlet(element);
             outlet.clear();
-            expect(() => outlet.querySelectorAll(element)).to.throw(Error, 'Ether.MutableOutlet#querySelectorAll() was called but the outlet is not holding an element.');
+            expect(() => outlet.querySelectorAll(element)).to.throw(Error, 'MutableOutlet#querySelectorAll() was called but the outlet is not holding an element.');
         });
 
         it('appends a child element', function() {
@@ -93,7 +93,7 @@ describe('MutableOutlet', function() {
             let spy = element.appendChild = sinon.spy();
             let outlet = new MutableOutlet(element);
 
-            expect(() => outlet.append({})).to.throw(TypeError, 'Ether.MutableOutlet#append() was not passed an "Element" instance.');
+            expect(() => outlet.append({})).to.throw(TypeError, 'MutableOutlet#append() was not passed an "Element" instance.');
             outlet.append(appended);
             spy.should.have.been.calledWith(appended);
             outlet.append(appended2);
@@ -108,7 +108,7 @@ describe('MutableOutlet', function() {
             let spy = element.removeChild = sinon.spy();
             let outlet = new MutableOutlet(element);
 
-            expect(() => outlet.remove({})).to.throw(TypeError, 'Ether.MutableOutlet#remove() was not passed an "Element" instance.');
+            expect(() => outlet.remove({})).to.throw(TypeError, 'MutableOutlet#remove() was not passed an "Element" instance.');
             outlet.remove(appended);
             spy.should.have.been.calledWith(appended);
             outlet.remove(appended2);

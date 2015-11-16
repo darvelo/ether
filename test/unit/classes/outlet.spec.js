@@ -3,8 +3,8 @@ import Outlet from '../../../src/classes/outlet.js';
 describe('Outlet', function() {
     describe('Constructor', function() {
         it('throws when passed a non-Element', function() {
-            expect(() => new Outlet()).to.throw(TypeError, 'Ether.Outlet constructor was not passed an "Element" instance.');
-            expect(() => new Outlet({})).to.throw(TypeError, 'Ether.Outlet constructor was not passed an "Element" instance.');
+            expect(() => new Outlet()).to.throw(TypeError, 'Outlet constructor was not passed an "Element" instance.');
+            expect(() => new Outlet({})).to.throw(TypeError, 'Outlet constructor was not passed an "Element" instance.');
         });
     });
 
@@ -16,7 +16,7 @@ describe('Outlet', function() {
             let stub = sinon.stub(element, 'appendChild');
             let outlet = new Outlet(element);
 
-            expect(() => outlet.append({})).to.throw(TypeError, 'Ether.Outlet#append() was not passed an "Element" instance.');
+            expect(() => outlet.append({})).to.throw(TypeError, '#append() was not passed an "Element" instance.');
 
             outlet.append(appended);
             stub.should.have.been.calledWith(appended);
@@ -32,7 +32,7 @@ describe('Outlet', function() {
             let stub = sinon.stub(element, 'removeChild');
             let outlet = new Outlet(element);
 
-            expect(() => outlet.remove({})).to.throw(TypeError, 'Ether.Outlet#remove() was not passed an "Element" instance.');
+            expect(() => outlet.remove({})).to.throw(TypeError, '#remove() was not passed an "Element" instance.');
 
             outlet.remove(appended);
             stub.should.have.been.calledWith(appended);

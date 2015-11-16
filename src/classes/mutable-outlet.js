@@ -7,7 +7,6 @@ class MutableOutlet extends Outlet {
         }
 
         super(element);
-        this.__name__ = 'Ether.MutableOutlet';
     }
 
     get() {
@@ -16,7 +15,7 @@ class MutableOutlet extends Outlet {
 
     hold(element) {
         if (!(element instanceof Element)) {
-            throw new TypeError(this.__name__ + '#hold() was not passed an "Element" instance.');
+            throw new TypeError(this.constructor.name + '#hold() was not passed an "Element" instance.');
         }
 
         this.clear();
