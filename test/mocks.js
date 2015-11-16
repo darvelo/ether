@@ -45,15 +45,14 @@ export class Element {
         }
     }
     removeEventListener(evtName, callback) {
+        if (typeof callback !== 'function') {
+            throw new Error('Element#removeEventListener() was not passed a callback function.');
+        }
         this._events = this._events || {};
         let evtList = this._events[evtName] || (this._events[evtName] = []);
-        if (!callback) {
-            evtList.length = 0;
-        } else {
-            let idx = evtList.indexOf(callback);
-            if (idx !== -1) {
-                evtList.splice(idx, 1);
-            }
+        let idx = evtList.indexOf(callback);
+        if (idx !== -1) {
+            evtList.splice(idx, 1);
         }
     }
 }

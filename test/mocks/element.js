@@ -42,7 +42,7 @@ describe('Element Mock', () => {
     });
 
     describe('addEventListener', () => {
-        it('throws when not passed a callback', () => {
+        it('throws when not passed a callback function', () => {
             expect(() => element.addEventListener('click')).to.throw();
         });
 
@@ -67,6 +67,10 @@ describe('Element Mock', () => {
     });
 
     describe('removeEventListener', () => {
+        it('throws when not passed a callback function', () => {
+            expect(() => element.removeEventListener('click')).to.throw();
+        });
+
         it('removeEventListener removes the passed-in callback', () => {
             let spy = sinon.spy();
             let spy2 = sinon.spy();
@@ -76,17 +80,6 @@ describe('Element Mock', () => {
             element.fire('click');
             spy.should.not.have.been.called;
             spy2.should.have.been.calledOnce;
-        });
-
-        it('removeEventListener removes all callbacks', () => {
-            let spy = sinon.spy();
-            let spy2 = sinon.spy();
-            element.addEventListener('click', spy);
-            element.addEventListener('click', spy2);
-            element.removeEventListener('click');
-            element.fire('click');
-            spy.should.not.have.been.called;
-            spy2.should.not.have.been.called;
         });
     });
 });
