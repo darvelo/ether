@@ -74,18 +74,10 @@ class Route extends ModifiableRoute {
     }
 
     // user-overridable methods
-    render() {
-
-    }
-    destroy() {
-
-    }
-    willHide() {
-
-    }
-    willShow() {
-
-    }
+    render() { }
+    destroy() { }
+    willHide() { }
+    willShow() { }
 }
 
 export default Route;

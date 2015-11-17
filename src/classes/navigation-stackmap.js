@@ -1,4 +1,4 @@
-class NavigationStack {
+class NavigationStackMap {
     constructor() {
         this._stack = [];
         this._lastParams = {};
@@ -30,4 +30,4 @@ class NavigationStack {
     }
 }
 
-export default NavigationStack;
+export default NavigationStackMap;

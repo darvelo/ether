@@ -1,10 +1,10 @@
-import NavigationStack from '../../../src/classes/navigation-stack';
+import NavigationStackMap from '../../../src/classes/navigation-stackmap';
 
-describe('NavigationStack', function() {
+describe('NavigationStackMap', function() {
     let stack;
 
     beforeEach(function() {
-        stack = new NavigationStack();
+        stack = new NavigationStackMap();
     });
 
     it('returns undefined when the stack is empty', function() {
