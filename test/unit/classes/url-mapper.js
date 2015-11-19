@@ -54,4 +54,12 @@ describe('URLMapper', () => {
         mapper.add(pattern);
         expect(regexEqual(expected, mapper.regexFor(pattern)));
     });
+
+    it('can extract parameter variables from regex', () => {
+        let pattern = '/name/{id=\\d+}/view';
+        let expected = /^\/name\/(\d+)\/view$/;
+        mapper.add(pattern);
+        expect(regexEqual(expected, mapper.regexFor(pattern)));
+        expect(mapper.paramsFor(pattern)).to.deep.equal(['id']);
+    });
 });
