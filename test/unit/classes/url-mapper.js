@@ -63,6 +63,11 @@ describe('URLMapper', () => {
         expect(mapper.paramsFor(pattern)).to.deep.equal(['id']);
     });
 
+    it('throws if a parameter name is given more than once', () => {
+        let pattern = '/user/{id=\\d+}/item/{id=[a-zA-Z]\\d+}[\\w]';
+        expect(() => mapper.add(pattern)).to.throw(RangeError);
+    });
+
     it('keeps a slash character count for a path', () => {
         let pattern = '/path/to/somewhere';
         mapper.add(pattern);
@@ -79,15 +84,23 @@ describe('URLMapper', () => {
     it('matches a given path with a previously mapped pattern', () => {
         let pattern = '/user/{id=\\d+}';
         let route = {};
+        let result;
+
         mapper.add(pattern, route);
-        expect(mapper.match('/user/25/profile')).to.deep.equal({
+
+        result = mapper.match('/user/25/profile');
+        expect(result.route).to.equal(route);
+        expect(result).to.deep.equal({
             route: route,
             rest: '/profile',
             params: {
                 id: 25,
             },
         });
-        expect(mapper.match('/user/1xyz/profile')).to.deep.equal({
+
+        result = mapper.match('/user/1xyz/profile');
+        expect(result.route).to.equal(route);
+        expect(result).to.deep.equal({
             route: route,
             rest: 'xyz/profile',
             params: {
@@ -102,5 +115,29 @@ describe('URLMapper', () => {
         expect(mapper.match('/user/xyz/profile')).to.equal(null);
         expect(mapper.match('/user/xyz1/profile')).to.equal(null);
         expect(mapper.match('/user/x1yz/profile')).to.equal(null);
+    });
+
+    it('matches patterns in order of path length/slash count', () => {
+        let result;
+        mapper.add('/user/{id=\\d+}');
+        result = mapper.match('/user/1/profile/edit');
+        expect(result.rest).to.equal('/profile/edit');
+
+        // has the most slashes, is tested first when matching
+        mapper.add('/user/{id=\\d+}/profile/edit');
+        result = mapper.match('/user/1/profile/edit');
+        expect(result.rest).to.equal('');
+
+        // this pattern, though it would match, is a worse match than the above.
+        // the above pattern has more slashes, and so is tested before this
+        // pattern in order to find the best match first
+        mapper.add('/user/{id=\\d+}/profile');
+
+        let spy1 = sinon.spy(mapper.regexFor('/user/{id=\\d+}/profile'), 'exec');
+        let spy2 = sinon.spy(mapper.regexFor('/user/{id=\\d+}/profile/edit'), 'exec');
+        result = mapper.match('/user/1/profile/edit');
+        expect(result.rest).to.equal('');
+        spy1.should.not.have.been.called;
+        spy2.should.have.been.calledOnce;
     });
 });

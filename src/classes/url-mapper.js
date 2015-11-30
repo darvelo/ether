@@ -8,6 +8,8 @@ class URLMapper {
         this._sortedPatterns = [];
     }
 
+    // @TODO: make sorting stable or do away with sorting all together
+    //        and let the user control the ordering of match testing
     _sortFn(a, b) {
         // patterns with more slashes are are placed at the beginning
         return b.slashes - a.slashes;
@@ -23,6 +25,7 @@ class URLMapper {
         let finalRegex = [];
         // holds user-supplied properties encoded within pattern string
         let paramNames = [];
+        let existingParamNames = {};
         // keeps track of string position when we need to push a slice of it
         // into the RegExp, to avoid `+=` string concat performance penalty
         let leftBound = 0;
@@ -43,7 +46,7 @@ class URLMapper {
 
         finalRegex.push('^');
 
-        while (cursor < len) {
+        for (; cursor < len; ++cursor) {
             let c = patternStr[cursor];
             if (mode === NORMAL_MODE) {
                 let pushSlice = false;
@@ -71,6 +74,10 @@ class URLMapper {
                 if (c === '=') {
                     mode = PARAM_VALUE_MODE;
                     let name = patternStr.slice(leftBound, cursor);
+                    if (existingParamNames[name]) {
+                        throw new RangeError('URLMapper: Parameter name "' + name + '" was given more than once in pattern ' + patternStr);
+                    }
+                    existingParamNames[name] = true;
                     paramNames.push(name);
                     finalRegex.push('(');
                     leftBound = cursor+1;
@@ -95,7 +102,6 @@ class URLMapper {
                     }
                 }
             }
-            ++cursor;
         }
 
         if (mode !== NORMAL_MODE) {
