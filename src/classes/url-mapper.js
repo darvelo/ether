@@ -34,9 +34,6 @@ class URLMapper {
         // useful for sorting mapped urls by "path length"
         // to test longer paths (those with more slashes) first
         let slashesCount = 0;
-        // when storing user-supplied properties encoded within a regex, we
-        // need to make sure the prop name will be valid for an object literal
-        let validPropRegex = /^[a-zA-Z][\w-]+$/;
         // since we're going to compile a RegExp,
         // we need to properly escape certain chars
         let escapes = {
@@ -74,9 +71,6 @@ class URLMapper {
                 if (c === '=') {
                     mode = PARAM_VALUE_MODE;
                     let name = patternStr.slice(leftBound, cursor);
-                    if (!validPropRegex.test(name)) {
-                        throw new Error('Ether URLMapper: The parameter name "' + name + '" needs to be a string that can be used as a key in an object. Pattern was ' + patternStr);
-                    }
                     paramNames.push(name);
                     finalRegex.push('(');
                     leftBound = cursor+1;
