@@ -29,37 +29,78 @@ describe('URLMapper', () => {
 
     it('processes url regex-like specs into actual regex', () => {
         let pattern = 'word';
-        let expected = /^word$/;
+        let expected = /^word(.*)/;
         mapper.add(pattern);
         expect(regexEqual(expected, mapper.regexFor(pattern)));
     });
 
     it('processes slashes correctly', () => {
         let pattern = '/first/second';
-        let expected = /^\/first\/second$/;
+        let expected = /^\/first\/second(.*)/;
         mapper.add(pattern);
         expect(regexEqual(expected, mapper.regexFor(pattern)));
     });
 
     it('processes backslashes correctly', () => {
         let pattern = '\\first\\second\\';
-        let expected = /^\\first\\second\\$/;
+        let expected = /^\\first\\second\\(.*)/;
         mapper.add(pattern);
         expect(regexEqual(expected, mapper.regexFor(pattern)));
     });
 
     it('processes a combination of slashes and backslashes correctly', () => {
         let pattern = '/\\first/\\/second\\';
-        let expected = /^\/\\first\/\\\/second\\$/;
+        let expected = /^\/\\first\/\\\/second\\(.*)/;
         mapper.add(pattern);
         expect(regexEqual(expected, mapper.regexFor(pattern)));
     });
 
     it('can extract parameter variables from regex', () => {
         let pattern = '/name/{id=\\d+}/view';
-        let expected = /^\/name\/(\d+)\/view$/;
+        let expected = /^\/name\/(\d+)\/view(.*)/;
         mapper.add(pattern);
         expect(regexEqual(expected, mapper.regexFor(pattern)));
         expect(mapper.paramsFor(pattern)).to.deep.equal(['id']);
+    });
+
+    it('keeps a slash character count for a path', () => {
+        let pattern = '/path/to/somewhere';
+        mapper.add(pattern);
+        expect(mapper.slashesFor(pattern)).to.equal(3);
+    });
+
+    it('associates a route with a path', () => {
+        let pattern = '/path/to/somewhere';
+        let route = {};
+        mapper.add(pattern, route);
+        expect(mapper.routeFor(pattern)).to.equal(route);
+    });
+
+    it('matches a given path with a previously mapped pattern', () => {
+        let pattern = '/user/{id=\\d+}';
+        let route = {};
+        mapper.add(pattern, route);
+        expect(mapper.match('/user/25/profile')).to.deep.equal({
+            route: route,
+            rest: '/profile',
+            params: {
+                id: 25,
+            },
+        });
+        expect(mapper.match('/user/1xyz/profile')).to.deep.equal({
+            route: route,
+            rest: 'xyz/profile',
+            params: {
+                id: 1,
+            },
+        });
+    });
+
+    it('returns null if a match is not found', () => {
+        let pattern = '/user/{id=\\d+}';
+        mapper.add(pattern);
+        expect(mapper.match('/user/xyz/profile')).to.equal(null);
+        expect(mapper.match('/user/xyz1/profile')).to.equal(null);
+        expect(mapper.match('/user/x1yz/profile')).to.equal(null);
     });
 });
