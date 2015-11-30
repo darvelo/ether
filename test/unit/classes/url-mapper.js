@@ -49,8 +49,8 @@ describe('URLMapper', () => {
     });
 
     it('processes a combination of slashes and backslashes correctly', () => {
-        let pattern = '/\\first/\\second\\';
-        let expected = /^\/\\first\/\\second\\$/;
+        let pattern = '/\\first/\\/second\\';
+        let expected = /^\/\\first\/\\\/second\\$/;
         mapper.add(pattern);
         expect(regexEqual(expected, mapper.regexFor(pattern)));
     });

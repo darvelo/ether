@@ -3,120 +3,121 @@ class URLMapper {
         this._urlMap = {};
     }
 
-    add(strPattern) {
-        let len = strPattern.length;
-        let paramNames = [];
+    add(path) {
+        const NORMAL_MODE = 1;
+        const PARAM_NAME_MODE = 2;
+        const PARAM_VALUE_MODE = 3;
+
+        let mode = NORMAL_MODE;
+        let len = path.length;
         let finalRegex = [];
-        let bound = 0;
+        // holds user-supplied properties encoded within regex string pattern
+        let paramNames = [];
+        // keeps track of string position when we need to push a slice of it
+        // into the RegExp, to avoid `+=` string concat performance penalty
+        let leftBound = 0;
+        // the current position (index) while processing the string
         let cursor = 0;
+        // used to test for malformed string pattern
         let bracesCount = 0;
+        // will be stored in final urlmap data structure.
+        // useful for sorting mapped urls by "path length"
+        // to test longer paths (those with more slashes) first
         let slashesCount = 0;
-        let validPropRegex = /^[a-zA-Z][\w\d_-]+$/;
-
-        const GATHERMODE = {
-            normal: 1,
-            paramName: 2,
-            paramValue: 3,
-        };
-
-        let replaceChar = {
+        // when storing user-supplied properties encoded within a regex, we
+        // need to make sure the prop name will be valid for an object literal
+        let validPropRegex = /^[a-zA-Z][\w-]+$/;
+        // since we're going to compile a RegExp,
+        // we need to properly escape certain chars
+        let escapes = {
             '/': '\\/',
             '\\': '\\\\',
         };
 
-
-        let mode = GATHERMODE.normal;
-
         finalRegex.push('^');
 
         while (cursor < len) {
-            let c = strPattern[cursor];
-            if (mode === GATHERMODE.normal) {
+            let c = path[cursor];
+            if (mode === NORMAL_MODE) {
                 let pushSlice = false;
-                let replace   = false;
-                let moveBound = false;
+                let escape    = false;
 
                 if (c === '{') {
-                    mode = GATHERMODE.paramName;
+                    mode = PARAM_NAME_MODE;
                     pushSlice = true;
-                    moveBound = true;
-                } else if (replaceChar[c]) {
+                } else if (escapes[c]) {
                     if (c === '/') {
                         slashesCount++;
                     }
                     pushSlice = true;
-                    replace = true;
-                    moveBound = true;
+                    escape = true;
                 }
 
                 if (pushSlice) {
-                    finalRegex.push(strPattern.slice(bound, cursor));
+                    finalRegex.push(path.slice(leftBound, cursor));
+                    leftBound = cursor+1;
                 }
-                if (replace) {
-                    finalRegex.push(replaceChar[c]);
+                if (escape) {
+                    finalRegex.push(escapes[c]);
                 }
-                if (moveBound) {
-                    bound = cursor+1;
-                }
-            } else if (mode === GATHERMODE.paramName) {
+            } else if (mode === PARAM_NAME_MODE) {
                 if (c === '=') {
-                    mode = GATHERMODE.paramValue;
-                    let name = strPattern.slice(bound, cursor);
+                    mode = PARAM_VALUE_MODE;
+                    let name = path.slice(leftBound, cursor);
                     if (!validPropRegex.test(name)) {
-                        throw new Error('The parameter name "' + name + '" needs to be a string that can be used as a key in an object.');
+                        throw new Error('Ether URLMapper: The parameter name "' + name + '" needs to be a string that can be used as a key in an object. Path was ' + path);
                     }
                     paramNames.push(name);
                     finalRegex.push('(');
-                    bound = cursor+1;
+                    leftBound = cursor+1;
                 } else if (c === '{') {
-                    throw new Error('Got unexpected character "{" while parsing a parameter name in ' + strPattern);
+                    throw new Error('Ether URLMapper: Got unexpected character "{" while parsing a parameter name in path ' + path);
                 } else if (c === '}') {
-                    throw new Error('Got unexpected character "}" while parsing a parameter name in ' + strPattern);
+                    throw new Error('Ether URLMapper: Got unexpected character "}" while parsing a parameter name in path ' + path);
                 }
-            } else if (mode === GATHERMODE.paramValue) {
+            } else if (mode === PARAM_VALUE_MODE) {
                 if (c === '/') {
-                    throw new Error('The "/" character is not allowed in the regex value of a parameter name.');
+                    throw new Error('Ether URLMapper: The "/" character is not allowed in the regex of a parameter value. Path given was ' + path);
                 } else if (c === '{') {
                     bracesCount++;
                 } else if (c === '}') {
                     if (bracesCount) {
                         bracesCount--;
                     } else {
-                        mode = GATHERMODE.normal;
-                        finalRegex.push(strPattern.slice(bound, cursor));
+                        mode = NORMAL_MODE;
+                        finalRegex.push(path.slice(leftBound, cursor));
                         finalRegex.push(')');
-                        bound = cursor+1;
+                        leftBound = cursor+1;
                     }
                 }
             }
             ++cursor;
         }
 
-        if (mode !== GATHERMODE.normal) {
-            throw new Error('URL Regex was malformed in ' + strPattern);
+        if (mode !== NORMAL_MODE) {
+            throw new Error('Ether URLMapper: Malformed path ' + path);
         }
 
-        if (bound < cursor) {
-            finalRegex.push(strPattern.slice(bound, cursor));
+        if (leftBound < cursor) {
+            finalRegex.push(path.slice(leftBound, cursor));
         }
 
         // @TODO: remove $ since we need to capture the rest to pass it along
         finalRegex.push('$');
-        finalRegex = new RegExp(finalRegex.join(''));
-        this._urlMap[strPattern] = {
-            regex: finalRegex,
+        this._urlMap[path] = {
+            regex: new RegExp(finalRegex.join('')),
             slashes: slashesCount,
             params: paramNames.length ? paramNames : null,
         };
     }
 
-    regexFor(strPattern) {
-        let mapped = this._urlMap[strPattern];
+    regexFor(path) {
+        let mapped = this._urlMap[path];
         return mapped && mapped.regex;
     }
 
-    paramsFor(strPattern) {
-        let mapped = this._urlMap[strPattern];
+    paramsFor(path) {
+        let mapped = this._urlMap[path];
         return mapped && mapped.params;
     }
 }

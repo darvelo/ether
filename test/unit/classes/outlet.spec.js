@@ -16,7 +16,7 @@ describe('Outlet', function() {
             let stub = sinon.stub(element, 'appendChild');
             let outlet = new Outlet(element);
 
-            expect(() => outlet.append({})).to.throw(TypeError, '#append() was not passed an "Element" instance.');
+            expect(() => outlet.append({})).to.throw(TypeError, 'Outlet#append() was not passed an "Element" instance.');
 
             outlet.append(appended);
             stub.should.have.been.calledWith(appended);
@@ -32,7 +32,7 @@ describe('Outlet', function() {
             let stub = sinon.stub(element, 'removeChild');
             let outlet = new Outlet(element);
 
-            expect(() => outlet.remove({})).to.throw(TypeError, '#remove() was not passed an "Element" instance.');
+            expect(() => outlet.remove({})).to.throw(TypeError, 'Outlet#remove() was not passed an "Element" instance.');
 
             outlet.remove(appended);
             stub.should.have.been.calledWith(appended);
