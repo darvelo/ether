@@ -7,6 +7,12 @@ class Outlet {
         this._element = element;
     }
 
+    empty() {
+        if (this._element) {
+            this._element.innerHTML = '';
+        }
+    }
+
     append(child) {
         if (!(child instanceof Element)) {
             throw new TypeError(this.constructor.name + '#append() was not passed an "Element" instance.');

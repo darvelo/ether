@@ -8,6 +8,15 @@ describe('Outlet', function() {
         });
     });
 
+    it('empties its HTML', () => {
+        let element = new Element();
+        let outlet = new Outlet(element);
+        outlet.append(new Element());
+        outlet.append(new Element());
+        outlet.empty();
+        element.innerHTML.should.equal('');
+    });
+
     describe('DOM-delegating methods', function() {
         it('appends a child element', function() {
             let element = new Element();
