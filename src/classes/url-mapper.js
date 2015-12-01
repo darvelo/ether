@@ -155,7 +155,7 @@ class URLMapper {
 
         let len = theMatch.length;
         let paramNames = pattern.paramNames;
-        let namesLen = paramNames.length;
+        let namesLen = paramNames ? paramNames.length : 0;
 
         if (len-namesLen > 2) {
             // somehow we have more params than expected,
