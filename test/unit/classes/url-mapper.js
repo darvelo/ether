@@ -186,7 +186,6 @@ describe('URLMapper', () => {
     });
 
     it('does a stable sort when sorting by slash count', () => {
-        let result;
         // Tease out differences in JS engines' sorting implementations.
         // For Array.prototype.sort:
         //     Firefox and Safari are known to do a stable sort.
@@ -207,7 +206,7 @@ describe('URLMapper', () => {
         mapper.add('/user/{id=\\d+}abcdefghijk');
         mapper.add('/user/{id=\\d+}abcdefghijkl');
         mapper.add('/user/{id=\\d+}abcdefghijklm');
-        result = mapper.match('/user/25abcdefghijklmnopqrstuvwxyz');
+        let result = mapper.match('/user/25abcdefghijklmnopqrstuvwxyz');
         expect(result.rest).to.equal('abcdefghijklmnopqrstuvwxyz');
     });
 });

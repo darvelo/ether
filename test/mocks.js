@@ -1,4 +1,21 @@
 export class Element {
+    get children() {
+        return this._children || (this._children = []);
+    }
+    set children(array) {
+        this._children = array;
+    }
+    get innerHTML() {
+        if (!this.children.length) {
+            return '';
+        }
+        throw new Error('Element#innerHTML not implemented for when element has children.');
+    }
+    set innerHTML(value) {
+        if (value === '' && this.children) {
+            this.children.length = 0;
+        }
+    }
     get parentNode() {
         if (!this._parentNode) {
             this._parentNode = new Element();
@@ -10,14 +27,12 @@ export class Element {
         if (!(element instanceof Element)) {
             throw new TypeError('Element#appendChild() was not passed an Element instance.');
         }
-        this.children = this.children || [];
         this.children.push(element);
     }
     removeChild(element) {
         if (!(element instanceof Element)) {
             throw new TypeError('Element#removeChild() was not passed an Element instance.');
         }
-        this.children = this.children || [];
         let idx = this.children.indexOf(element);
         if (idx !== -1) {
             return this.children.splice(idx, 1)[0];
