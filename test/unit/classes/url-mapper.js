@@ -34,6 +34,14 @@ describe('URLMapper', () => {
         expect(regexEqual(expected, mapper.regexFor(pattern))).to.be.ok;
     });
 
+    it('clears cached data', () => {
+        expect(mapper.regexFor('word')).to.not.be.ok;
+        mapper.add('word');
+        expect(mapper.regexFor('word')).to.be.an.instanceof(RegExp);
+        mapper.clear();
+        expect(mapper.regexFor('word')).to.not.be.ok;
+    });
+
     it('processes slashes correctly', () => {
         let pattern = '/first/second';
         let expected = /^\/first\/second(.*)/;
@@ -153,7 +161,7 @@ describe('URLMapper', () => {
         expect(mapper.match('/user/x1yz/profile')).to.equal(null);
     });
 
-    it('matches patterns in order of path length/slash count', () => {
+    it('matches patterns in order of slash count', () => {
         let result;
         mapper.add('/user/{id=\\d+}');
         result = mapper.match('/user/1/profile/edit');
@@ -175,5 +183,31 @@ describe('URLMapper', () => {
         expect(result.rest).to.equal(null);
         spy1.should.not.have.been.called;
         spy2.should.have.been.calledOnce;
+    });
+
+    it('does a stable sort when sorting by slash count', () => {
+        let result;
+        // Tease out differences in JS engines' sorting implementations.
+        // For Array.prototype.sort:
+        //     Firefox and Safari are known to do a stable sort.
+        //     Chrome is known not to do a stable sort if array size > 10,
+        //        where quicksort is used over insertionsort.
+        //        see: https://github.com/v8/v8/blob/master/src/js/array.js#L964
+        mapper.add('/user/{id=\\d+}');
+        mapper.add('/user/{id=\\d+}a');
+        mapper.add('/user/{id=\\d+}ab');
+        mapper.add('/user/{id=\\d+}abc');
+        mapper.add('/user/{id=\\d+}abcd');
+        mapper.add('/user/{id=\\d+}abcde');
+        mapper.add('/user/{id=\\d+}abcdef');
+        mapper.add('/user/{id=\\d+}abcdefg');
+        mapper.add('/user/{id=\\d+}abcdefgh');
+        mapper.add('/user/{id=\\d+}abcdefghi');
+        mapper.add('/user/{id=\\d+}abcdefghij');
+        mapper.add('/user/{id=\\d+}abcdefghijk');
+        mapper.add('/user/{id=\\d+}abcdefghijkl');
+        mapper.add('/user/{id=\\d+}abcdefghijklm');
+        result = mapper.match('/user/25abcdefghijklmnopqrstuvwxyz');
+        expect(result.rest).to.equal('abcdefghijklmnopqrstuvwxyz');
     });
 });

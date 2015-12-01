@@ -1,3 +1,5 @@
+import mergesort from '../utils/mergesort';
+
 function isNumeric(str) {
     return !isNaN(str);
 }
@@ -8,8 +10,11 @@ class URLMapper {
         this._sortedPatterns = [];
     }
 
-    // @TODO: make sorting stable or do away with sorting all together
-    //        and let the user control the ordering of match testing
+    clear() {
+        this._urlMap = {};
+        this._sortedPatterns = [];
+    }
+
     _sortFn(a, b) {
         // patterns with more slashes are are placed at the beginning
         return b.slashes - a.slashes;
@@ -134,7 +139,7 @@ class URLMapper {
         };
 
         this._sortedPatterns.push(mapped);
-        this._sortedPatterns.sort(this._sortFn);
+        mergesort(this._sortedPatterns, this._sortFn);
     }
 
     // @TODO: parse querystring parameters
