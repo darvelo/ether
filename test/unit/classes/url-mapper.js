@@ -31,41 +31,77 @@ describe('URLMapper', () => {
         let pattern = 'word';
         let expected = /^word(.*)/;
         mapper.add(pattern);
-        expect(regexEqual(expected, mapper.regexFor(pattern)));
+        expect(regexEqual(expected, mapper.regexFor(pattern))).to.be.ok;
     });
 
     it('processes slashes correctly', () => {
         let pattern = '/first/second';
         let expected = /^\/first\/second(.*)/;
         mapper.add(pattern);
-        expect(regexEqual(expected, mapper.regexFor(pattern)));
+        expect(regexEqual(expected, mapper.regexFor(pattern))).to.be.ok;
     });
 
     it('processes backslashes correctly', () => {
         let pattern = '\\first\\second\\';
         let expected = /^\\first\\second\\(.*)/;
         mapper.add(pattern);
-        expect(regexEqual(expected, mapper.regexFor(pattern)));
+        expect(regexEqual(expected, mapper.regexFor(pattern))).to.be.ok;
     });
 
     it('processes a combination of slashes and backslashes correctly', () => {
         let pattern = '/\\first/\\/second\\';
         let expected = /^\/\\first\/\\\/second\\(.*)/;
         mapper.add(pattern);
-        expect(regexEqual(expected, mapper.regexFor(pattern)));
+        expect(regexEqual(expected, mapper.regexFor(pattern))).to.be.ok;
     });
 
     it('can extract parameter variables from regex', () => {
         let pattern = '/name/{id=\\d+}/view';
         let expected = /^\/name\/(\d+)\/view(.*)/;
         mapper.add(pattern);
-        expect(regexEqual(expected, mapper.regexFor(pattern)));
+        expect(regexEqual(expected, mapper.regexFor(pattern))).to.be.ok;
         expect(mapper.paramsFor(pattern)).to.deep.equal(['id']);
     });
 
     it('throws if a parameter name is given more than once', () => {
         let pattern = '/user/{id=\\d+}/item/{id=[a-zA-Z]\\d+}[\\w]';
         expect(() => mapper.add(pattern)).to.throw(RangeError);
+    });
+
+    it('escapes parentheses and brackets when not processing a parameter', () => {
+        let pattern = '/[user]/(item)';
+        let expected = /^\/\[user\]\/\(item\)(.*)/;
+        mapper.add(pattern);
+        expect(regexEqual(expected, mapper.regexFor(pattern))).to.be.ok;
+    });
+
+    it('disallows parentheses/brackets/braces/slashes/backslashes when processing a parameter name', () => {
+        expect(() => mapper.add('/user/{id(=\\d+}')).to.throw();
+        expect(() => mapper.add('/user/{id)=\\d+}')).to.throw();
+        expect(() => mapper.add('/user/{id[=\\d+}')).to.throw();
+        expect(() => mapper.add('/user/{id]=\\d+}')).to.throw();
+        expect(() => mapper.add('/user/{id{=\\d+}')).to.throw();
+        expect(() => mapper.add('/user/{id}=\\d+}')).to.throw();
+        expect(() => mapper.add('/user/{id/=\\d+}')).to.throw();
+        expect(() => mapper.add('/user/{id\\=\\d+}')).to.throw();
+    });
+
+    it('escapes parentheses that the user escaped with backslashes', () => {
+        let pattern = '/user/{id=\\(\\d+\\)}';
+        let expected = /^\/user\/(\(\d+\))(.*)/;
+        expect(() => mapper.add(pattern)).to.not.throw();
+        expect(regexEqual(expected, mapper.regexFor(pattern))).to.be.ok;
+    });
+
+    it('throws on encountering a capturing group when processing a parameter value', () => {
+        expect(() => mapper.add('/user/{id=(\\d+)}')).to.throw();
+        expect(() => mapper.add('/user/{id=(?:\\d+)}')).to.not.throw();
+        expect(() => mapper.add('/user/{id=(?=\\d+)}')).to.not.throw();
+        expect(() => mapper.add('/user/{id=(?!\\d+)}')).to.not.throw();
+        expect(() => mapper.add('/user/{id=\\(\\d+\\)}')).to.not.throw();
+        // unmatched capturing group for closing parenthesis
+        // JS engine handles this for us
+        expect(() => mapper.add('/user/{id=\\(\\d+)}/')).to.throw(SyntaxError);
     });
 
     it('keeps a slash character count for a path', () => {
@@ -126,7 +162,7 @@ describe('URLMapper', () => {
         // has the most slashes, is tested first when matching
         mapper.add('/user/{id=\\d+}/profile/edit');
         result = mapper.match('/user/1/profile/edit');
-        expect(result.rest).to.equal('');
+        expect(result.rest).to.equal(null);
 
         // this pattern, though it would match, is a worse match than the above.
         // the above pattern has more slashes, and so is tested before this
@@ -136,7 +172,7 @@ describe('URLMapper', () => {
         let spy1 = sinon.spy(mapper.regexFor('/user/{id=\\d+}/profile'), 'exec');
         let spy2 = sinon.spy(mapper.regexFor('/user/{id=\\d+}/profile/edit'), 'exec');
         result = mapper.match('/user/1/profile/edit');
-        expect(result.rest).to.equal('');
+        expect(result.rest).to.equal(null);
         spy1.should.not.have.been.called;
         spy2.should.have.been.calledOnce;
     });

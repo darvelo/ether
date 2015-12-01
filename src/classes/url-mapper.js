@@ -42,6 +42,10 @@ class URLMapper {
         let escapes = {
             '/': '\\/',
             '\\': '\\\\',
+            '[': '\\[',
+            ']': '\\]',
+            '(': '\\(',
+            ')': '\\)',
         };
 
         finalRegex.push('^');
@@ -81,14 +85,20 @@ class URLMapper {
                     paramNames.push(name);
                     finalRegex.push('(');
                     leftBound = cursor+1;
-                } else if (c === '{') {
-                    throw new Error('Ether URLMapper: Got unexpected character "{" while parsing a parameter name in pattern ' + patternStr);
-                } else if (c === '}') {
-                    throw new Error('Ether URLMapper: Got unexpected character "}" while parsing a parameter name in pattern ' + patternStr);
+                } else if (escapes[c] || c === '{' || c === '}') {
+                    throw new Error('Ether URLMapper: The "' + c + '" character is not allowed in a parameter name. Pattern given was ' + patternStr);
                 }
             } else if (mode === PARAM_VALUE_MODE) {
                 if (c === '/') {
                     throw new Error('Ether URLMapper: The "/" character is not allowed in the regex of a parameter value. Pattern given was ' + patternStr);
+                } else if (c === '(' && patternStr[cursor-1] !== '\\') {
+                    let token = patternStr.slice(cursor, cursor+3);
+                    if (token !== '(?:' &&
+                        token !== '(?=' &&
+                        token !== '(?!' )
+                    {
+                        throw new Error('Ether URLMapper: Capturing groups are not allowed in the regex of a parameter value. Pattern given was ' + patternStr);
+                    }
                 } else if (c === '{') {
                     bracesCount++;
                 } else if (c === '}') {
@@ -127,6 +137,7 @@ class URLMapper {
         this._sortedPatterns.sort(this._sortFn);
     }
 
+    // @TODO: parse querystring parameters
     match(path) {
         let pattern;
         let theMatch;
@@ -161,7 +172,8 @@ class URLMapper {
             }
             ret.params[paramNames[i]] = group;
         }
-        ret.rest = theMatch[len-1];
+        // turn the empty string into null
+        ret.rest = theMatch[len-1] || null;
         ret.route = pattern.route;
         return ret;
     }
