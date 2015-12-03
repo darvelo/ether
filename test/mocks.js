@@ -75,5 +75,9 @@ export class Element {
 export var document = {
     createElement() {
         return new Element();
+    },
+
+    querySelector() {
+        throw new Error('document.querySelector() not implemented.');
     }
 };

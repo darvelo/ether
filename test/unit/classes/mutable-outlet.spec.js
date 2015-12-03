@@ -12,6 +12,23 @@ describe('MutableOutlet', function() {
             expect(() => new MutableOutlet()).to.throw(TypeError, 'MutableOutlet constructor was not passed an "Element" instance.');
             expect(() => new MutableOutlet({})).to.throw(TypeError, 'MutableOutlet constructor was not passed an "Element" instance.');
         });
+
+        it('accepts a CSS selector', () => {
+            let selector = '#myElement';
+            let spy = sinon.spy(document, 'querySelector');
+            expect(() => new MutableOutlet(selector)).to.throw();
+            spy.should.have.been.calledOnce;
+            spy.should.have.thrown;
+            spy.restore();
+            let element = document.createElement('div');
+            let stub = sinon.stub(document, 'querySelector').returns(element);
+            let outlet;
+            expect(() => outlet = new MutableOutlet(selector)).to.not.throw();
+            expect(outlet.get()).to.equal(element);
+            stub.should.have.been.calledOnce;
+            stub.should.have.been.calledWith(selector);
+            stub.restore();
+        });
     });
 
     describe('Non-mutating methods', function() {

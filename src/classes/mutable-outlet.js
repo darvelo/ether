@@ -1,14 +1,6 @@
 import Outlet from './outlet';
 
 class MutableOutlet extends Outlet {
-    constructor(element) {
-        if (!(element instanceof Element)) {
-            throw new TypeError('Ether.MutableOutlet constructor was not passed an "Element" instance.');
-        }
-
-        super(element);
-    }
-
     get() {
         return this._element;
     }

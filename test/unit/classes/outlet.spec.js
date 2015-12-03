@@ -6,6 +6,20 @@ describe('Outlet', function() {
             expect(() => new Outlet()).to.throw(TypeError, 'Outlet constructor was not passed an "Element" instance.');
             expect(() => new Outlet({})).to.throw(TypeError, 'Outlet constructor was not passed an "Element" instance.');
         });
+
+        it('accepts a CSS selector', () => {
+            let selector = '#myElement';
+            let spy = sinon.spy(document, 'querySelector');
+            expect(() => new Outlet(selector)).to.throw();
+            spy.should.have.been.calledOnce;
+            spy.should.have.thrown;
+            spy.restore();
+            let stub = sinon.stub(document, 'querySelector').returns(document.createElement('div'));
+            expect(() => new Outlet(selector)).to.not.throw();
+            stub.should.have.been.calledOnce;
+            stub.should.have.been.calledWith(selector);
+            stub.restore();
+        });
     });
 
     it('empties its HTML', () => {

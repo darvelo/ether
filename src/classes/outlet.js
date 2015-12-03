@@ -1,5 +1,9 @@
 class Outlet {
     constructor(element) {
+        if (typeof element === 'string') {
+            element = document.querySelector(element);
+        }
+
         if (!(element instanceof Element)) {
             throw new TypeError(this.constructor.name + ' constructor was not passed an "Element" instance.');
         }
