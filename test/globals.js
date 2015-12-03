@@ -10,7 +10,8 @@ sinon.assert.expose(chai.assert, {prefix: ''});
 global.assert = chai.assert;
 global.expect = chai.expect;
 global.sinon = sinon;
-global.Element = mocks.Element;
+global.window = mocks.window;
 global.document = mocks.document;
+global.Element = mocks.Element;
 
 require('babel-polyfill');

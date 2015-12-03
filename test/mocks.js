@@ -1,4 +1,51 @@
-export class Element {
+export class Eventable {
+    fire(evtName) {
+        this._events = this._events || {};
+        let evtList = this._events[evtName] || (this._events[evtName] = []);
+        for (let callback of evtList) {
+            callback();
+        }
+    }
+    addEventListener(evtName, callback) {
+        if (typeof callback !== 'function') {
+            throw new Error('Element#addEventListener() was not passed a callback function.');
+        }
+        this._events = this._events || {};
+        let evtList = this._events[evtName] || (this._events[evtName] = []);
+        if (!evtList.some(cb => cb === callback)) {
+            evtList.push(callback);
+        }
+    }
+    removeEventListener(evtName, callback) {
+        if (typeof callback !== 'function') {
+            throw new Error('Element#removeEventListener() was not passed a callback function.');
+        }
+        this._events = this._events || {};
+        let evtList = this._events[evtName] || (this._events[evtName] = []);
+        let idx = evtList.indexOf(callback);
+        if (idx !== -1) {
+            evtList.splice(idx, 1);
+        }
+    }
+}
+
+export var window = {
+    __proto__: Eventable,
+};
+
+export var document = {
+    __proto__: Eventable,
+
+    createElement() {
+        return new Element();
+    },
+
+    querySelector() {
+        throw new Error('document.querySelector() not implemented.');
+    }
+};
+
+export class Element extends Eventable {
     get children() {
         return this._children || (this._children = []);
     }
@@ -42,42 +89,4 @@ export class Element {
     }
     querySelector() { }
     querySelectorAll() { }
-    fire(evtName) {
-        this._events = this._events || {};
-        let evtList = this._events[evtName] || (this._events[evtName] = []);
-        for (let callback of evtList) {
-            callback();
-        }
-    }
-    addEventListener(evtName, callback) {
-        if (typeof callback !== 'function') {
-            throw new Error('Element#addEventListener() was not passed a callback function.');
-        }
-        this._events = this._events || {};
-        let evtList = this._events[evtName] || (this._events[evtName] = []);
-        if (!evtList.some(cb => cb === callback)) {
-            evtList.push(callback);
-        }
-    }
-    removeEventListener(evtName, callback) {
-        if (typeof callback !== 'function') {
-            throw new Error('Element#removeEventListener() was not passed a callback function.');
-        }
-        this._events = this._events || {};
-        let evtList = this._events[evtName] || (this._events[evtName] = []);
-        let idx = evtList.indexOf(callback);
-        if (idx !== -1) {
-            evtList.splice(idx, 1);
-        }
-    }
 }
-
-export var document = {
-    createElement() {
-        return new Element();
-    },
-
-    querySelector() {
-        throw new Error('document.querySelector() not implemented.');
-    }
-};
