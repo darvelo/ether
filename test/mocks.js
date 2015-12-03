@@ -71,3 +71,9 @@ export class Element {
         }
     }
 }
+
+export var document = {
+    createElement() {
+        return new Element();
+    }
+};

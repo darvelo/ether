@@ -1,4 +1,4 @@
-import URLMapper from '../../../src/classes/url-mapper.js';
+import URLMapper from '../../../src/classes/url-mapper';
 
 // test regex equality
 // see: http://stackoverflow.com/questions/10776600/testing-for-equality-of-regular-expressions

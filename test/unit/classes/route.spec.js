@@ -9,13 +9,13 @@ describe('Route', () => {
 
             it('throws when DOMListen callback is not a function', () => {
                 let route = new Route();
-                expect(() => route.DOMListen(new Element(), 'click')).to.throw(TypeError,  'Route#DOMListen() was not passed a callback that was a function type.');
+                expect(() => route.DOMListen(document.createElement('div'), 'click')).to.throw(TypeError,  'Route#DOMListen() was not passed a callback that was a function type.');
             });
 
             it('adds an event callback without a context', () => {
                 let route = new Route();
                 let spy = route.handleClick = sinon.spy();
-                let element = new Element();
+                let element = document.createElement('div');
                 route.DOMListen(element, 'click', route.handleClick);
                 element.fire('click');
                 spy.should.have.been.calledOnce;
@@ -25,7 +25,7 @@ describe('Route', () => {
             it('adds an event callback with a context', () => {
                 let route = new Route();
                 let spy = route.handleClick = sinon.spy();
-                let element = new Element();
+                let element = document.createElement('div');
                 route.DOMListen(element, 'click', route.handleClick, route);
                 element.fire('click');
                 spy.should.have.been.calledOnce;
@@ -34,8 +34,8 @@ describe('Route', () => {
 
             it('adds a callback only for the element passed in', () => {
                 let route = new Route();
-                let element1 = new Element();
-                let element2 = new Element();
+                let element1 = document.createElement('div');
+                let element2 = document.createElement('div');
                 let spy1 = sinon.spy();
                 let spy2 = sinon.spy();
                 route.DOMListen(element1, 'click', spy1);
@@ -57,7 +57,7 @@ describe('Route', () => {
             it('only removes a callback when the context matches', () => {
                 let route = new Route();
                 let spy = route.handleClick = sinon.spy();
-                let element = new Element();
+                let element = document.createElement('div');
                 route.DOMListen(element, 'click', route.handleClick, route);
                 route.DOMUnlisten(element, 'click', route.handleClick);
                 element.fire('click');
@@ -73,7 +73,7 @@ describe('Route', () => {
                 let route = new Route();
                 let spy1 = sinon.spy();
                 let spy2 = sinon.spy();
-                let element = new Element();
+                let element = document.createElement('div');
                 route.DOMListen(element, 'click', spy1);
                 route.DOMListen(element, 'click', spy2, route);
                 element.fire('click');
@@ -87,8 +87,8 @@ describe('Route', () => {
 
             it('removes a callback only for the element passed in', () => {
                 let route = new Route();
-                let element1 = new Element();
-                let element2 = new Element();
+                let element1 = document.createElement('div');
+                let element2 = document.createElement('div');
                 let spy1 = sinon.spy();
                 let spy2 = sinon.spy();
                 route.DOMListen(element1, 'click', spy1);
@@ -107,8 +107,8 @@ describe('Route', () => {
 
             it('removes all callbacks only for the element passed in', () => {
                 let route = new Route();
-                let element1 = new Element();
-                let element2 = new Element();
+                let element1 = document.createElement('div');
+                let element2 = document.createElement('div');
                 let spy1 = sinon.spy();
                 let spy2 = sinon.spy();
                 let spy3 = sinon.spy();
