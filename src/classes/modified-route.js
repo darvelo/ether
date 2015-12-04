@@ -17,13 +17,13 @@ class ModifiedRoute {
         transformer.transform(this, ...args);
     }
 
-    outlets(...args) {
-        this._transform(OutletsReceivable, ...args);
+    addresses(...args) {
+        this._transform(Addressable, ...args);
         return this;
     }
 
-    address(...args) {
-        this._transform(Addressable, ...args);
+    outlets(...args) {
+        this._transform(OutletsReceivable, ...args);
         return this;
     }
 }

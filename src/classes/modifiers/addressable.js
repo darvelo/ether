@@ -1,6 +1,6 @@
 class Addressable {
-    static transform(modified, name) {
-        modified._address = name;
+    static transform(modified, ...names) {
+        modified._addresses = names;
     }
 }
 

@@ -3,7 +3,7 @@ import Addressable from './modifiers/addressable';
 import OutletsReceivable from './modifiers/outlets-receivable';
 
 class ModifiableRoute {
-    static address(...args) {
+    static addresses(...args) {
         return new ModifiedRoute(this, Addressable, ...args);
     }
 

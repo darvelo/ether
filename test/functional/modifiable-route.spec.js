@@ -19,11 +19,11 @@ class TestRoute extends ModifiableRoute {
 let transformTests = {
     address: {
         klass: Addressable,
-        prop: 'address',
-        arg: 'addy',
+        prop: 'addresses',
+        args: ['addy'],
         run: function(addressable) {
-            let modified = addressable[this.prop](this.arg);
-            expect(modified._address).to.equal(this.arg);
+            let modified = addressable[this.prop](...this.args);
+            expect(modified._addresses).to.deep.equal(this.args);
             return modified;
         },
     },
@@ -57,13 +57,13 @@ let transformTests = {
 describe('ModifiableRoute Class Static Modifiers', () => {
     describe('Addressable', () => {
         it('static fn returns a ModifiedRoute', () => {
-            let route = ModifiableRoute.address('addy');
+            let route = ModifiableRoute.addresses('addy');
             route.should.be.an.instanceof(ModifiedRoute);
         });
 
         it('static fn calls transform', () => {
             let stub = sinon.stub(Addressable, 'transform');
-            let route = ModifiableRoute.address('addy');
+            let route = ModifiableRoute.addresses('addy');
             stub.should.have.been.calledOnce;
             stub.should.have.been.calledWith(route, 'addy');
             stub.restore();
@@ -71,14 +71,14 @@ describe('ModifiableRoute Class Static Modifiers', () => {
 
         it('instance fn returns a ModifiedRoute', () => {
             let modified = new ModifiedRoute(null, IdentityModifier);
-            modified.address('addy').should.be.an.instanceof(ModifiedRoute);
+            modified.addresses('addy').should.be.an.instanceof(ModifiedRoute);
         });
 
         it('instance fn calls transform', () => {
             let modified = new ModifiedRoute(null, IdentityModifier);
             let mock = sinon.mock(Addressable);
             mock.expects('transform').once().withArgs(modified, 'addy');
-            modified.address('addy');
+            modified.addresses('addy');
             mock.verify();
         });
 
@@ -87,7 +87,7 @@ describe('ModifiableRoute Class Static Modifiers', () => {
         });
 
         it('creates an instance of ModifiableRoute with args passed', () => {
-            let modified = TestRoute.address('addy');
+            let modified = TestRoute.addresses('addy');
             let route = modified._createInstance('mic', 'check');
             route.should.be.an.instanceof(TestRoute);
             expect(route.args).to.deep.equal(['mic', 'check']);
