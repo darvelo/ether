@@ -16,32 +16,45 @@ class TestRoute extends ModifiableRoute {
     }
 }
 
+let transformTestsArgs = [
+    {
+        addresses: ['should-be-overwritten'],
+        outlets: {
+            one: 1,
+            two: 2,
+            three: 3,
+        },
+    },
+    4, 5, 6,
+];
+
 let transformTests = {
     address: {
         klass: Addressable,
         prop: 'addresses',
-        args: ['addy'],
+        args: ['addy1', 'addy2'],
         run: function(addressable) {
             let modified = addressable[this.prop](...this.args);
-            expect(modified._addresses).to.deep.equal(this.args);
+            let stub = sinon.stub(modified, 'klass');
+            modified._createInstance(...transformTestsArgs);
+            stub.should.have.been.calledOnce;
+            stub.should.have.been.calledWithNew;
+            let callArgs = stub.getCall(0).args;
+            callArgs.should.have.length.above(1);
+            callArgs[0].should.have.property('addresses');
+            callArgs[0].addresses.should.deep.equal(this.args);
+            stub.restore();
             return modified;
-        },
+        }
     },
     outlets: {
         klass: OutletsReceivable,
         prop: 'outlets',
         args: ['one', 'three'],
-        instanceArgs: [{
-            outlets: {
-                one: 1,
-                two: 2,
-                three: 3,
-            },
-        }, 4, 5, 6],
         run: function(outletable) {
             let modified = outletable[this.prop](...this.args);
             let stub = sinon.stub(modified, 'klass');
-            modified._createInstance(...this.instanceArgs);
+            modified._createInstance(...transformTestsArgs);
             stub.should.have.been.calledOnce;
             stub.should.have.been.calledWithNew;
             let callArgs = stub.getCall(0).args;
@@ -88,9 +101,9 @@ describe('ModifiableRoute Class Static Modifiers', () => {
 
         it('creates an instance of ModifiableRoute with args passed', () => {
             let modified = TestRoute.addresses('addy');
-            let route = modified._createInstance('mic', 'check');
+            let route = modified._createInstance({}, 'mic', 'check');
             route.should.be.an.instanceof(TestRoute);
-            expect(route.args).to.deep.equal(['mic', 'check']);
+            expect(route.args).to.deep.equal([{addresses: ['addy']}, 'mic', 'check']);
         });
     });
 
