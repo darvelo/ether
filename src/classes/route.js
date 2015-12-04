@@ -3,6 +3,9 @@ import ModifiableRoute from './modifiable-route';
 class Route extends ModifiableRoute {
     constructor(opts) {
         super();
+        if (typeof opts !== 'object') {
+            throw Error(this.constructor.name + ' not given an options object argument.');
+        }
         this._events = {};
     }
 
