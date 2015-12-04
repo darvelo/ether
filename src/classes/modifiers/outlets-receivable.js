@@ -1,9 +1,11 @@
 class OutletsReceivable {
     static transform(modified, ...names) {
-        modified._argsTransformFns.push(this.filterOutlets.bind(null, names));
+        modified.outlets = names;
+        modified._argsTransformFns.push(this.filterOutlets.bind(null, modified));
     }
 
-    static filterOutlets(names, opts, ...args) {
+    static filterOutlets(modified, opts, ...args) {
+        let names = modified.outlets;
         let outlets = opts.outlets || {};
         let newOpts = {};
 

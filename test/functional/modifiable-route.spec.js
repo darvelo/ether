@@ -54,6 +54,7 @@ let transformTests = {
         run: function(outletable) {
             let modified = outletable[this.prop](...this.args);
             let stub = sinon.stub(modified, 'klass');
+            expect(modified.outlets).to.deep.equal(this.args);
             modified._createInstance(...transformTestsArgs);
             stub.should.have.been.calledOnce;
             stub.should.have.been.calledWithNew;
