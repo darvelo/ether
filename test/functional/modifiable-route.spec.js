@@ -41,7 +41,8 @@ let transformTests = {
             stub.should.have.been.calledOnce;
             stub.should.have.been.calledWithNew;
             let callArgs = stub.getCall(0).args;
-            callArgs.should.have.length.above(1);
+            callArgs.should.have.length(transformTestsArgs.length);
+            callArgs.slice(1).should.deep.equal(transformTestsArgs.slice(1));
             callArgs[0].should.have.property('addresses');
             callArgs[0].addresses.should.deep.equal(this.args);
             stub.restore();
@@ -59,7 +60,8 @@ let transformTests = {
             stub.should.have.been.calledOnce;
             stub.should.have.been.calledWithNew;
             let callArgs = stub.getCall(0).args;
-            callArgs.should.have.length.above(1);
+            callArgs.should.have.length(transformTestsArgs.length);
+            callArgs.slice(1).should.deep.equal(transformTestsArgs.slice(1));
             callArgs[0].should.have.property('outlets');
             callArgs[0].outlets.should.deep.equal({one: 1, three: 3});
             stub.restore();
