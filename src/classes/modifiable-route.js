@@ -1,8 +1,9 @@
 import ModifiedRoute from './modified-route';
+import Expectable from './expectable';
 import Addressable from './modifiers/addressable';
 import OutletsReceivable from './modifiers/outlets-receivable';
 
-class ModifiableRoute {
+class ModifiableRoute extends Expectable {
     static addresses(...args) {
         return new ModifiedRoute(this, Addressable, ...args);
     }

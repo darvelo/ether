@@ -2,11 +2,14 @@ import ModifiableRoute from './modifiable-route';
 
 class Route extends ModifiableRoute {
     constructor(opts) {
-        super();
-        if (typeof opts !== 'object') {
-            throw Error(this.constructor.name + ' not given an options object argument.');
-        }
+        super(opts);
+        this._rootApp = opts.rootApp;
+        this._registerAddresses(opts.addresses);
         this._events = {};
+    }
+
+    _registerAddresses(addresses) {
+        addresses.forEach(name => this._rootApp._registerAddress(name, this));
     }
 
     DOMListen(element, evtName, callback, context) {

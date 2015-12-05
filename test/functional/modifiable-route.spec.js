@@ -11,7 +11,7 @@ class IdentityModifier {
 
 class TestRoute extends ModifiableRoute {
     constructor(...args) {
-        super();
+        super(...args);
         this.args = args;
     }
 }
@@ -30,11 +30,12 @@ let transformTestsArgs = [
 
 let transformTests = {
     address: {
-        klass: Addressable,
         prop: 'addresses',
         args: ['addy1', 'addy2'],
         run: function(addressable) {
             let modified = addressable[this.prop](...this.args);
+            // this allows us to bypass Expectable expected*() functions
+            // and just check that the arguments are transformed correctly
             let stub = sinon.stub(modified, 'klass');
             modified._createInstance(...transformTestsArgs);
             stub.should.have.been.calledOnce;
@@ -48,7 +49,6 @@ let transformTests = {
         }
     },
     outlets: {
-        klass: OutletsReceivable,
         prop: 'outlets',
         args: ['one', 'three'],
         run: function(outletable) {
@@ -99,13 +99,6 @@ describe('ModifiableRoute Class Static Modifiers', () => {
         it('applies the proper transformation', () => {
             transformTests.address.run(ModifiableRoute);
         });
-
-        it('creates an instance of ModifiableRoute with args passed', () => {
-            let modified = TestRoute.addresses('addy');
-            let route = modified._createInstance({}, 'mic', 'check');
-            route.should.be.an.instanceof(TestRoute);
-            expect(route.args).to.deep.equal([{addresses: ['addy']}, 'mic', 'check']);
-        });
     });
 
     describe('OutletsReceivable', () => {
@@ -140,25 +133,8 @@ describe('ModifiableRoute Class Static Modifiers', () => {
             transformTests.outlets.run(ModifiableRoute);
         });
 
-        it('creates an instance of ModifiableRoute with args passed', () => {
-            let args = [{
-                outlets: {
-                    one: 1,
-                    two: 2,
-                    three: 3,
-                }
-            }, 4, 5, 6];
-            let modified = TestRoute.outlets('two');
-            let route = modified._createInstance(...args);
-            route.should.be.an.instanceof(TestRoute);
-            expect(route.args).to.deep.equal([{
-                outlets: {
-                    two: 2,
-                }
-            }, 4, 5, 6]);
-        });
-
-        it('throws if missing any expected outlet', () => {
+        // @TODO: replace this with expectedOutlets()
+        it.skip('throws if missing any expected outlet', () => {
             let args = [{
                 outlets: {
                     one: 1,

@@ -1,22 +1,23 @@
-class App {
-    constructor(options) {
-        if (typeof options !== 'object') {
-            throw new TypeError(this.constructor.name + ' was not given an options object.');
+import Expectable from './expectable';
+
+class App extends Expectable {
+    constructor(opts) {
+        super(opts);
+
+        if (opts.rootApp === true) {
+            opts.rootApp = this;
         }
 
-        if (options.rootApp === true) {
-            options.rootApp = this;
+        if (!opts.rootApp) {
+            throw new TypeError(Object.getPrototypeOf(this).constructor.name + ' constructor was not given a reference to the Ether RootApp.');
         }
 
-        if (!options.rootApp) {
-            throw new TypeError(this.constructor.name + ' was not given a reference to the Ether RootApp.');
-        }
+        this._rootApp = opts.rootApp;
+        this._registerAddresses(opts.addresses);
+    }
 
-        if (!(options.rootApp instanceof App)) {
-            throw new TypeError(this.constructor.name + ' was given an options object whose rootApp property was not an App instance.');
-        }
-
-        this._rootApp = options.rootApp;
+    _registerAddresses(addresses) {
+        addresses.forEach(name => this._rootApp._registerAddress(name, this));
     }
 
     setupOutlets() {

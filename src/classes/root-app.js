@@ -1,15 +1,18 @@
 import App from './app';
+import Route from './route';
 
 class RootApp extends App {
-    constructor(options) {
-        if (typeof options === 'object') {
-            options.rootApp = true;
+    constructor(opts) {
+        if (typeof opts === 'object') {
+            opts.rootApp = true;
+            opts.addresses = opts.addresses || [];
         }
-        super(options);
-        this._addresses = {};
+        super(opts);
     }
 
     _registerAddress(name, dest) {
+        this._addresses = this._addresses || (this._addresses = {});
+
         if (!(dest instanceof App) && !(dest instanceof Route)) {
             throw new TypeError([
                 Object.getPrototypeOf(this).constructor.name,
@@ -34,7 +37,12 @@ class RootApp extends App {
     }
 
     _atAddress(name) {
+        this._addresses = this._addresses || (this._addresses = {});
         return this._addresses[name];
+    }
+
+    expectedAddresses() {
+        return [];
     }
 
     start() {

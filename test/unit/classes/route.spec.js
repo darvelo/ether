@@ -1,25 +1,50 @@
 import Route from '../../../src/classes/route';
+import RootApp from '../../../src/classes/root-app';
+import Expectable from '../../../src/classes/expectable';
+
+let defaultOpts = {
+    rootApp: new RootApp({}),
+    addresses: [],
+};
+
+class TestRoute extends Route {
+    expectedAddresses() {
+        return [];
+    }
+}
 
 describe('Route', () => {
     describe('Constructor', () => {
-        it('throws if not given an options argument', () => {
-            expect(() => new Route()).to.throw(Error, 'Route not given an options object argument.');
+        it('Route is an instance of Expectable', () => {
+            expect(new TestRoute(defaultOpts)).to.be.an.instanceof(Expectable);
+        });
+
+        it('adds itself to the RootApp\'s address registry', () => {
+            class RouteWithAddresses extends Route { expectedAddresses() { return ['first', 'second']; } }
+            let opts = {
+                rootApp: new RootApp({}),
+                addresses: ['first', 'second'],
+            };
+            let rootApp = opts.rootApp;
+            opts.addresses.forEach(name => expect(rootApp._atAddress(name)).to.not.be.ok);
+            let route = new RouteWithAddresses(opts);
+            opts.addresses.forEach(name => expect(rootApp._atAddress(name)).to.equal(route));
         });
     });
 
     describe('DOMEvents', () => {
         describe('DOMListen', () => {
             it('throws when not given an Element instance', () => {
-                expect(() => new Route({}).DOMListen({}, 'click', function(){})).to.throw(TypeError, 'Route#DOMListen() was not passed an Element instance.');
+                expect(() => new TestRoute(defaultOpts).DOMListen({}, 'click', function(){})).to.throw(TypeError, 'Route#DOMListen() was not passed an Element instance.');
             });
 
             it('throws when DOMListen callback is not a function', () => {
-                let route = new Route({});
+                let route = new TestRoute(defaultOpts);
                 expect(() => route.DOMListen(document.createElement('div'), 'click')).to.throw(TypeError,  'Route#DOMListen() was not passed a callback that was a function type.');
             });
 
             it('adds an event callback without a context', () => {
-                let route = new Route({});
+                let route = new TestRoute(defaultOpts);
                 let spy = route.handleClick = sinon.spy();
                 let element = document.createElement('div');
                 route.DOMListen(element, 'click', route.handleClick);
@@ -29,7 +54,7 @@ describe('Route', () => {
             });
 
             it('adds an event callback with a context', () => {
-                let route = new Route({});
+                let route = new TestRoute(defaultOpts);
                 let spy = route.handleClick = sinon.spy();
                 let element = document.createElement('div');
                 route.DOMListen(element, 'click', route.handleClick, route);
@@ -39,7 +64,7 @@ describe('Route', () => {
             });
 
             it('adds a callback only for the element passed in', () => {
-                let route = new Route({});
+                let route = new TestRoute(defaultOpts);
                 let element1 = document.createElement('div');
                 let element2 = document.createElement('div');
                 let spy1 = sinon.spy();
@@ -57,11 +82,11 @@ describe('Route', () => {
 
         describe('DOMUnlisten', () => {
             it('throws when not given an Element instance', () => {
-                expect(() => new Route({}).DOMUnlisten({}, 'click', function(){})).to.throw(TypeError, 'Route#DOMUnlisten() was not passed an Element instance.');
+                expect(() => new TestRoute(defaultOpts).DOMUnlisten({}, 'click', function(){})).to.throw(TypeError, 'Route#DOMUnlisten() was not passed an Element instance.');
             });
 
             it('only removes a callback when the context matches', () => {
-                let route = new Route({});
+                let route = new TestRoute(defaultOpts);
                 let spy = route.handleClick = sinon.spy();
                 let element = document.createElement('div');
                 route.DOMListen(element, 'click', route.handleClick, route);
@@ -76,7 +101,7 @@ describe('Route', () => {
             });
 
             it('removes all callbacks when not passed a specific callback function to remove', () => {
-                let route = new Route({});
+                let route = new TestRoute(defaultOpts);
                 let spy1 = sinon.spy();
                 let spy2 = sinon.spy();
                 let element = document.createElement('div');
@@ -92,7 +117,7 @@ describe('Route', () => {
             });
 
             it('removes a callback only for the element passed in', () => {
-                let route = new Route({});
+                let route = new TestRoute(defaultOpts);
                 let element1 = document.createElement('div');
                 let element2 = document.createElement('div');
                 let spy1 = sinon.spy();
@@ -112,7 +137,7 @@ describe('Route', () => {
             });
 
             it('removes all callbacks only for the element passed in', () => {
-                let route = new Route({});
+                let route = new TestRoute(defaultOpts);
                 let element1 = document.createElement('div');
                 let element2 = document.createElement('div');
                 let spy1 = sinon.spy();
