@@ -14,10 +14,10 @@ class Route extends ModifiableRoute {
 
     DOMListen(element, evtName, callback, context) {
         if (!(element instanceof Element)) {
-            throw new TypeError(this.constructor.name + '#DOMListen() was not passed an Element instance.');
+            throw new TypeError(Object.getPrototypeOf(this).constructor.name + '#DOMListen() was not passed an Element instance.');
         }
         if (typeof callback !== 'function') {
-            throw new TypeError(this.constructor.name + '#DOMListen() was not passed a callback that was a function type.');
+            throw new TypeError(Object.getPrototypeOf(this).constructor.name + '#DOMListen() was not passed a callback that was a function type.');
         }
 
         let elementsList = this._events[evtName] || (this._events[evtName] = []);
@@ -46,7 +46,7 @@ class Route extends ModifiableRoute {
     }
     DOMUnlisten(element, evtName, callback, context) {
         if (!(element instanceof Element)) {
-            throw new TypeError(this.constructor.name + '#DOMUnlisten() was not passed an Element instance.');
+            throw new TypeError(Object.getPrototypeOf(this).constructor.name + '#DOMUnlisten() was not passed an Element instance.');
         }
 
         let elementsList = this._events[evtName] || (this._events[evtName] = []);

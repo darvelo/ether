@@ -7,7 +7,7 @@ class MutableOutlet extends Outlet {
 
     hold(element) {
         if (!(element instanceof Element)) {
-            throw new TypeError(this.constructor.name + '#hold() was not passed an "Element" instance.');
+            throw new TypeError(Object.getPrototypeOf(this).constructor.name + '#hold() was not passed an "Element" instance.');
         }
 
         this.clear();
