@@ -6,6 +6,35 @@ class RootApp extends App {
             options.rootApp = true;
         }
         super(options);
+        this._addresses = {};
+    }
+
+    _registerAddress(name, dest) {
+        if (!(dest instanceof App) && !(dest instanceof Route)) {
+            throw new TypeError([
+                Object.getPrototypeOf(this).constructor.name,
+                ' cannot register an address for a non-App/non-Route instance, ',
+                Object.getPrototypeOf(dest).constructor.name,
+                '.',
+            ].join(''));
+        }
+
+        if (name in this._addresses) {
+            throw new Error([
+                Object.getPrototypeOf(this).constructor.name,
+                ' address "',
+                name,
+                '" already taken. Could not register the address for ',
+                Object.getPrototypeOf(dest).constructor.name,
+                '.',
+            ].join(''));
+        }
+
+        this._addresses[name] = dest;
+    }
+
+    _atAddress(name) {
+        return this._addresses[name];
     }
 
     start() {
