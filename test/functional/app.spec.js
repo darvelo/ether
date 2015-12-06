@@ -1,5 +1,6 @@
+import App from '../../src/classes/app';
 import RootApp from '../../src/classes/root-app';
-import Route from '../../src/classes/route';
+import Outlet from '../../src/classes/outlet';
 import MutableOutlet from '../../src/classes/mutable-outlet';
 
 let defaultOpts = {
@@ -12,20 +13,20 @@ let defaultOpts = {
     outlets: {},
 };
 
-class TestRoute extends Route {
+class TestApp extends App {
     expectedOutlets() {
         return [];
     }
 }
 
-describe('Route Integration Tests', () => {
+describe('App Integration Tests', () => {
     describe('Addresses', () => {
         it('expects no addresses', () => {
-            expect(() => new TestRoute(defaultOpts)).to.not.throw();
+            expect(() => new TestApp(defaultOpts)).to.not.throw();
             let cachedAddresses = defaultOpts.addresses;
             defaultOpts.addresses = ['addy'];
-            expect(() => new TestRoute(defaultOpts)).to.throw(Error, [
-                'TestRoute\'s received addresses ',
+            expect(() => new TestApp(defaultOpts)).to.throw(Error, [
+                'TestApp\'s received addresses ',
                     JSON.stringify(defaultOpts.addresses),
                 ' did not match its expected addresses ',
                     JSON.stringify(cachedAddresses),
@@ -37,7 +38,7 @@ describe('Route Integration Tests', () => {
 
     describe('Outlets', () => {
         it('does not implement expectedOutlets()', () => {
-            expect(() => new Route(defaultOpts)).to.throw(Error, 'Route did not implement expectedOutlets().');
+            expect(() => new App(defaultOpts)).to.throw(Error, 'App did not implement expectedOutlets().');
         });
     });
 });
