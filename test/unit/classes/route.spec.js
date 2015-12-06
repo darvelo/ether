@@ -15,9 +15,6 @@ let defaultOpts = {
 };
 
 class TestRoute extends Route {
-    expectedAddresses() {
-        return [];
-    }
     expectedOutlets() {
         return [];
     }

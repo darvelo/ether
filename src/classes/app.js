@@ -1,4 +1,6 @@
 import Modifiable from './modifiable';
+import MutableOutlet from './mutable-outlet';
+import Outlet from './outlet';
 
 class App extends Modifiable {
     constructor(opts) {
@@ -14,14 +16,24 @@ class App extends Modifiable {
 
         this._rootApp = opts.rootApp;
         this._registerAddresses(opts.addresses);
+        if (this !== this._rootApp) {
+            // only the creator of a MutableOutlet
+            // should have access to its mutability
+            this._makeOutletsImmutable(opts.outlets);
+        }
+        this.outlets = this.createOutlets(opts.outlets);
     }
 
     _registerAddresses(addresses) {
         addresses.forEach(name => this._rootApp._registerAddress(name, this));
     }
 
-    setupOutlets() {
-
+    _makeOutletsImmutable(outlets) {
+        for (let prop in outlets) {
+            if (outlets.hasOwnProperty(prop) && outlets[prop] instanceof MutableOutlet) {
+                outlets[prop] = new Outlet(outlets[prop].get());
+            }
+        }
     }
 
     route(urlpath, params) {
@@ -37,6 +49,10 @@ class App extends Modifiable {
 
     routeConditional() {
 
+    }
+
+    createOutlets(outlets) {
+        return outlets;
     }
 
     expectedAddresses() {

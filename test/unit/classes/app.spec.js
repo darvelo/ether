@@ -15,9 +15,6 @@ let defaultOpts = {
 };
 
 class TestApp extends App {
-    expectedAddresses() {
-        return [];
-    }
     expectedOutlets() {
         return [];
     }
@@ -51,6 +48,81 @@ describe('App', function() {
             let app = new AppWithAddresses(defaultOpts);
             defaultOpts.addresses.forEach(name => expect(rootApp._atAddress(name)).to.equal(app));
             defaultOpts.addresses = cachedAddresses;
+        });
+
+        it('stores passed-in outlets', () => {
+            class AppWithOutlets extends App {
+                expectedOutlets() {
+                    return ['first', 'second'];
+                }
+            }
+            let firstOutlet = new Outlet(document.createElement('div'));
+            let secondOutlet = new Outlet(document.createElement('div'));
+            let cachedOutlets = defaultOpts.outlets;
+            defaultOpts.outlets = {
+                first: firstOutlet,
+                second: secondOutlet,
+            };
+            let app = new AppWithOutlets(defaultOpts);
+            expect(app).to.have.property('outlets');
+            expect(app.outlets).to.be.an('object');
+            expect(app.outlets.first).to.equal(firstOutlet);
+            expect(app.outlets.second).to.equal(secondOutlet);
+            defaultOpts.outlets = cachedOutlets;
+        });
+
+        it('allows the user to create their own outlet mappings', () => {
+            class AppWithOutlets extends App {
+                expectedOutlets() {
+                    return ['first', 'second'];
+                }
+                createOutlets(outlets) {
+                    return {
+                        first: outlets.second,
+                        second: outlets.first,
+                        third: new MutableOutlet(document.createElement('div')),
+                    };
+                }
+            }
+            let firstOutlet = new Outlet(document.createElement('div'));
+            let secondOutlet = new Outlet(document.createElement('div'));
+            let cachedOutlets = defaultOpts.outlets;
+            defaultOpts.outlets = {
+                first: firstOutlet,
+                second: secondOutlet,
+            };
+            let app = new AppWithOutlets(defaultOpts);
+            expect(app).to.have.property('outlets');
+            expect(app.outlets).to.be.an('object');
+            expect(app.outlets.first).to.equal(secondOutlet);
+            expect(app.outlets.second).to.equal(firstOutlet);
+            expect(app.outlets.third).to.be.an.instanceof(MutableOutlet);
+            defaultOpts.outlets = cachedOutlets;
+        });
+
+        it('MutableOutlets received are rewrapped into Outlets', () => {
+            class AppWithOutlets extends App {
+                expectedOutlets() {
+                    return ['first'];
+                }
+            }
+            let parent = document.createElement('div');
+            let child = document.createElement('div');
+            let cachedOutlets = defaultOpts.outlets;
+            defaultOpts.outlets = {
+                first: new MutableOutlet(parent),
+            };
+            let app = new AppWithOutlets(defaultOpts);
+            expect(app).to.have.property('outlets');
+            expect(app.outlets).to.be.an('object');
+            expect(app.outlets.first).to.be.an.instanceof(Outlet);
+            expect(app.outlets.first).to.not.be.an.instanceof(MutableOutlet);
+            // we have no direct access to an Outlet's element,
+            // so to make sure we still have the same element as the
+            // passed-in MutableOutlet, we need to check for it indirectly
+            app.outlets.first.append(child);
+            expect(child.parentNode).to.equal(parent);
+            defaultOpts.outlets = cachedOutlets;
         });
     });
 });

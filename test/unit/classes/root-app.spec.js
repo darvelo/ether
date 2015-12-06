@@ -17,18 +17,12 @@ let childOpts = {
 };
 
 class TestApp extends App {
-    expectedAddresses() {
-        return [];
-    }
     expectedOutlets() {
         return [];
     }
 }
 
 class TestRoute extends Route {
-    expectedAddresses() {
-        return [];
-    }
     expectedOutlets() {
         return [];
     }
@@ -86,5 +80,26 @@ describe('RootApp', () => {
         expect(() => rootApp._registerAddress('hello', new TestApp(childOpts))).to.not.throw();
         expect(() => rootApp._registerAddress('hello2', new TestRoute(childOpts))).to.not.throw();
         childOpts.rootApp = cachedChildOptsRootApp;
+    });
+
+    it('stores passed-in outlets, allowing MutableOutlets', () => {
+        class RootAppWithOutlets extends RootApp {
+            expectedOutlets() {
+                return ['first', 'second'];
+            }
+        }
+        let firstOutlet = new MutableOutlet(document.createElement('div'));
+        let secondOutlet = new MutableOutlet(document.createElement('div'));
+        let cachedOutlets = defaultOpts.outlets;
+        defaultOpts.outlets = {
+            first: firstOutlet,
+            second: secondOutlet,
+        };
+        let rootApp = new RootAppWithOutlets(defaultOpts);
+        expect(rootApp).to.have.property('outlets');
+        expect(rootApp.outlets).to.be.an('object');
+        expect(rootApp.outlets.first).to.equal(firstOutlet);
+        expect(rootApp.outlets.second).to.equal(secondOutlet);
+        defaultOpts.outlets = cachedOutlets;
     });
 });
