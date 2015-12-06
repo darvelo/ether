@@ -1,6 +1,6 @@
 import { Eventable } from '../mocks';
 
-describe('Eventable Mock helper', () => {
+describe('Eventable mock helper', () => {
     let eventable;
 
     beforeEach(() => {

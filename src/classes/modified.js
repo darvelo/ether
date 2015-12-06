@@ -1,7 +1,7 @@
 import Addressable from './modifiers/addressable';
 import OutletsReceivable from './modifiers/outlets-receivable';
 
-class ModifiedRoute {
+class Modified {
     constructor(klass, transformer, ...args) {
         this.klass = klass;
         this._argsTransformFns = [];
@@ -28,4 +28,4 @@ class ModifiedRoute {
     }
 }
 
-export default ModifiedRoute;
+export default Modified;

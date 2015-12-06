@@ -1,6 +1,6 @@
-import Expectable from './expectable';
+import Modifiable from './modifiable';
 
-class App extends Expectable {
+class App extends Modifiable {
     constructor(opts) {
         super(opts);
 
