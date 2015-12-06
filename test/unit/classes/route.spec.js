@@ -1,14 +1,24 @@
 import Route from '../../../src/classes/route';
 import RootApp from '../../../src/classes/root-app';
 import Expectable from '../../../src/classes/expectable';
+import Outlet from '../../../src/classes/outlet';
+import MutableOutlet from '../../../src/classes/mutable-outlet';
 
 let defaultOpts = {
-    rootApp: new RootApp({}),
+    rootApp: new RootApp({
+        outlets: {
+            main: new MutableOutlet(document.createElement('div')),
+        },
+    }),
     addresses: [],
+    outlets: {},
 };
 
 class TestRoute extends Route {
     expectedAddresses() {
+        return [];
+    }
+    expectedOutlets() {
         return [];
     }
 }
@@ -20,15 +30,20 @@ describe('Route', () => {
         });
 
         it('adds itself to the RootApp\'s address registry', () => {
-            class RouteWithAddresses extends Route { expectedAddresses() { return ['first', 'second']; } }
-            let opts = {
-                rootApp: new RootApp({}),
-                addresses: ['first', 'second'],
-            };
-            let rootApp = opts.rootApp;
-            opts.addresses.forEach(name => expect(rootApp._atAddress(name)).to.not.be.ok);
-            let route = new RouteWithAddresses(opts);
-            opts.addresses.forEach(name => expect(rootApp._atAddress(name)).to.equal(route));
+            class RouteWithAddresses extends Route {
+                expectedAddresses() {
+                    return ['first', 'second'];
+                }
+                expectedOutlets() {
+                    return [];
+                }
+            }
+            let { rootApp, addresses: cachedAddresses } = defaultOpts;
+            defaultOpts.addresses = ['first', 'second'];
+            defaultOpts.addresses.forEach(name => expect(rootApp._atAddress(name)).to.not.be.ok);
+            let route = new RouteWithAddresses(defaultOpts);
+            defaultOpts.addresses.forEach(name => expect(rootApp._atAddress(name)).to.equal(route));
+            defaultOpts.addresses = cachedAddresses;
         });
     });
 

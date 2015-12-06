@@ -38,6 +38,10 @@ class App extends Modifiable {
     routeConditional() {
 
     }
+
+    expectedAddresses() {
+        return [];
+    }
 }
 
 export default App;
