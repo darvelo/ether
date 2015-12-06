@@ -70,89 +70,91 @@ let transformTests = {
     },
 };
 
-describe('Modifiable static modifiers', () => {
-    describe('Addressable', () => {
-        it('static fn returns a Modified', () => {
-            let route = Modifiable.addresses('addy');
-            route.should.be.an.instanceof(Modified);
+describe('Modifiable', () => {
+    describe('Modifiers', () => {
+        describe('Addressable', () => {
+            it('static fn returns a Modified', () => {
+                let route = Modifiable.addresses('addy');
+                route.should.be.an.instanceof(Modified);
+            });
+
+            it('static fn calls transform', () => {
+                let stub = sinon.stub(Addressable, 'transform');
+                let route = Modifiable.addresses('addy');
+                stub.should.have.been.calledOnce;
+                stub.should.have.been.calledWith(route, 'addy');
+                stub.restore();
+            });
+
+            it('instance fn returns a Modified', () => {
+                let modified = new Modified(null, IdentityModifier);
+                modified.addresses('addy').should.be.an.instanceof(Modified);
+            });
+
+            it('instance fn calls transform', () => {
+                let modified = new Modified(null, IdentityModifier);
+                let mock = sinon.mock(Addressable);
+                mock.expects('transform').once().withArgs(modified, 'addy');
+                modified.addresses('addy');
+                mock.verify();
+            });
+
+            it('applies the proper transformation', () => {
+                transformTests.address.run(Modifiable);
+            });
         });
 
-        it('static fn calls transform', () => {
-            let stub = sinon.stub(Addressable, 'transform');
-            let route = Modifiable.addresses('addy');
-            stub.should.have.been.calledOnce;
-            stub.should.have.been.calledWith(route, 'addy');
-            stub.restore();
-        });
+        describe('OutletsReceivable', () => {
+            it('static fn returns a Modified', () => {
+                let route = Modifiable.outlets('one', 'two');
+                route.should.be.an.instanceof(Modified);
+            });
 
-        it('instance fn returns a Modified', () => {
-            let modified = new Modified(null, IdentityModifier);
-            modified.addresses('addy').should.be.an.instanceof(Modified);
-        });
+            it('static fn calls transform', () => {
+                let stub = sinon.stub(OutletsReceivable, 'transform');
+                let route = Modifiable.outlets('one', 'two');
+                stub.should.have.been.calledOnce;
+                stub.should.have.been.calledWith(route, 'one', 'two');
+                stub.restore();
+            });
 
-        it('instance fn calls transform', () => {
-            let modified = new Modified(null, IdentityModifier);
-            let mock = sinon.mock(Addressable);
-            mock.expects('transform').once().withArgs(modified, 'addy');
-            modified.addresses('addy');
-            mock.verify();
-        });
+            it('instance fn returns a Modified', () => {
+                let modified = new Modified(null, IdentityModifier);
+                modified = modified.outlets('one', 'two');
+                modified.should.be.an.instanceof(Modified);
+            });
 
-        it('applies the proper transformation', () => {
-            transformTests.address.run(Modifiable);
+            it('instance fn calls transform', () => {
+                let modified = new Modified(null, IdentityModifier);
+                let mock = sinon.mock(OutletsReceivable);
+                mock.expects('transform').once().withArgs(modified, 'one', 'two');
+                modified.outlets('one', 'two');
+                mock.verify();
+            });
+
+            it('applies the proper transformation', () => {
+                transformTests.outlets.run(Modifiable);
+            });
+
+            // @TODO: replace this with expectedOutlets()
+            it.skip('throws if missing any expected outlet', () => {
+                let args = [{
+                    outlets: {
+                        one: 1,
+                        two: 2,
+                        three: 3,
+                    }
+                }, 4, 5, 6];
+                let modified = TestModifiable.outlets('two', 'four');
+                expect(() => modified.create(...args)).to.throw(
+                    Error,
+                    'Route expected outlets ["two","four"] but received ["one","three","two"].'
+                );
+            });
         });
     });
 
-    describe('OutletsReceivable', () => {
-        it('static fn returns a Modified', () => {
-            let route = Modifiable.outlets('one', 'two');
-            route.should.be.an.instanceof(Modified);
-        });
-
-        it('static fn calls transform', () => {
-            let stub = sinon.stub(OutletsReceivable, 'transform');
-            let route = Modifiable.outlets('one', 'two');
-            stub.should.have.been.calledOnce;
-            stub.should.have.been.calledWith(route, 'one', 'two');
-            stub.restore();
-        });
-
-        it('instance fn returns a Modified', () => {
-            let modified = new Modified(null, IdentityModifier);
-            modified = modified.outlets('one', 'two');
-            modified.should.be.an.instanceof(Modified);
-        });
-
-        it('instance fn calls transform', () => {
-            let modified = new Modified(null, IdentityModifier);
-            let mock = sinon.mock(OutletsReceivable);
-            mock.expects('transform').once().withArgs(modified, 'one', 'two');
-            modified.outlets('one', 'two');
-            mock.verify();
-        });
-
-        it('applies the proper transformation', () => {
-            transformTests.outlets.run(Modifiable);
-        });
-
-        // @TODO: replace this with expectedOutlets()
-        it.skip('throws if missing any expected outlet', () => {
-            let args = [{
-                outlets: {
-                    one: 1,
-                    two: 2,
-                    three: 3,
-                }
-            }, 4, 5, 6];
-            let modified = TestModifiable.outlets('two', 'four');
-            expect(() => modified.create(...args)).to.throw(
-                Error,
-                'Route expected outlets ["two","four"] but received ["one","three","two"].'
-            );
-        });
-    });
-
-    describe('Chaining', () => {
+    describe('Chaining Modifiers', () => {
         it('calls transform method for any permutation of modifiers', () => {
             let modifiers = [];
 
