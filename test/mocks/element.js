@@ -39,6 +39,13 @@ describe('Element Mock', () => {
             element.appendChild(child);
             expect(element.children).to.deep.equal([child]);
         });
+
+        it('when appending, sets child.parentNode to itself', () => {
+            let child = new Element();
+            expect(child.parentNode).to.not.equal(element);
+            element.appendChild(child);
+            expect(child.parentNode).to.equal(element);
+        });
     });
 
     describe('removeChild', () => {

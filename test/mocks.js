@@ -70,11 +70,15 @@ export class Element extends Eventable {
         }
         return this._parentNode;
     }
+    set parentNode(element) {
+        this._parentNode = element;
+    }
     appendChild(element) {
         if (!(element instanceof Element)) {
             throw new TypeError('Element#appendChild() was not passed an Element instance.');
         }
         this.children.push(element);
+        element.parentNode = this;
     }
     removeChild(element) {
         if (!(element instanceof Element)) {
