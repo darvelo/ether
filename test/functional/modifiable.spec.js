@@ -9,13 +9,6 @@ class IdentityModifier {
     }
 }
 
-class TestModifiable extends Modifiable {
-    constructor(...args) {
-        super(...args);
-        this.args = args;
-    }
-}
-
 let transformTestsArgs = [
     {
         addresses: ['should-be-overwritten'],
@@ -134,22 +127,6 @@ describe('Modifiable', () => {
 
             it('applies the proper transformation', () => {
                 transformTests.outlets.run(Modifiable);
-            });
-
-            // @TODO: replace this with expectedOutlets()
-            it.skip('throws if missing any expected outlet', () => {
-                let args = [{
-                    outlets: {
-                        one: 1,
-                        two: 2,
-                        three: 3,
-                    }
-                }, 4, 5, 6];
-                let modified = TestModifiable.outlets('two', 'four');
-                expect(() => modified.create(...args)).to.throw(
-                    Error,
-                    'Route expected outlets ["two","four"] but received ["one","three","two"].'
-                );
             });
         });
     });
