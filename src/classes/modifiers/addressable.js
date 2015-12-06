@@ -3,9 +3,10 @@ class Addressable {
         modified._argsTransformFns.push(this.passAddresses.bind(null, names));
     }
 
-    static passAddresses(names, opts, ...args) {
+    static passAddresses(names, ...args) {
+        let opts = args[0];
         opts.addresses = names;
-        return [opts, ...args];
+        return args;
     }
 }
 

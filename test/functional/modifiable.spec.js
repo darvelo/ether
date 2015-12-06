@@ -15,7 +15,6 @@ let transformTestsArgs = [
         outlets: {
             one: 1,
             two: 2,
-            three: 3,
         },
     },
     4, 5, 6,
@@ -44,9 +43,11 @@ let transformTests = {
     },
     outlets: {
         prop: 'outlets',
-        args: ['one', 'three'],
+        args: ['one', 'two'],
         run: function(outletable) {
             let modified = outletable[this.prop](...this.args);
+            // this allows us to bypass Expectable expected*() functions
+            // and just check that the arguments are transformed correctly
             let stub = sinon.stub(modified, 'klass');
             expect(modified.outlets).to.deep.equal(this.args);
             modified.create(...transformTestsArgs);
@@ -56,7 +57,7 @@ let transformTests = {
             callArgs.should.have.length(transformTestsArgs.length);
             callArgs.slice(1).should.deep.equal(transformTestsArgs.slice(1));
             callArgs[0].should.have.property('outlets');
-            callArgs[0].outlets.should.deep.equal({one: 1, three: 3});
+            callArgs[0].outlets.should.deep.equal({one: 1, two: 2});
             stub.restore();
             return modified;
         }
