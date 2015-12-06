@@ -8,13 +8,13 @@ class Modified {
         this._transform(transformer, ...args);
     }
 
-    _createInstance(...args) {
-        args = this._argsTransformFns.reduce((memo, fn) => fn(...memo), args);
-        return new this.klass(...args);
-    }
-
     _transform(transformer, ...args) {
         transformer.transform(this, ...args);
+    }
+
+    create(...args) {
+        args = this._argsTransformFns.reduce((memo, fn) => fn(...memo), args);
+        return new this.klass(...args);
     }
 
     addresses(...args) {

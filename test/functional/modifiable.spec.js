@@ -37,7 +37,7 @@ let transformTests = {
             // this allows us to bypass Expectable expected*() functions
             // and just check that the arguments are transformed correctly
             let stub = sinon.stub(modified, 'klass');
-            modified._createInstance(...transformTestsArgs);
+            modified.create(...transformTestsArgs);
             stub.should.have.been.calledOnce;
             stub.should.have.been.calledWithNew;
             let callArgs = stub.getCall(0).args;
@@ -56,7 +56,7 @@ let transformTests = {
             let modified = outletable[this.prop](...this.args);
             let stub = sinon.stub(modified, 'klass');
             expect(modified.outlets).to.deep.equal(this.args);
-            modified._createInstance(...transformTestsArgs);
+            modified.create(...transformTestsArgs);
             stub.should.have.been.calledOnce;
             stub.should.have.been.calledWithNew;
             let callArgs = stub.getCall(0).args;
@@ -145,7 +145,7 @@ describe('Modifiable static modifiers', () => {
                 }
             }, 4, 5, 6];
             let modified = TestModifiable.outlets('two', 'four');
-            expect(() => modified._createInstance(...args)).to.throw(
+            expect(() => modified.create(...args)).to.throw(
                 Error,
                 'Route expected outlets ["two","four"] but received ["one","three","two"].'
             );
