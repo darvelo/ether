@@ -1,6 +1,6 @@
-import ModifiableRoute from './modifiable-route';
+import Modifiable from './modifiable';
 
-class Route extends ModifiableRoute {
+class Route extends Modifiable {
     constructor(opts) {
         super(opts);
         this._rootApp = opts.rootApp;
@@ -77,6 +77,10 @@ class Route extends ModifiableRoute {
         if (callbackList.length === 0) {
             elementsList.splice(elementEventsIdx, 1);
         }
+    }
+
+    expectedAddresses() {
+        return [];
     }
 
     // user-overridable methods
