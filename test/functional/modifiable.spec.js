@@ -64,7 +64,7 @@ let transformTests = {
     },
 };
 
-describe('Modifiable', () => {
+describe('Modifiable Functional Tests', () => {
     describe('Modifiers', () => {
         describe('Addressable', () => {
             it('static fn returns a Modified', () => {

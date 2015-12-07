@@ -18,7 +18,7 @@ class TestRoute extends Route {
     }
 }
 
-describe('Route Integration Tests', () => {
+describe('Route Functional Tests', () => {
     describe('Addresses', () => {
         it('expects no addresses', () => {
             expect(() => new TestRoute(defaultOpts)).to.not.throw();

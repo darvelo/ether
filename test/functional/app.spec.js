@@ -1,17 +1,6 @@
 import App from '../../src/classes/app';
 import RootApp from '../../src/classes/root-app';
-import Outlet from '../../src/classes/outlet';
 import MutableOutlet from '../../src/classes/mutable-outlet';
-
-let defaultOpts = {
-    rootApp: new RootApp({
-        outlets: {
-            main: new MutableOutlet(document.createElement('div')),
-        },
-    }),
-    addresses: [],
-    outlets: {},
-};
 
 class TestApp extends App {
     expectedOutlets() {
@@ -19,7 +8,21 @@ class TestApp extends App {
     }
 }
 
-describe('App Integration Tests', () => {
+describe('App Functional Tests', () => {
+    let defaultOpts;
+
+    beforeEach(() => {
+        defaultOpts = {
+            rootApp: new RootApp({
+                outlets: {
+                    main: new MutableOutlet(document.createElement('div')),
+                },
+            }),
+            addresses: [],
+            outlets: {},
+        };
+    });
+
     describe('Addresses', () => {
         it('expects no addresses', () => {
             expect(() => new TestApp(defaultOpts)).to.not.throw();
