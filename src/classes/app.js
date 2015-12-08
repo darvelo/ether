@@ -1,4 +1,5 @@
 import Modifiable from './modifiable';
+import Modified from './modified';
 import MutableOutlet from './mutable-outlet';
 import Outlet from './outlet';
 
@@ -22,6 +23,7 @@ class App extends Modifiable {
             this._makeOutletsImmutable(opts.outlets);
         }
         this.outlets = this.createOutlets(opts.outlets);
+        this._mounts = this._instantiateChildren();
     }
 
     _registerAddresses(addresses) {
@@ -36,7 +38,7 @@ class App extends Modifiable {
         }
     }
 
-    route(urlpath, params) {
+    _instantiateChildren() {
         // make sure to compound and forward params in any case below
         // push params onto the stack (now just a recent-params map)
         // if we've got * routes, do those first
@@ -45,10 +47,32 @@ class App extends Modifiable {
         // if urlpath => route
         //     call render with params or show if params equal
         //     pushState() if this isn't page load
+
+        let mounts = this.route();
+        // @TODO: make sure "conditionally" routes are only Routes
+        // let cMounts = this.routeConditionally();
+
+        // @TODO: throw error if mounts isn't an object
+        for (let path in mounts) {
+            if (mounts.hasOwnProperty(path)) {
+                // @TODO: throw error if any mount isn't an App or a Route instance
+                let mount = mounts[path];
+                let opts = {};
+                opts.rootApp = this._rootApp;
+                opts.outlets = {};
+                mounts[path] = mount.create(opts);
+            }
+        }
+        return mounts;
     }
 
-    routeConditional() {
+    route() {
+        console.warn();
+        return {};
+    }
 
+    routeConditionally() {
+        return {};
     }
 
     createOutlets(outlets) {
