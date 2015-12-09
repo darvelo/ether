@@ -2,6 +2,7 @@ import Modifiable from './modifiable';
 import Modified from './modified';
 import MutableOutlet from './mutable-outlet';
 import Outlet from './outlet';
+import Route from './route';
 import ctorName from '../utils/ctor-name';
 import { isnt } from '../utils/is';
 
@@ -40,25 +41,54 @@ class App extends Modifiable {
         }
     }
 
-    _instantiateMountInstance(mount) {
+    _checkMountInheritance(mount, id, isConditional) {
+        if (mount instanceof Modified) {
+            mount = mount.klass;
+        }
+        let obj = Object.create(mount.prototype);
+        if (isConditional && !(obj instanceof Route)) {
+            throw new TypeError(ctorName(this) + ` conditional mount "${id}" is not an instance of Route.`);
+        }
+        if (!(obj instanceof App) && !(obj instanceof Route)) {
+            throw new TypeError(ctorName(this) + ` mount "${id}" is not an instance of App or Route.`);
+        }
+    }
+
+    _checkForMissingOutlets(mount, id, isConditional, missingOutlets) {
+        let ctor = ctorName(this);
+        let conditional = isConditional ? 'conditional ' : '';
+        if (missingOutlets.length) {
+            throw new Error(`${ctor} ${conditional}mount "${id}" requested these outlets that ${ctor} does not own: ${JSON.stringify(missingOutlets)}.`);
+        }
+    }
+
+    _instantiateMountInstance(mount, id, isConditional) {
+        let self = this;
+        let missingOutlets = [];
         let opts = {
             rootApp: this._rootApp,
             outlets: {},
             // @TODO: pass params
         };
 
-        if (mount instanceof Modified) {
-            // @TODO: make sure "conditionally" routes are only Routes
+        this._checkMountInheritance(mount, id, isConditional);
 
+        function assignOptOutlets(name) {
+            if (!self._outlets[name]) {
+                missingOutlets.push(name);
+            }
+            opts.outlets[name] = self._outlets[name];
+        }
+
+        if (mount instanceof Modified) {
             // the OutletsReceivable modifier,
             // if the user invoked it, sets this array
             if (Array.isArray(mount.outlets)) {
-                // @TODO: check if it's asking for an outlet we don't have
-                mount.outlets.forEach(outletName => opts.outlets[outletName] = this._outlets[outletName]);
+                mount.outlets.forEach(assignOptOutlets);
+                this._checkForMissingOutlets(mount, id, isConditional, missingOutlets);
             }
             return mount.create(opts);
         } else {
-            // @TODO: throw error if any mount isn't an App or a Route instance
             return new mount(opts);
         }
     }
@@ -83,20 +113,25 @@ class App extends Modifiable {
 
         for (let path in mounts) {
             if (mounts.hasOwnProperty(path)) {
-                finalMounts.normal[path] = this._instantiateMountInstance(mounts[path]);
+                let mount = mounts[path];
+                let isConditional = false;
+                finalMounts.normal[path] = this._instantiateMountInstance(mount, path, isConditional);
             }
         }
-        for (let path in cMounts) {
-            if (cMounts.hasOwnProperty(path)) {
+        for (let logic in cMounts) {
+            if (cMounts.hasOwnProperty(logic)) {
                 // @TODO: validate conditional path
-                finalMounts.conditional[path] = this._instantiateMountInstance(cMounts[path]);
+                let mount = cMounts[logic];
+                let isConditional = true;
+                finalMounts.conditional[logic] = this._instantiateMountInstance(mount, logic, isConditional);
             }
         }
         return finalMounts;
     }
 
     mount() {
-        console.warn();
+        // @TODO: do this in debug mode (make debug mode a thing)
+        // console.warn();
         return {};
     }
 

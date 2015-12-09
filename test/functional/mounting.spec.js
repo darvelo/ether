@@ -10,7 +10,7 @@ class TestApp extends App {
     }
 }
 
-describe('Routing Functional Tests', () => {
+describe('Mounting Functional Tests', () => {
     let defaultOpts;
 
     beforeEach(() => {
@@ -26,8 +26,6 @@ describe('Routing Functional Tests', () => {
     });
 
     describe('Child Instantiation', () => {
-        it('only allows instances of App or Route to be mounted');
-
         describe('Addresses', () => {
             it('registers addresses of child routes and apps', () => {
                 class NoOutletApp extends App { expectedOutlets() { return []; } }
@@ -54,7 +52,7 @@ describe('Routing Functional Tests', () => {
                             'xyz': ChildRoute.addresses('aRoute', 'sameRoute'),
                         };
                     }
-                    mountConditionally() {
+                    mountConditionals() {
                         return {
                             '*': ChildConditionalRoute.addresses('conditional', 'starRoute'),
                         };
