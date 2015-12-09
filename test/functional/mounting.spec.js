@@ -48,13 +48,13 @@ describe('Routing Functional Tests', () => {
                     }
                 }
                 class AddressTestApp extends NoOutletApp {
-                    route() {
+                    mount() {
                         return {
                             'abc': ChildApp.addresses('anApp', 'sameApp'),
                             'xyz': ChildRoute.addresses('aRoute', 'sameRoute'),
                         };
                     }
-                    routeConditionally() {
+                    mountConditionally() {
                         return {
                             '*': ChildConditionalRoute.addresses('conditional', 'starRoute'),
                         };

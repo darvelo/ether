@@ -65,8 +65,8 @@ class App extends Modifiable {
         // @TODO: make sure to compound and forward params in any case below
         // push params onto the stack (now just a recent-params map)
 
-        let mounts = this.route();
-        let cMounts = this.routeConditionally();
+        let mounts = this.mount();
+        let cMounts = this.mountConditionally();
         let finalMounts = {
             normal: {},
             conditional: {},
@@ -89,12 +89,12 @@ class App extends Modifiable {
         return finalMounts;
     }
 
-    route() {
+    mount() {
         console.warn();
         return {};
     }
 
-    routeConditionally() {
+    mountConditionally() {
         return {};
     }
 
