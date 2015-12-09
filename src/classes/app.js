@@ -12,6 +12,9 @@ class App extends Modifiable {
 
         if (opts.rootApp === true) {
             opts.rootApp = this;
+            if (opts.debug === true) {
+                this._debugMode = true;
+            }
         }
 
         if (!opts.rootApp) {
@@ -47,10 +50,10 @@ class App extends Modifiable {
         }
         let obj = Object.create(mount.prototype);
         if (isConditional && !(obj instanceof Route)) {
-            throw new TypeError(ctorName(this) + ` conditional mount "${id}" is not an instance of Route.`);
+            throw new TypeError(`${ctorName(this)} conditional mount "${id}" is not an instance of Route.`);
         }
         if (!(obj instanceof App) && !(obj instanceof Route)) {
-            throw new TypeError(ctorName(this) + ` mount "${id}" is not an instance of App or Route.`);
+            throw new TypeError(`${ctorName(this)} mount "${id}" is not an instance of App or Route.`);
         }
     }
 
@@ -110,6 +113,9 @@ class App extends Modifiable {
         if (isnt(cMounts, 'Object')) {
             throw new TypeError(ctorName(this) + '#mountConditionals() did not return an object.');
         }
+        if (this._rootApp._debugMode && Object.keys(mounts).length === 0) {
+            console.warn(`${ctorName(this)}#mount() returned an empty object.`);
+        }
 
         for (let path in mounts) {
             if (mounts.hasOwnProperty(path)) {
@@ -130,8 +136,6 @@ class App extends Modifiable {
     }
 
     mount() {
-        // @TODO: do this in debug mode (make debug mode a thing)
-        // console.warn();
         return {};
     }
 
