@@ -43,4 +43,24 @@ describe('App Functional Tests', () => {
             expect(() => new App(defaultOpts)).to.throw(Error, 'App did not implement expectedOutlets().');
         });
     });
+
+    describe('Mounting', () => {
+        it('throws if mount() does not return an object', () => {
+            class MyApp extends TestApp {
+                mount() {
+                    return null;
+                }
+            }
+            expect(() => new MyApp(defaultOpts)).to.throw(TypeError, 'MyApp#mount() did not return an object.');
+        });
+
+        it('throws if mountConditionals() does not return an object', () => {
+            class MyApp extends TestApp {
+                mountConditionals() {
+                    return null;
+                }
+            }
+            expect(() => new MyApp(defaultOpts)).to.throw(TypeError, 'MyApp#mountConditionals() did not return an object.');
+        });
+    });
 });

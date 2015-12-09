@@ -66,14 +66,18 @@ class App extends Modifiable {
         // push params onto the stack (now just a recent-params map)
 
         let mounts = this.mount();
-        let cMounts = this.mountConditionally();
+        let cMounts = this.mountConditionals();
         let finalMounts = {
             normal: {},
             conditional: {},
         };
 
-        // @TODO: throw error if mounts isn't an object
-        // @TODO: throw error if cMounts isn't an object
+        if (isnt(mounts, 'Object')) {
+            throw new TypeError(Object.getPrototypeOf(this).constructor.name + '#mount() did not return an object.');
+        }
+        if (isnt(cMounts, 'Object')) {
+            throw new TypeError(Object.getPrototypeOf(this).constructor.name + '#mountConditionals() did not return an object.');
+        }
 
         for (let path in mounts) {
             if (mounts.hasOwnProperty(path)) {
@@ -94,7 +98,7 @@ class App extends Modifiable {
         return {};
     }
 
-    mountConditionally() {
+    mountConditionals() {
         return {};
     }
 
