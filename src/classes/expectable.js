@@ -1,4 +1,5 @@
 import Outlet from './outlet';
+import { isnt } from '../utils/is';
 
 const RECEIVED_NOT_ARRAY = 1;
 const EXPECTED_NOT_ARRAY = 2;
@@ -6,7 +7,7 @@ const ARRAYS_NOT_EQUAL = 3;
 
 class Expectable {
     constructor(opts) {
-        if (typeof opts !== 'object') {
+        if (isnt(opts, 'Object')) {
             throw new TypeError(Object.getPrototypeOf(this).constructor.name + ' constructor was not given an options object.');
         }
 
@@ -63,7 +64,7 @@ class Expectable {
     }
 
     _checkOutlets(outlets) {
-        if (typeof outlets !== 'object') {
+        if (isnt(outlets, 'Object')) {
             throw new Error(Object.getPrototypeOf(this).constructor.name + ' constructor\'s options.outlets property was not an Object.');
         }
 

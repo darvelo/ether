@@ -1,6 +1,8 @@
+import is from '../utils/is';
+
 class Outlet {
     constructor(element) {
-        if (typeof element === 'string') {
+        if (is(element, 'String')) {
             element = document.querySelector(element);
         }
 

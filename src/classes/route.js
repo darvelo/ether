@@ -1,4 +1,5 @@
 import Modifiable from './modifiable';
+import { isnt } from '../utils/is';
 
 class Route extends Modifiable {
     constructor(opts) {
@@ -16,7 +17,7 @@ class Route extends Modifiable {
         if (!(element instanceof Element)) {
             throw new TypeError(Object.getPrototypeOf(this).constructor.name + '#DOMListen() was not passed an Element instance.');
         }
-        if (typeof callback !== 'function') {
+        if (isnt(callback, 'Function')) {
             throw new TypeError(Object.getPrototypeOf(this).constructor.name + '#DOMListen() was not passed a callback that was a function type.');
         }
 

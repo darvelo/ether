@@ -1,9 +1,10 @@
 import App from './app';
 import Route from './route';
+import is from '../utils/is';
 
 class RootApp extends App {
     constructor(opts) {
-        if (typeof opts === 'object') {
+        if (is(opts, 'Object')) {
             opts.rootApp = true;
             opts.addresses = opts.addresses || [];
             opts.outlets = opts.outlets || {};
