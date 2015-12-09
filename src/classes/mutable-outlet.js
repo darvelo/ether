@@ -1,4 +1,5 @@
 import Outlet from './outlet';
+import ctorName from '../utils/ctor-name';
 
 class MutableOutlet extends Outlet {
     get() {
@@ -7,7 +8,7 @@ class MutableOutlet extends Outlet {
 
     hold(element) {
         if (!(element instanceof Element)) {
-            throw new TypeError(Object.getPrototypeOf(this).constructor.name + '#hold() was not passed an "Element" instance.');
+            throw new TypeError(ctorName(this) + '#hold() was not passed an "Element" instance.');
         }
 
         this.clear();

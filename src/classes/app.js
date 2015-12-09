@@ -2,6 +2,8 @@ import Modifiable from './modifiable';
 import Modified from './modified';
 import MutableOutlet from './mutable-outlet';
 import Outlet from './outlet';
+import ctorName from '../utils/ctor-name';
+import { isnt } from '../utils/is';
 
 class App extends Modifiable {
     constructor(opts) {
@@ -12,7 +14,7 @@ class App extends Modifiable {
         }
 
         if (!opts.rootApp) {
-            throw new TypeError(Object.getPrototypeOf(this).constructor.name + ' constructor was not given a reference to the Ether RootApp.');
+            throw new TypeError(ctorName(this) + ' constructor was not given a reference to the Ether RootApp.');
         }
 
         this._rootApp = opts.rootApp;
@@ -73,10 +75,10 @@ class App extends Modifiable {
         };
 
         if (isnt(mounts, 'Object')) {
-            throw new TypeError(Object.getPrototypeOf(this).constructor.name + '#mount() did not return an object.');
+            throw new TypeError(ctorName(this) + '#mount() did not return an object.');
         }
         if (isnt(cMounts, 'Object')) {
-            throw new TypeError(Object.getPrototypeOf(this).constructor.name + '#mountConditionals() did not return an object.');
+            throw new TypeError(ctorName(this) + '#mountConditionals() did not return an object.');
         }
 
         for (let path in mounts) {

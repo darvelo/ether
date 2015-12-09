@@ -1,4 +1,5 @@
 import Modifiable from './modifiable';
+import ctorName from '../utils/ctor-name';
 import { isnt } from '../utils/is';
 
 class Route extends Modifiable {
@@ -15,10 +16,10 @@ class Route extends Modifiable {
 
     DOMListen(element, evtName, callback, context) {
         if (!(element instanceof Element)) {
-            throw new TypeError(Object.getPrototypeOf(this).constructor.name + '#DOMListen() was not passed an Element instance.');
+            throw new TypeError(ctorName(this) + '#DOMListen() was not passed an Element instance.');
         }
         if (isnt(callback, 'Function')) {
-            throw new TypeError(Object.getPrototypeOf(this).constructor.name + '#DOMListen() was not passed a callback that was a function type.');
+            throw new TypeError(ctorName(this) + '#DOMListen() was not passed a callback that was a function type.');
         }
 
         let elementsList = this._events[evtName] || (this._events[evtName] = []);
@@ -47,7 +48,7 @@ class Route extends Modifiable {
     }
     DOMUnlisten(element, evtName, callback, context) {
         if (!(element instanceof Element)) {
-            throw new TypeError(Object.getPrototypeOf(this).constructor.name + '#DOMUnlisten() was not passed an Element instance.');
+            throw new TypeError(ctorName(this) + '#DOMUnlisten() was not passed an Element instance.');
         }
 
         let elementsList = this._events[evtName] || (this._events[evtName] = []);

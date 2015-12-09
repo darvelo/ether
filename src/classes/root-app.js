@@ -1,5 +1,6 @@
 import App from './app';
 import Route from './route';
+import ctorName from '../utils/ctor-name';
 import is from '../utils/is';
 
 class RootApp extends App {
@@ -17,20 +18,20 @@ class RootApp extends App {
 
         if (!(dest instanceof App) && !(dest instanceof Route)) {
             throw new TypeError([
-                Object.getPrototypeOf(this).constructor.name,
+                ctorName(this),
                 ' cannot register an address for a non-App/non-Route instance, ',
-                Object.getPrototypeOf(dest).constructor.name,
+                ctorName(dest),
                 '.',
             ].join(''));
         }
 
         if (name in this._addresses) {
             throw new Error([
-                Object.getPrototypeOf(this).constructor.name,
+                ctorName(this),
                 ' address "',
                 name,
                 '" already taken. Could not register the address for ',
-                Object.getPrototypeOf(dest).constructor.name,
+                ctorName(dest),
                 '.',
             ].join(''));
         }

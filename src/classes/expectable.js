@@ -1,4 +1,5 @@
 import Outlet from './outlet';
+import ctorName from '../utils/ctor-name';
 import { isnt } from '../utils/is';
 
 const RECEIVED_NOT_ARRAY = 1;
@@ -8,7 +9,7 @@ const ARRAYS_NOT_EQUAL = 3;
 class Expectable {
     constructor(opts) {
         if (isnt(opts, 'Object')) {
-            throw new TypeError(Object.getPrototypeOf(this).constructor.name + ' constructor was not given an options object.');
+            throw new TypeError(ctorName(this) + ' constructor was not given an options object.');
         }
 
         this._checkAddresses(opts.addresses);
@@ -16,11 +17,11 @@ class Expectable {
     }
 
     expectedAddresses() {
-        throw new Error(Object.getPrototypeOf(this).constructor.name + ' did not implement expectedAddresses().');
+        throw new Error(ctorName(this) + ' did not implement expectedAddresses().');
     }
 
     expectedOutlets() {
-        throw new Error(Object.getPrototypeOf(this).constructor.name + ' did not implement expectedOutlets().');
+        throw new Error(ctorName(this) + ' did not implement expectedOutlets().');
     }
 
     _areArraysEqual(array, expected) {
@@ -46,12 +47,12 @@ class Expectable {
         let result = this._areArraysEqual(addresses, expected);
         switch (result) {
             case RECEIVED_NOT_ARRAY:
-                throw new Error(Object.getPrototypeOf(this).constructor.name + ' constructor\'s options.addresses property was not an Array.');
+                throw new Error(ctorName(this) + ' constructor\'s options.addresses property was not an Array.');
             case EXPECTED_NOT_ARRAY:
-                throw new Error(Object.getPrototypeOf(this).constructor.name + '#expectedAdddresses() did not return an Array.');
+                throw new Error(ctorName(this) + '#expectedAdddresses() did not return an Array.');
             case ARRAYS_NOT_EQUAL:
                 throw new Error([
-                    Object.getPrototypeOf(this).constructor.name,
+                    ctorName(this),
                     '\'s received addresses ',
                         JSON.stringify(addresses),
                     ' did not match its expected addresses ',
@@ -65,7 +66,7 @@ class Expectable {
 
     _checkOutlets(outlets) {
         if (isnt(outlets, 'Object')) {
-            throw new Error(Object.getPrototypeOf(this).constructor.name + ' constructor\'s options.outlets property was not an Object.');
+            throw new Error(ctorName(this) + ' constructor\'s options.outlets property was not an Object.');
         }
 
         let outletsKeys = Object.keys(outlets).sort();
@@ -73,10 +74,10 @@ class Expectable {
         let result = this._areArraysEqual(outletsKeys, expected);
         switch (result) {
             case EXPECTED_NOT_ARRAY:
-                throw new Error(Object.getPrototypeOf(this).constructor.name + '#expectedOutlets() did not return an Array.');
+                throw new Error(ctorName(this) + '#expectedOutlets() did not return an Array.');
             case ARRAYS_NOT_EQUAL:
                 throw new Error([
-                    Object.getPrototypeOf(this).constructor.name,
+                    ctorName(this),
                     '\'s received outlets ',
                         JSON.stringify(outletsKeys),
                     ' did not match its expected outlets ',
@@ -95,7 +96,7 @@ class Expectable {
         }
         if (nonOutlets.length) {
             throw new Error([
-                Object.getPrototypeOf(this).constructor.name,
+                ctorName(this),
                 ' did not receive instances of Outlet for named outlets: ',
                     JSON.stringify(nonOutlets.sort()),
                 '.',
