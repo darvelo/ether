@@ -66,8 +66,8 @@ describe('Routing Functional Tests', () => {
                 expect(rootApp._atAddress('anApp')).to.be.an.instanceof(ChildApp);
                 expect(rootApp._atAddress('aRoute')).to.equal(rootApp._atAddress('sameRoute'));
                 expect(rootApp._atAddress('aRoute')).to.be.an.instanceof(ChildRoute);
-                // expect(rootApp._atAddress('conditional')).to.equal(rootApp._atAddress('starRoute'));
-                // expect(rootApp._atAddress('conditional')).to.be.an.instanceof(ChildConditionalRoute);
+                expect(rootApp._atAddress('conditional')).to.equal(rootApp._atAddress('starRoute'));
+                expect(rootApp._atAddress('conditional')).to.be.an.instanceof(ChildConditionalRoute);
             });
         });
     });

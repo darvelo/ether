@@ -23,7 +23,7 @@ class App extends Modifiable {
             this._makeOutletsImmutable(opts.outlets);
         }
         this._outlets = this.createOutlets(opts.outlets);
-        this._mounts = this._instantiateChildren();
+        this._mounts = this._instantiateMounts();
     }
 
     _registerAddresses(addresses) {
@@ -38,32 +38,55 @@ class App extends Modifiable {
         }
     }
 
-    _instantiateChildren() {
-        // make sure to compound and forward params in any case below
+    _instantiateMountInstance(mount) {
+        let opts = {
+            rootApp: this._rootApp,
+            outlets: {},
+            // @TODO: pass params
+        };
+
+        if (mount instanceof Modified) {
+            // @TODO: make sure "conditionally" routes are only Routes
+
+            // the OutletsReceivable modifier,
+            // if the user invoked it, sets this array
+            if (Array.isArray(mount.outlets)) {
+                // @TODO: check if it's asking for an outlet we don't have
+                mount.outlets.forEach(outletName => opts.outlets[outletName] = this._outlets[outletName]);
+            }
+            return mount.create(opts);
+        } else {
+            // @TODO: throw error if any mount isn't an App or a Route instance
+            return new mount(opts);
+        }
+    }
+
+    _instantiateMounts() {
+        // @TODO: make sure to compound and forward params in any case below
         // push params onto the stack (now just a recent-params map)
-        // if we've got * routes, do those first
-        // if urlpath => app
-        //     call app to make it use its urlmapper and route method
-        // if urlpath => route
-        //     call render with params or show if params equal
-        //     pushState() if this isn't page load
 
         let mounts = this.route();
-        // @TODO: make sure "conditionally" routes are only Routes
-        // let cMounts = this.routeConditionally();
+        let cMounts = this.routeConditionally();
+        let finalMounts = {
+            normal: {},
+            conditional: {},
+        };
 
         // @TODO: throw error if mounts isn't an object
+        // @TODO: throw error if cMounts isn't an object
+
         for (let path in mounts) {
             if (mounts.hasOwnProperty(path)) {
-                // @TODO: throw error if any mount isn't an App or a Route instance
-                let mount = mounts[path];
-                let opts = {};
-                opts.rootApp = this._rootApp;
-                opts.outlets = {};
-                mounts[path] = mount.create(opts);
+                finalMounts.normal[path] = this._instantiateMountInstance(mounts[path]);
             }
         }
-        return mounts;
+        for (let path in cMounts) {
+            if (cMounts.hasOwnProperty(path)) {
+                // @TODO: validate conditional path
+                finalMounts.conditional[path] = this._instantiateMountInstance(cMounts[path]);
+            }
+        }
+        return finalMounts;
     }
 
     route() {
