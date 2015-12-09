@@ -4,16 +4,6 @@ import Expectable from '../../../src/classes/expectable';
 import Outlet from '../../../src/classes/outlet';
 import MutableOutlet from '../../../src/classes/mutable-outlet';
 
-let defaultOpts = {
-    rootApp: new RootApp({
-        outlets: {
-            main: new MutableOutlet(document.createElement('div')),
-        },
-    }),
-    addresses: [],
-    outlets: {},
-};
-
 class TestRoute extends Route {
     expectedOutlets() {
         return [];
@@ -21,6 +11,20 @@ class TestRoute extends Route {
 }
 
 describe('Route', () => {
+    let defaultOpts;
+
+    beforeEach(() => {
+        defaultOpts = {
+            rootApp: new RootApp({
+                outlets: {
+                    main: new MutableOutlet(document.createElement('div')),
+                },
+            }),
+            addresses: [],
+            outlets: {},
+        };
+    });
+
     describe('Constructor', () => {
         it('Route is an instance of Expectable', () => {
             expect(new TestRoute(defaultOpts)).to.be.an.instanceof(Expectable);
@@ -35,12 +39,11 @@ describe('Route', () => {
                     return [];
                 }
             }
-            let { rootApp, addresses: cachedAddresses } = defaultOpts;
-            defaultOpts.addresses = ['first', 'second'];
-            defaultOpts.addresses.forEach(name => expect(rootApp._atAddress(name)).to.not.be.ok);
+            let rootApp = defaultOpts.rootApp;
+            let addresses = defaultOpts.addresses = ['first', 'second'];
+            addresses.forEach(name => expect(rootApp._atAddress(name)).to.not.be.ok);
             let route = new RouteWithAddresses(defaultOpts);
-            defaultOpts.addresses.forEach(name => expect(rootApp._atAddress(name)).to.equal(route));
-            defaultOpts.addresses = cachedAddresses;
+            addresses.forEach(name => expect(rootApp._atAddress(name)).to.equal(route));
         });
     });
 

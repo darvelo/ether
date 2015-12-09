@@ -4,16 +4,6 @@ import Expectable from '../../../src/classes/expectable';
 import Outlet from '../../../src/classes/outlet';
 import MutableOutlet from '../../../src/classes/mutable-outlet';
 
-let defaultOpts = {
-    rootApp: new RootApp({
-        outlets: {
-            main: new MutableOutlet(document.createElement('div')),
-        },
-    }),
-    addresses: [],
-    outlets: {},
-};
-
 class TestApp extends App {
     expectedOutlets() {
         return [];
@@ -21,16 +11,28 @@ class TestApp extends App {
 }
 
 describe('App', function() {
+    let defaultOpts;
+
+    beforeEach(() => {
+        defaultOpts = {
+            rootApp: new RootApp({
+                outlets: {
+                    main: new MutableOutlet(document.createElement('div')),
+                },
+            }),
+            addresses: [],
+            outlets: {},
+        };
+    });
+
     describe('Constructor', () => {
         it('App is an instance of Expectable', () => {
             expect(new TestApp(defaultOpts)).to.be.an.instanceof(Expectable);
         });
 
         it('throws if not given a rootApp', () => {
-            let cachedRootApp = defaultOpts.rootApp;
             delete defaultOpts.rootApp;
             expect(() => new TestApp(defaultOpts)).to.throw(TypeError, 'App constructor was not given a reference to the Ether RootApp.');
-            defaultOpts.rootApp = cachedRootApp;
         });
 
         it('adds itself to the RootApp\'s address registry', () => {
@@ -42,12 +44,11 @@ describe('App', function() {
                     return [];
                 }
             }
-            let { rootApp, addresses: cachedAddresses } = defaultOpts;
-            defaultOpts.addresses = ['first', 'second'];
-            defaultOpts.addresses.forEach(name => expect(rootApp._atAddress(name)).to.not.be.ok);
+            let rootApp = defaultOpts.rootApp;
+            let addresses = defaultOpts.addresses = ['first', 'second'];
+            addresses.forEach(name => expect(rootApp._atAddress(name)).to.not.be.ok);
             let app = new AppWithAddresses(defaultOpts);
-            defaultOpts.addresses.forEach(name => expect(rootApp._atAddress(name)).to.equal(app));
-            defaultOpts.addresses = cachedAddresses;
+            addresses.forEach(name => expect(rootApp._atAddress(name)).to.equal(app));
         });
 
         it('stores passed-in outlets', () => {
@@ -58,7 +59,6 @@ describe('App', function() {
             }
             let firstOutlet = new Outlet(document.createElement('div'));
             let secondOutlet = new Outlet(document.createElement('div'));
-            let cachedOutlets = defaultOpts.outlets;
             defaultOpts.outlets = {
                 first: firstOutlet,
                 second: secondOutlet,
@@ -68,7 +68,6 @@ describe('App', function() {
             expect(app.outlets).to.be.an('object');
             expect(app.outlets.first).to.equal(firstOutlet);
             expect(app.outlets.second).to.equal(secondOutlet);
-            defaultOpts.outlets = cachedOutlets;
         });
 
         it('allows the user to create their own outlet mappings', () => {
@@ -86,7 +85,6 @@ describe('App', function() {
             }
             let firstOutlet = new Outlet(document.createElement('div'));
             let secondOutlet = new Outlet(document.createElement('div'));
-            let cachedOutlets = defaultOpts.outlets;
             defaultOpts.outlets = {
                 first: firstOutlet,
                 second: secondOutlet,
@@ -97,7 +95,6 @@ describe('App', function() {
             expect(app.outlets.first).to.equal(secondOutlet);
             expect(app.outlets.second).to.equal(firstOutlet);
             expect(app.outlets.third).to.be.an.instanceof(MutableOutlet);
-            defaultOpts.outlets = cachedOutlets;
         });
 
         it('MutableOutlets received are rewrapped into Outlets', () => {
@@ -108,7 +105,6 @@ describe('App', function() {
             }
             let parent = document.createElement('div');
             let child = document.createElement('div');
-            let cachedOutlets = defaultOpts.outlets;
             defaultOpts.outlets = {
                 first: new MutableOutlet(parent),
             };
@@ -122,7 +118,6 @@ describe('App', function() {
             // passed-in MutableOutlet, we need to check for it indirectly
             app.outlets.first.append(child);
             expect(child.parentNode).to.equal(parent);
-            defaultOpts.outlets = cachedOutlets;
         });
     });
 });

@@ -26,16 +26,15 @@ describe('App Functional Tests', () => {
     describe('Addresses', () => {
         it('expects no addresses', () => {
             expect(() => new TestApp(defaultOpts)).to.not.throw();
-            let cachedAddresses = defaultOpts.addresses;
+            let expectedAddresses = TestApp.prototype.expectedAddresses();
             defaultOpts.addresses = ['addy'];
             expect(() => new TestApp(defaultOpts)).to.throw(Error, [
                 'TestApp\'s received addresses ',
                     JSON.stringify(defaultOpts.addresses),
                 ' did not match its expected addresses ',
-                    JSON.stringify(cachedAddresses),
+                    JSON.stringify(expectedAddresses),
                 '.',
             ].join(''));
-            defaultOpts.addresses = cachedAddresses;
         });
     });
 

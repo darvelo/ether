@@ -15,31 +15,29 @@ describe('RootApp Functional Tests', () => {
     describe('Addresses', () => {
         it('expects no addresses', () => {
             expect(() => new RootApp(defaultOpts)).to.not.throw();
-            let cachedAddresses = defaultOpts.addresses;
+            let expectedAddresses = RootApp.prototype.expectedAddresses();
             defaultOpts.addresses = ['addy'];
             expect(() => new RootApp(defaultOpts)).to.throw(Error, [
                 'RootApp\'s received addresses ',
                     JSON.stringify(defaultOpts.addresses),
                 ' did not match its expected addresses ',
-                    JSON.stringify(cachedAddresses),
+                    JSON.stringify(expectedAddresses),
                 '.',
             ].join(''));
-            defaultOpts.addresses = cachedAddresses;
         });
     });
 
     describe('Outlets', () => {
         it('expects an outlet called "main"', () => {
-            let cachedOutlets = defaultOpts.outlets;
+            let expectedOutlets = RootApp.prototype.expectedOutlets();
             defaultOpts.outlets = {};
             expect(() => new RootApp(defaultOpts)).to.throw(Error, [
                 'RootApp\'s received outlets ',
                     JSON.stringify(Object.keys(defaultOpts.outlets).sort()),
                 ' did not match its expected outlets ',
-                    JSON.stringify(RootApp.prototype.expectedOutlets()),
+                    JSON.stringify(expectedOutlets),
                 '.',
             ].join(''));
-            defaultOpts.outlets = cachedOutlets;
         });
     });
 });
