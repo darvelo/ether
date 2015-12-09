@@ -92,9 +92,9 @@ describe('RootApp', () => {
             second: secondOutlet,
         };
         let rootApp = new RootAppWithOutlets(defaultOpts);
-        expect(rootApp).to.have.property('outlets');
-        expect(rootApp.outlets).to.be.an('object');
-        expect(rootApp.outlets.first).to.equal(firstOutlet);
-        expect(rootApp.outlets.second).to.equal(secondOutlet);
+        expect(rootApp).to.have.property('_outlets');
+        expect(rootApp._outlets).to.be.an('object');
+        expect(rootApp._outlets.first).to.equal(firstOutlet);
+        expect(rootApp._outlets.second).to.equal(secondOutlet);
     });
 });

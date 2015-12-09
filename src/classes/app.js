@@ -22,7 +22,7 @@ class App extends Modifiable {
             // should have access to its mutability
             this._makeOutletsImmutable(opts.outlets);
         }
-        this.outlets = this.createOutlets(opts.outlets);
+        this._outlets = this.createOutlets(opts.outlets);
         this._mounts = this._instantiateChildren();
     }
 
