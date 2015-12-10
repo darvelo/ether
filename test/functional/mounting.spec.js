@@ -15,13 +15,11 @@ describe('Mounting Functional Tests', () => {
 
     beforeEach(() => {
         defaultOpts = {
-            rootApp: new RootApp({
-                outlets: {
-                    main: new MutableOutlet(document.createElement('div')),
-                },
-            }),
+            rootApp: true,
             addresses: [],
-            outlets: {},
+            outlets: {
+                main: new MutableOutlet(document.createElement('div')),
+            },
         };
     });
 
@@ -45,7 +43,10 @@ describe('Mounting Functional Tests', () => {
                         return ['starRoute', 'conditional'];
                     }
                 }
-                class AddressTestApp extends NoOutletApp {
+                class AddressApp extends NoOutletApp {
+                    expectedAddresses() {
+                        return ['addressApp'];
+                    }
                     mount() {
                         return {
                             'abc': ChildApp.addresses('anApp', 'sameApp'),
@@ -58,8 +59,33 @@ describe('Mounting Functional Tests', () => {
                         };
                     }
                 }
-                let app = new AddressTestApp(defaultOpts);
-                let rootApp = defaultOpts.rootApp;
+                class AddressRoute extends NoOutletRoute {
+                    expectedAddresses() {
+                        return ['addressRoute'];
+                    }
+                }
+                class AddressConditionalRoute extends NoOutletRoute {
+                    expectedAddresses() {
+                        return ['addressConditionalRoute'];
+                    }
+                }
+                class MyRootApp extends RootApp {
+                    mount() {
+                        return {
+                            '123': AddressApp.addresses('addressApp'),
+                            '456': AddressRoute.addresses('addressRoute'),
+                        };
+                    }
+                    mountConditionals() {
+                        return {
+                            '*': AddressConditionalRoute.addresses('addressConditionalRoute'),
+                        };
+                    }
+                }
+                let rootApp = new MyRootApp(defaultOpts);
+                expect(rootApp._atAddress('addressApp')).to.be.an.instanceof(AddressApp);
+                expect(rootApp._atAddress('addressRoute')).to.be.an.instanceof(AddressRoute);
+                expect(rootApp._atAddress('addressConditionalRoute')).to.be.an.instanceof(AddressConditionalRoute);
                 expect(rootApp._atAddress('anApp')).to.equal(rootApp._atAddress('sameApp'));
                 expect(rootApp._atAddress('anApp')).to.be.an.instanceof(ChildApp);
                 expect(rootApp._atAddress('aRoute')).to.equal(rootApp._atAddress('sameRoute'));
