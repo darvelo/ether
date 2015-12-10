@@ -2,6 +2,13 @@ import RootApp from '../../src/classes/root-app';
 import App from '../../src/classes/app';
 import Route from '../../src/classes/route';
 import MutableOutlet from '../../src/classes/mutable-outlet';
+import Outlet from '../../src/classes/outlet';
+
+class TestRoute extends Route {
+    expectedOutlets() {
+        return [];
+    }
+}
 
 describe('RootApp Functional Tests', () => {
     let defaultOpts;
@@ -44,48 +51,102 @@ describe('RootApp Functional Tests', () => {
     });
 
     describe('Mounting', () => {
-        it('throws if mount() does not return an object', () => {
-            class MyApp extends RootApp {
-                mount() {
-                    return null;
+        describe('Normal Mounts', () => {
+            it('throws if mount() does not return an object', () => {
+                class MyApp extends RootApp {
+                    mount() {
+                        return null;
+                    }
                 }
-            }
-            expect(() => new MyApp(defaultOpts)).to.throw(TypeError, 'MyApp#mount() did not return an object.');
+                expect(() => new MyApp(defaultOpts)).to.throw(TypeError, 'MyApp#mount() did not return an object.');
+            });
+
+            it('throws if any normal mount is not an instance of App or Route', () => {
+                class MyApp extends RootApp {
+                    mount() {
+                        return {
+                            'abc': function(){},
+                        };
+                    }
+                }
+                expect(() => new MyApp(defaultOpts)).to.throw(TypeError, 'MyApp mount "abc" is not an instance of App or Route.');
+            });
         });
 
-        it('throws if mountConditionals() does not return an object', () => {
-            class MyApp extends RootApp {
-                mountConditionals() {
-                    return null;
+        describe('Conditional Mounts', () => {
+            it('throws if mountConditionals() does not return an object', () => {
+                class MyApp extends RootApp {
+                    mountConditionals() {
+                        return null;
+                    }
                 }
-            }
-            expect(() => new MyApp(defaultOpts)).to.throw(TypeError, 'MyApp#mountConditionals() did not return an object.');
-        });
+                expect(() => new MyApp(defaultOpts)).to.throw(TypeError, 'MyApp#mountConditionals() did not return an object.');
+            });
 
-        it('throws if any normal mount is not an instance of App or Route', () => {
-            class MyApp extends RootApp {
-                mount() {
-                    return {
-                        'abc': function(){},
-                    };
+            it.skip('throws if a conditional mount\'s address-based id cannot be parsed');
+            it.skip('throws if any conditional mount\'s id requires a mount with an address that the RootApp did not register');
+
+            it('throws if any conditional mount is not an instance of Route', () => {
+                class MyApp extends RootApp {
+                    mountConditionals() {
+                        return {
+                            'abc': App,
+                        };
+                    }
                 }
-            }
-            expect(() => new MyApp(defaultOpts)).to.throw(TypeError, 'MyApp mount "abc" is not an instance of App or Route.');
-        });
+                expect(() => new MyApp(defaultOpts)).to.throw(TypeError, 'MyApp conditional mount "abc" is not an instance of Route or an array of Route instances.');
+            });
 
-        it('throws if any conditional mount is not an instance of Route', () => {
-            class MyApp extends RootApp {
-                mountConditionals() {
-                    return {
-                        'abc': App,
-                    };
+            it('allows an array of routes', () => {
+                class AddressRoute extends TestRoute { expectedAddresses() { return ['addy']; } }
+                class AddressRouteTwo extends TestRoute { expectedAddresses() { return ['addy2']; } }
+                class AddressRouteABC extends TestRoute { expectedAddresses() { return ['abc']; } }
+                class AddressRouteXYZ extends TestRoute { expectedAddresses() { return ['xyz']; } }
+                class NoOutletRoute extends Route { expectedOutlets() { return []; } }
+                class OutletRoute extends Route {
+                    expectedAddresses() { return ['out']; }
+                    expectedOutlets() { return ['out']; }
                 }
-            }
-            expect(() => new MyApp(defaultOpts)).to.throw(TypeError, 'MyApp conditional mount "abc" is not an instance of Route.');
-        });
+                class MyRootApp extends RootApp {
+                    createOutlets(outlets) {
+                        outlets.out = new MutableOutlet(document.createElement('div'));
+                        return outlets;
+                    }
+                    mount() {
+                        return {
+                            'abc': AddressRouteABC.addresses('abc'),
+                            'xyz': AddressRouteXYZ.addresses('xyz'),
+                        };
+                    }
+                    mountConditionals() {
+                        return {
+                            '*': [AddressRoute.addresses('addy'), OutletRoute.outlets('out').addresses('out')],
+                            '+abc,xyz': [NoOutletRoute, AddressRouteTwo.addresses('addy2')],
+                            '!xyz': [NoOutletRoute, NoOutletRoute],
+                        };
+                    }
+                }
+                let rootApp;
+                expect(() => rootApp = new MyRootApp(defaultOpts)).to.not.throw();
+                expect(rootApp._atAddress('addy')).to.be.an.instanceof(AddressRoute);
+                expect(rootApp._atAddress('addy2')).to.be.an.instanceof(AddressRouteTwo);
+                expect(rootApp._atAddress('out')).to.have.property('outlets');
+                expect(rootApp._atAddress('out').outlets).to.have.property('out');
+                expect(rootApp._atAddress('out').outlets.out).to.be.an.instanceof(Outlet);
+            });
 
-        it.skip('throws if a conditional mount\'s address-based id cannot be parsed');
-        it.skip('throws if any conditional mount\'s id requires a mount with an address that the RootApp did not register');
+            it('throws if any of the items an the array is not an instance of Route', () => {
+                class NoOutletRoute extends Route { expectedOutlets() { return []; } }
+                class MyRootApp extends RootApp {
+                    mountConditionals() {
+                        return {
+                            '*': [NoOutletRoute, App],
+                        };
+                    }
+                }
+                expect(() => new MyRootApp(defaultOpts)).to.throw(TypeError, 'MyRootApp conditional mount "*" is not an instance of Route or an array of Route instances.');
+            });
+        });
 
         describe('Outlets', () => {
             it('throws if any mount requests an outlet that the RootApp does not own', () => {

@@ -44,28 +44,28 @@ class App extends Modifiable {
         }
     }
 
-    _checkMountInheritance(mount, id, isConditional) {
+    _checkMountInheritance(mount, key, isConditional) {
         if (mount instanceof Modified) {
             mount = mount.klass;
         }
         let obj = Object.create(mount.prototype);
         if (isConditional && !(obj instanceof Route)) {
-            throw new TypeError(`${ctorName(this)} conditional mount "${id}" is not an instance of Route.`);
+            throw new TypeError(`${ctorName(this)} conditional mount "${key}" is not an instance of Route or an array of Route instances.`);
         }
         if (!(obj instanceof App) && !(obj instanceof Route)) {
-            throw new TypeError(`${ctorName(this)} mount "${id}" is not an instance of App or Route.`);
+            throw new TypeError(`${ctorName(this)} mount "${key}" is not an instance of App or Route.`);
         }
     }
 
-    _checkForMissingOutlets(mount, id, isConditional, missingOutlets) {
+    _checkForMissingOutlets(mount, key, isConditional, missingOutlets) {
         let ctor = ctorName(this);
         let conditional = isConditional ? 'conditional ' : '';
         if (missingOutlets.length) {
-            throw new Error(`${ctor} ${conditional}mount "${id}" requested these outlets that ${ctor} does not own: ${JSON.stringify(missingOutlets)}.`);
+            throw new Error(`${ctor} ${conditional}mount "${key}" requested these outlets that ${ctor} does not own: ${JSON.stringify(missingOutlets)}.`);
         }
     }
 
-    _instantiateMountInstance(mount, id, isConditional) {
+    _instantiateMountInstance(mount, key, isConditional) {
         let self = this;
         let missingOutlets = [];
         let opts = {
@@ -76,21 +76,21 @@ class App extends Modifiable {
             params: [],
         };
 
-        this._checkMountInheritance(mount, id, isConditional);
+        this._checkMountInheritance(mount, key, isConditional);
 
         function assignOptOutlets(name) {
-            if (!self.outlets[name]) {
+            if (!this.outlets[name]) {
                 missingOutlets.push(name);
             }
-            opts.outlets[name] = self.outlets[name];
+            opts.outlets[name] = this.outlets[name];
         }
 
         if (mount instanceof Modified) {
             // the OutletsReceivable modifier,
             // if the user invoked it, sets this array
             if (Array.isArray(mount.outlets)) {
-                mount.outlets.forEach(assignOptOutlets);
-                this._checkForMissingOutlets(mount, id, isConditional, missingOutlets);
+                mount.outlets.forEach(assignOptOutlets, this);
+                this._checkForMissingOutlets(mount, key, isConditional, missingOutlets);
             }
             return mount.create(opts);
         } else {
@@ -119,6 +119,12 @@ class App extends Modifiable {
             console.warn(`${ctorName(this)}#mount() returned an empty object.`);
         }
 
+        function conditionalMap(logic, isConditional) {
+            return function(mount) {
+                return this._instantiateMountInstance(mount, logic, isConditional);
+            };
+        }
+
         for (let path in mounts) {
             if (mounts.hasOwnProperty(path)) {
                 let mount = mounts[path];
@@ -130,7 +136,10 @@ class App extends Modifiable {
             if (cMounts.hasOwnProperty(logic)) {
                 let mount = cMounts[logic];
                 let isConditional = true;
-                finalMounts.conditional[logic] = this._instantiateMountInstance(mount, logic, isConditional);
+                if (!Array.isArray(mount)) {
+                    mount = [mount];
+                }
+                finalMounts.conditional[logic] = mount.map(conditionalMap(logic, isConditional), this);
             }
         }
         return finalMounts;
