@@ -5,6 +5,7 @@ import { isnt } from '../utils/is';
 const RECEIVED_NOT_ARRAY = 1;
 const EXPECTED_NOT_ARRAY = 2;
 const ARRAYS_NOT_EQUAL = 3;
+const EXPECTED_ANY = 4;
 
 class Expectable {
     constructor(opts) {
@@ -111,7 +112,14 @@ class Expectable {
 
     _checkParams(params) {
         let expected = this.expectedParams();
-        let result = this._areArraysEqual(params, expected);
+        let result;
+
+        if (expected === '*') {
+            result = EXPECTED_ANY;
+        } else {
+            result = this._areArraysEqual(params, expected);
+        }
+
         switch (result) {
             case RECEIVED_NOT_ARRAY:
                 throw new Error(ctorName(this) + ' constructor\'s options.params property was not an Array.');
@@ -126,6 +134,8 @@ class Expectable {
                         JSON.stringify(expected),
                     '.'
                 ].join(''));
+            case EXPECTED_ANY:
+                return;
             default:
                 break;
         }
