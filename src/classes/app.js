@@ -28,7 +28,7 @@ class App extends Modifiable {
             // should have access to its mutability
             this._makeOutletsImmutable(opts.outlets);
         }
-        this._outlets = this.createOutlets(opts.outlets);
+        this.outlets = this.createOutlets(opts.outlets);
         this._mounts = this._instantiateMounts();
     }
 
@@ -77,10 +77,10 @@ class App extends Modifiable {
         this._checkMountInheritance(mount, id, isConditional);
 
         function assignOptOutlets(name) {
-            if (!self._outlets[name]) {
+            if (!self.outlets[name]) {
                 missingOutlets.push(name);
             }
-            opts.outlets[name] = self._outlets[name];
+            opts.outlets[name] = self.outlets[name];
         }
 
         if (mount instanceof Modified) {
@@ -126,7 +126,6 @@ class App extends Modifiable {
         }
         for (let logic in cMounts) {
             if (cMounts.hasOwnProperty(logic)) {
-                // @TODO: validate conditional path
                 let mount = cMounts[logic];
                 let isConditional = true;
                 finalMounts.conditional[logic] = this._instantiateMountInstance(mount, logic, isConditional);
