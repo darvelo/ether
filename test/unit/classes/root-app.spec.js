@@ -97,4 +97,22 @@ describe('RootApp', () => {
         expect(rootApp.outlets.first).to.equal(firstOutlet);
         expect(rootApp.outlets.second).to.equal(secondOutlet);
     });
+
+    it('takes ownership of outlets returned by createOutlets', () => {
+        let mainOutlet = defaultOpts.outlets.main;
+        let outlet = new MutableOutlet(document.createElement('div'));
+        class RootAppWithOutlets extends RootApp {
+            createOutlets(outlets) {
+                outlets.myOutlet = outlet;
+                outlets.myMain = outlets.main;
+                delete outlets.main;
+                return outlets;
+            }
+        }
+        let rootApp = new RootAppWithOutlets(defaultOpts);
+        expect(rootApp.outlets).to.be.an('object');
+        expect(rootApp.outlets.myOutlet).to.equal(outlet);
+        expect(rootApp.outlets.myMain).to.equal(mainOutlet);
+        expect(rootApp.outlets.main).to.not.be.ok;
+    });
 });

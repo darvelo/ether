@@ -70,6 +70,20 @@ describe('App', function() {
             expect(app.outlets.second).to.equal(secondOutlet);
         });
 
+        it('takes ownership of outlets returned by createOutlets', () => {
+            let outlet = new MutableOutlet(document.createElement('div'));
+            class AppWithOutlets extends TestApp {
+                createOutlets(outlets) {
+                    return {
+                        myOutlet: outlet,
+                    };
+                }
+            }
+            let app = new AppWithOutlets(defaultOpts);
+            expect(app).to.have.property('outlets');
+            expect(app.outlets.myOutlet).to.equal(outlet);
+        });
+
         it('allows the user to create their own outlet mappings', () => {
             class AppWithOutlets extends App {
                 expectedOutlets() {
