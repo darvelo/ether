@@ -64,10 +64,10 @@ describe('App', function() {
                 second: secondOutlet,
             };
             let app = new AppWithOutlets(defaultOpts);
-            expect(app).to.have.property('_outlets');
-            expect(app._outlets).to.be.an('object');
-            expect(app._outlets.first).to.equal(firstOutlet);
-            expect(app._outlets.second).to.equal(secondOutlet);
+            expect(app).to.have.property('outlets');
+            expect(app.outlets).to.be.an('object');
+            expect(app.outlets.first).to.equal(firstOutlet);
+            expect(app.outlets.second).to.equal(secondOutlet);
         });
 
         it('allows the user to create their own outlet mappings', () => {
@@ -90,11 +90,11 @@ describe('App', function() {
                 second: secondOutlet,
             };
             let app = new AppWithOutlets(defaultOpts);
-            expect(app).to.have.property('_outlets');
-            expect(app._outlets).to.be.an('object');
-            expect(app._outlets.first).to.equal(secondOutlet);
-            expect(app._outlets.second).to.equal(firstOutlet);
-            expect(app._outlets.third).to.be.an.instanceof(MutableOutlet);
+            expect(app).to.have.property('outlets');
+            expect(app.outlets).to.be.an('object');
+            expect(app.outlets.first).to.equal(secondOutlet);
+            expect(app.outlets.second).to.equal(firstOutlet);
+            expect(app.outlets.third).to.be.an.instanceof(MutableOutlet);
         });
 
         it('MutableOutlets received are rewrapped into Outlets', () => {
@@ -109,14 +109,14 @@ describe('App', function() {
                 first: new MutableOutlet(parent),
             };
             let app = new AppWithOutlets(defaultOpts);
-            expect(app).to.have.property('_outlets');
-            expect(app._outlets).to.be.an('object');
-            expect(app._outlets.first).to.be.an.instanceof(Outlet);
-            expect(app._outlets.first).to.not.be.an.instanceof(MutableOutlet);
+            expect(app).to.have.property('outlets');
+            expect(app.outlets).to.be.an('object');
+            expect(app.outlets.first).to.be.an.instanceof(Outlet);
+            expect(app.outlets.first).to.not.be.an.instanceof(MutableOutlet);
             // we have no direct access to an Outlet's element,
             // so to make sure we still have the same element as the
             // passed-in MutableOutlet, we need to check for it indirectly
-            app._outlets.first.append(child);
+            app.outlets.first.append(child);
             expect(child.parentNode).to.equal(parent);
         });
     });
