@@ -42,23 +42,21 @@ describe('Mounting Functional Tests', () => {
             });
 
             it('registers addresses of child routes and apps', () => {
+                class MyRootApp extends RootApp {
+                    mount() {
+                        return {
+                            '123': AddressApp.addresses('addressApp'),
+                            '456': AddressRoute.addresses('addressRoute'),
+                        };
+                    }
+                    mountConditionals() {
+                        return {
+                            '*': AddressConditionalRoute.addresses('addressConditionalRoute'),
+                        };
+                    }
+                }
                 class NoOutletApp extends App { expectedOutlets() { return []; } }
                 class NoOutletRoute extends Route { expectedOutlets() { return []; } }
-                class ChildApp extends NoOutletApp {
-                    expectedAddresses() {
-                        return ['sameApp', 'anApp'];
-                    }
-                }
-                class ChildRoute extends NoOutletRoute {
-                    expectedAddresses() {
-                        return ['sameRoute', 'aRoute'];
-                    }
-                }
-                class ChildConditionalRoute extends NoOutletRoute {
-                    expectedAddresses() {
-                        return ['starRoute', 'conditional'];
-                    }
-                }
                 class AddressApp extends NoOutletApp {
                     expectedAddresses() {
                         return ['addressApp'];
@@ -85,17 +83,19 @@ describe('Mounting Functional Tests', () => {
                         return ['addressConditionalRoute'];
                     }
                 }
-                class MyRootApp extends RootApp {
-                    mount() {
-                        return {
-                            '123': AddressApp.addresses('addressApp'),
-                            '456': AddressRoute.addresses('addressRoute'),
-                        };
+                class ChildApp extends NoOutletApp {
+                    expectedAddresses() {
+                        return ['sameApp', 'anApp'];
                     }
-                    mountConditionals() {
-                        return {
-                            '*': AddressConditionalRoute.addresses('addressConditionalRoute'),
-                        };
+                }
+                class ChildRoute extends NoOutletRoute {
+                    expectedAddresses() {
+                        return ['sameRoute', 'aRoute'];
+                    }
+                }
+                class ChildConditionalRoute extends NoOutletRoute {
+                    expectedAddresses() {
+                        return ['starRoute', 'conditional'];
                     }
                 }
                 let rootApp = new MyRootApp(defaultOpts);
