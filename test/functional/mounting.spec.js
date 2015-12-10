@@ -4,12 +4,6 @@ import Route from '../../src/classes/route';
 import Outlet from '../../src/classes/outlet';
 import MutableOutlet from '../../src/classes/mutable-outlet';
 
-class TestApp extends App {
-    expectedOutlets() {
-        return [];
-    }
-}
-
 describe('Mounting Functional Tests', () => {
     let defaultOpts;
 
@@ -25,6 +19,28 @@ describe('Mounting Functional Tests', () => {
 
     describe('Child Instantiation', () => {
         describe('Addresses', () => {
+            it('provides no addresses to child routes and apps that haven\'t used the Addressable modifier', () => {
+                class NoOutletApp extends App { expectedOutlets() { return []; } }
+                class NoOutletRoute extends Route { expectedOutlets() { return []; } }
+                class MyRootApp extends RootApp {
+                    mount() {
+                        return {
+                            'abc': NoOutletApp,
+                            'xyz': NoOutletRoute,
+                        };
+                    }
+                    mountConditionals() {
+                        return {
+                            '*': NoOutletRoute,
+                        };
+                    }
+                }
+                let spy = sinon.spy(MyRootApp.prototype, '_registerAddress');
+                let rootApp = new MyRootApp(defaultOpts);
+                spy.should.not.have.been.called;
+                spy.restore();
+            });
+
             it('registers addresses of child routes and apps', () => {
                 class NoOutletApp extends App { expectedOutlets() { return []; } }
                 class NoOutletRoute extends Route { expectedOutlets() { return []; } }
@@ -163,11 +179,13 @@ describe('Mounting Functional Tests', () => {
                         return {
                             'abc': ChildApp.addresses('4').outlets('4_1', '4_2'),
                             'xyz': ChildRoute.addresses('5').outlets('5_1', '5_2'),
+                            'alpha': NoOutletApp,
                         };
                     }
                     mountConditionals() {
                         return {
                             '*': ChildConditionalRoute.addresses('6').outlets('6_1', '6_2'),
+                            '+alpha': NoOutletRoute,
                         };
                     }
                 }
@@ -211,6 +229,21 @@ describe('Mounting Functional Tests', () => {
                     }
                     expectedOutlets() {
                         return ['6_1', '6_2'];
+                    }
+                }
+                // these will throw errors if any outlets are passed to them,
+                // for added insurance that outlets are being passed properly
+                class NoOutletApp extends App {
+                    expectedAddresses() {
+                        return [];
+                    }
+                    expectedOutlets() {
+                        return [];
+                    }
+                }
+                class NoOutletRoute extends Route {
+                    expectedOutlets() {
+                        return [];
                     }
                 }
                 let rootApp = new MyRootApp(defaultOpts);

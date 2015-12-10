@@ -70,6 +70,7 @@ class App extends Modifiable {
         let missingOutlets = [];
         let opts = {
             rootApp: this._rootApp,
+            addresses: [],
             outlets: {},
             // @TODO: pass params
         };
