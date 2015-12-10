@@ -16,6 +16,7 @@ let transformTestsArgs = [
             one: 1,
             two: 2,
         },
+        params: [],
     },
     4, 5, 6,
 ];

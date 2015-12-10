@@ -73,6 +73,7 @@ class App extends Modifiable {
             addresses: [],
             outlets: {},
             // @TODO: pass params
+            params: [],
         };
 
         this._checkMountInheritance(mount, id, isConditional);
@@ -148,6 +149,10 @@ class App extends Modifiable {
     }
 
     expectedAddresses() {
+        return [];
+    }
+
+    expectedParams() {
         return [];
     }
 }

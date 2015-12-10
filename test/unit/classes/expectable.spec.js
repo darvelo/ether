@@ -13,7 +13,13 @@ class ExpectsAddressesOutlets extends ExpectsAddresses {
     }
 }
 
-class TestExpectable extends ExpectsAddressesOutlets { }
+class ExpectsAddressesOutletsParams extends ExpectsAddressesOutlets {
+    expectedParams() {
+        return ['id', 'name'];
+    }
+}
+
+class TestExpectable extends ExpectsAddressesOutletsParams { }
 
 describe('Expectable', function() {
     let defaultOpts;
@@ -25,6 +31,7 @@ describe('Expectable', function() {
                 first: new Outlet(document.createElement('div')),
                 second: new Outlet(document.createElement('div')),
             },
+            params: ['id', 'name'],
         };
     });
 
@@ -48,7 +55,7 @@ describe('Expectable', function() {
                     return null;
                 }
             }
-            expect(() => new Nope(defaultOpts)).to.throw(Error, 'Nope#expectedAdddresses() did not return an Array.');
+            expect(() => new Nope(defaultOpts)).to.throw(Error, 'Nope#expectedAddresses() did not return an Array.');
         });
 
         it('throws if options.addresses doesn\'t match expectedAddresses()', () => {
@@ -119,6 +126,47 @@ describe('Expectable', function() {
                     JSON.stringify(Object.keys(defaultOpts.outlets).sort()),
                 ' did not match its expected outlets ',
                     JSON.stringify(TestExpectable.prototype.expectedOutlets()),
+                '.'
+            ].join(''));
+        });
+    });
+
+    describe('expectedParams() tests', () => {
+        it('throws if expectedParams() is not defined', () => {
+            expect(() => new ExpectsAddressesOutlets(defaultOpts)).to.throw(Error, 'ExpectsAddressesOutlets did not implement expectedParams().');
+        });
+
+
+        it('throws if options.params is not an array', () => {
+            delete defaultOpts.params;
+            expect(() => new TestExpectable(defaultOpts)).to.throw(Error, 'TestExpectable constructor\'s options.params property was not an Array.');
+        });
+
+        it('throws if expectedParams() doesn\'t return an array', () => {
+            class Nope extends TestExpectable {
+                expectedParams() {
+                    return null;
+                }
+            }
+            expect(() => new Nope(defaultOpts)).to.throw(Error, 'Nope#expectedParams() did not return an Array.');
+        });
+
+        it('throws if options.params doesn\'t match expectedParams()', () => {
+            defaultOpts.params = [];
+            expect(() => new TestExpectable(defaultOpts)).to.throw(Error, [
+                'TestExpectable\'s received params ',
+                    JSON.stringify(defaultOpts.params),
+                ' did not match its expected params ',
+                    JSON.stringify(TestExpectable.prototype.expectedParams()),
+                '.'
+            ].join(''));
+
+            defaultOpts.params = ['nope'];
+            expect(() => new TestExpectable(defaultOpts)).to.throw(Error, [
+                'TestExpectable\'s received params ',
+                    JSON.stringify(defaultOpts.params),
+                ' did not match its expected params ',
+                    JSON.stringify(TestExpectable.prototype.expectedParams()),
                 '.'
             ].join(''));
         });

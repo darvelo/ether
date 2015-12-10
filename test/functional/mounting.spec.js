@@ -10,7 +10,6 @@ describe('Mounting Functional Tests', () => {
     beforeEach(() => {
         defaultOpts = {
             rootApp: true,
-            addresses: [],
             outlets: {
                 main: new MutableOutlet(document.createElement('div')),
             },

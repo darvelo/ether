@@ -14,6 +14,7 @@ class Expectable {
 
         this._checkAddresses(opts.addresses);
         this._checkOutlets(opts.outlets);
+        this._checkParams(opts.params);
     }
 
     expectedAddresses() {
@@ -22,6 +23,10 @@ class Expectable {
 
     expectedOutlets() {
         throw new Error(ctorName(this) + ' did not implement expectedOutlets().');
+    }
+
+    expectedParams() {
+        throw new Error(ctorName(this) + ' did not implement expectedParams().');
     }
 
     _areArraysEqual(array, expected) {
@@ -49,7 +54,7 @@ class Expectable {
             case RECEIVED_NOT_ARRAY:
                 throw new Error(ctorName(this) + ' constructor\'s options.addresses property was not an Array.');
             case EXPECTED_NOT_ARRAY:
-                throw new Error(ctorName(this) + '#expectedAdddresses() did not return an Array.');
+                throw new Error(ctorName(this) + '#expectedAddresses() did not return an Array.');
             case ARRAYS_NOT_EQUAL:
                 throw new Error([
                     ctorName(this),
@@ -101,6 +106,28 @@ class Expectable {
                     JSON.stringify(nonOutlets.sort()),
                 '.',
             ].join(''));
+        }
+    }
+
+    _checkParams(params) {
+        let expected = this.expectedParams();
+        let result = this._areArraysEqual(params, expected);
+        switch (result) {
+            case RECEIVED_NOT_ARRAY:
+                throw new Error(ctorName(this) + ' constructor\'s options.params property was not an Array.');
+            case EXPECTED_NOT_ARRAY:
+                throw new Error(ctorName(this) + '#expectedParams() did not return an Array.');
+            case ARRAYS_NOT_EQUAL:
+                throw new Error([
+                    ctorName(this),
+                    '\'s received params ',
+                        JSON.stringify(params),
+                    ' did not match its expected params ',
+                        JSON.stringify(expected),
+                    '.'
+                ].join(''));
+            default:
+                break;
         }
     }
 }

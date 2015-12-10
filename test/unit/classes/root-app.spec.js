@@ -31,6 +31,7 @@ describe('RootApp', () => {
         childOpts = {
             addresses: [],
             outlets: {},
+            params: [],
         };
     });
 

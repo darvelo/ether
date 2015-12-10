@@ -20,6 +20,7 @@ describe('Route Functional Tests', () => {
             }),
             addresses: [],
             outlets: {},
+            params: [],
         };
     });
 

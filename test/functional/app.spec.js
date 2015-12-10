@@ -21,6 +21,7 @@ describe('App Functional Tests', () => {
             }),
             addresses: [],
             outlets: {},
+            params: [],
         };
     });
 

@@ -22,6 +22,7 @@ describe('Debug Mode', () => {
         childOpts = {
             addresses: [],
             outlets: {},
+            params: [],
         };
     });
 

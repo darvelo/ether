@@ -22,6 +22,7 @@ describe('Route', () => {
             }),
             addresses: [],
             outlets: {},
+            params: [],
         };
     });
 

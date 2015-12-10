@@ -9,6 +9,7 @@ class RootApp extends App {
             opts.rootApp = true;
             opts.addresses = opts.addresses || [];
             opts.outlets = opts.outlets || {};
+            opts.params = [];
         }
         super(opts);
     }
@@ -50,6 +51,10 @@ class RootApp extends App {
 
     expectedOutlets() {
         return ['main'];
+    }
+
+    expectedParams() {
+        return [];
     }
 
     start() {

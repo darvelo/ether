@@ -86,6 +86,10 @@ class Route extends Modifiable {
         return [];
     }
 
+    expectedParams() {
+        return [];
+    }
+
     // user-overridable methods
     render() { }
     destroy() { }

@@ -22,6 +22,7 @@ describe('App', function() {
             }),
             addresses: [],
             outlets: {},
+            params: [],
         };
     });
 
