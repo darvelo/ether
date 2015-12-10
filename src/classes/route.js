@@ -7,6 +7,7 @@ class Route extends Modifiable {
         super(opts);
         this._rootApp = opts.rootApp;
         this._registerAddresses(opts.addresses);
+        this.outlets = opts.outlets;
         this._events = {};
     }
 

@@ -45,6 +45,25 @@ describe('Route', () => {
             let route = new RouteWithAddresses(defaultOpts);
             addresses.forEach(name => expect(rootApp._atAddress(name)).to.equal(route));
         });
+
+        it('stores passed-in outlets', () => {
+            class RouteWithOutlets extends Route {
+                expectedOutlets() {
+                    return ['first', 'second'];
+                }
+            }
+            let firstOutlet = new Outlet(document.createElement('div'));
+            let secondOutlet = new Outlet(document.createElement('div'));
+            defaultOpts.outlets = {
+                first: firstOutlet,
+                second: secondOutlet,
+            };
+            let route = new RouteWithOutlets(defaultOpts);
+            expect(route).to.have.property('outlets');
+            expect(route.outlets).to.be.an('object');
+            expect(route.outlets.first).to.equal(firstOutlet);
+            expect(route.outlets.second).to.equal(secondOutlet);
+        });
     });
 
     describe('DOMEvents', () => {
