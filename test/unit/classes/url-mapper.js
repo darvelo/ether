@@ -118,6 +118,15 @@ describe('URLMapper', () => {
         expect(mapper.slashesFor(pattern)).to.equal(3);
     });
 
+    it('add() returns the parsing results', () => {
+        let pattern = '/user/{id=\\d+}';
+        expect(mapper.add(pattern)).to.deep.equal({
+            regex: mapper.regexFor(pattern),
+            paramNames: mapper.paramsFor(pattern),
+            slashes: mapper.slashesFor(pattern),
+        });
+    });
+
     it('matches a given path with a previously mapped pattern', () => {
         let pattern = '/user/{id=\\d+}';
         let result;

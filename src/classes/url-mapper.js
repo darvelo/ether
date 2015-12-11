@@ -139,6 +139,7 @@ class URLMapper {
 
         this._sortedPatterns.push(mapped);
         mergesort(this._sortedPatterns, this._sortFn);
+        return mapped;
     }
 
     // @TODO: parse querystring parameters
