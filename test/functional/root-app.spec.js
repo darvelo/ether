@@ -4,6 +4,12 @@ import Route from '../../src/classes/route';
 import MutableOutlet from '../../src/classes/mutable-outlet';
 import Outlet from '../../src/classes/outlet';
 
+class TestApp extends App {
+    expectedOutlets() {
+        return [];
+    }
+}
+
 class TestRoute extends Route {
     expectedOutlets() {
         return [];
@@ -145,6 +151,34 @@ describe('RootApp Functional Tests', () => {
                     }
                 }
                 expect(() => new MyRootApp(defaultOpts)).to.throw(TypeError, 'MyRootApp conditional mount "*" is not an instance of Route or an array of Route instances.');
+            });
+
+            it.skip('throws if a required address does not exist on the app');
+
+            it('throws if a mount\'s params overlap the parent\'s params', () => {
+                class ParamRoute extends TestRoute {
+                    expectedParams() {
+                        return ['id'];
+                    }
+                }
+                class ChildApp extends TestApp {
+                    expectedParams() {
+                        return ['id'];
+                    }
+                    mount() {
+                        return {
+                            '/xyz/{id=\\w+}': ParamRoute,
+                        };
+                    }
+                }
+                class MyRootApp extends RootApp {
+                    mount() {
+                        return {
+                            '/abc/{id=\\w+}': ChildApp,
+                        };
+                    }
+                }
+                expect(() => new MyRootApp(defaultOpts)).to.throw(Error, 'ChildApp mount on "/xyz/{id=\\\\w+}" declares parameter(s) that were already declared higher in the App chain: ["id"].');
             });
         });
 

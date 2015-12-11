@@ -129,8 +129,24 @@ class App extends Modifiable {
             if (mounts.hasOwnProperty(path)) {
                 let mount = mounts[path];
                 let mountParams = this._urlMapper.add(path).paramNames || [];
-
                 let isConditional = false;
+                let conflictingParams = [];
+                for (let mountParam of mountParams) {
+                    if (params.indexOf(mountParam) !== -1) {
+                        conflictingParams.push(mountParam);
+                    }
+                }
+                // throw if mount's params overlap given params
+                if (conflictingParams.length) {
+                    throw new Error([
+                        ctorName(this),
+                        ' mount on "',
+                        path.replace('\\', '\\\\'),
+                        '" declares parameter(s) that were already declared higher in the App chain: ',
+                        JSON.stringify(conflictingParams),
+                        '.',
+                    ].join(''));
+                }
                 finalMounts.normal[path] = this._instantiateMountInstance(mount, path, isConditional, params.concat(mountParams));
             }
         }
