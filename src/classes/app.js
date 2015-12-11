@@ -43,6 +43,7 @@ class App extends Modifiable {
         //        with a similar API would be nice.
         this._conditionalMapper = {};
         this._instantiateMounts(opts.params);
+        this._instantiateConditionalMounts(opts.params);
     }
 
     _registerAddresses(addresses) {
@@ -70,7 +71,7 @@ class App extends Modifiable {
         }
     }
 
-    _checkForMissingOutlets(mount, key, isConditional, missingOutlets) {
+    _checkForMissingOutlets(mount, key, missingOutlets, isConditional) {
         let ctor = ctorName(this);
         let conditional = isConditional ? 'conditional ' : '';
         if (missingOutlets.length) {
@@ -106,7 +107,7 @@ class App extends Modifiable {
             // if the user invoked it, sets this array
             if (Array.isArray(mount.outlets)) {
                 mount.outlets.forEach(assignOptOutlets, this);
-                this._checkForMissingOutlets(mount, key, isConditional, missingOutlets);
+                this._checkForMissingOutlets(mount, key, missingOutlets, isConditional);
             }
             return mount.create(opts);
         } else {
@@ -114,31 +115,18 @@ class App extends Modifiable {
         }
     }
 
-    // @TODO: split this up into two functions
     _instantiateMounts(params) {
         let mounts = this.mount();
-        let cMounts = this.mountConditionals();
-        let finalMounts = {
-            normal: {},
-            conditional: {},
-        };
+        let instances = {};
 
         if (isnt(mounts, 'Object')) {
             throw new TypeError(ctorName(this) + '#mount() did not return an object.');
-        }
-        if (isnt(cMounts, 'Object')) {
-            throw new TypeError(ctorName(this) + '#mountConditionals() did not return an object.');
         }
         if (this._rootApp._debugMode && Object.keys(mounts).length === 0) {
             console.warn(`${ctorName(this)}#mount() returned an empty object.`);
         }
 
-        function conditionalMap(logic, params, isConditional) {
-            return function(mount) {
-                return this._instantiateMountInstance(mount, logic, params, isConditional);
-            };
-        }
-
+        // create mount instances
         for (let path in mounts) {
             if (mounts.hasOwnProperty(path)) {
                 let isConditional = false;
@@ -161,9 +149,26 @@ class App extends Modifiable {
                         '.',
                     ].join(''));
                 }
-                finalMounts.normal[path] = this._instantiateMountInstance(mount, path, params.concat(mountParams), isConditional);
+                instances[path] = this._instantiateMountInstance(mount, path, params.concat(mountParams), isConditional);
             }
         }
+        this._mounts = instances;
+    }
+
+    _instantiateConditionalMounts(params) {
+        let cMounts = this.mountConditionals();
+        let instances = {};
+
+        if (isnt(cMounts, 'Object')) {
+            throw new TypeError(ctorName(this) + '#mountConditionals() did not return an object.');
+        }
+
+        function createInstance(logic, params, isConditional) {
+            return function(mount) {
+                return this._instantiateMountInstance(mount, logic, params, isConditional);
+            };
+        }
+
         // used to check whether conditional mounts are
         // referencing addresses that weren't created in mount()
         let localAddresses = {};
@@ -176,6 +181,7 @@ class App extends Modifiable {
                 }
             }
         }
+        // create conditional mount instances
         for (let logic in cMounts) {
             if (cMounts.hasOwnProperty(logic)) {
                 let isConditional = true;
@@ -184,9 +190,11 @@ class App extends Modifiable {
                 if (!Array.isArray(mount)) {
                     mount = [mount];
                 }
-                finalMounts.conditional[logic] = mount.map(conditionalMap(logic, params, isConditional), this);
+                instances[logic] = mount.map(createInstance(logic, params, isConditional), this);
             }
         }
+        // throw if a conditional mount referenced an
+        // address that wasn't created in mount()
         failedAddressLookups = Object.keys(failedAddressLookups).sort();
         if (failedAddressLookups.length) {
             let ctorname = ctorName(this);
@@ -199,7 +207,7 @@ class App extends Modifiable {
                 '.',
             ].join(''));
         }
-        this._mounts = finalMounts;
+        this._cMounts = instances;
     }
 
     // @TODO: replace this with a URLMapper type of class
