@@ -7,6 +7,14 @@ describe('Element Mock', () => {
         element = new Element();
     });
 
+    it('fires "click" event listeners on click()', () => {
+        let spy = sinon.spy(element, 'fire');
+        element.click();
+        spy.should.have.been.calledOnce;
+        spy.should.have.been.calledWith('click');
+        spy.restore();
+    });
+
     it('creates a fake parent node that holds it', () => {
         expect(element.parentNode).to.equal(element.parentNode);
     });

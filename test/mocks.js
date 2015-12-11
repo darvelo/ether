@@ -46,6 +46,9 @@ export var document = {
 };
 
 export class Element extends Eventable {
+    click() {
+        this.fire('click');
+    }
     get children() {
         return this._children || (this._children = []);
     }
