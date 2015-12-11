@@ -20,7 +20,7 @@ class URLMapper {
         return b.slashes - a.slashes;
     }
 
-    add(patternStr, route) {
+    add(patternStr) {
         const NORMAL_MODE = 1;
         const PARAM_NAME_MODE = 2;
         const PARAM_VALUE_MODE = 3;
@@ -132,7 +132,6 @@ class URLMapper {
         finalRegex.push('(.*)');
 
         let mapped = this._urlMap[patternStr] = {
-            route: route,
             regex: new RegExp(finalRegex.join('')),
             slashes: slashesCount,
             paramNames: paramNames.length ? paramNames : null,
@@ -179,7 +178,6 @@ class URLMapper {
         }
         // turn the empty string into null
         ret.rest = theMatch[len-1] || null;
-        ret.route = pattern.route;
         return ret;
     }
 
@@ -191,11 +189,6 @@ class URLMapper {
     paramsFor(pattern) {
         let mapped = this._urlMap[pattern];
         return mapped && mapped.paramNames;
-    }
-
-    routeFor(pattern) {
-        let mapped = this._urlMap[pattern];
-        return mapped && mapped.route;
     }
 
     slashesFor(pattern) {

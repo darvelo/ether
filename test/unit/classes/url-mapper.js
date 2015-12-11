@@ -118,24 +118,14 @@ describe('URLMapper', () => {
         expect(mapper.slashesFor(pattern)).to.equal(3);
     });
 
-    it('associates a route with a path', () => {
-        let pattern = '/path/to/somewhere';
-        let route = {};
-        mapper.add(pattern, route);
-        expect(mapper.routeFor(pattern)).to.equal(route);
-    });
-
     it('matches a given path with a previously mapped pattern', () => {
         let pattern = '/user/{id=\\d+}';
-        let route = {};
         let result;
 
-        mapper.add(pattern, route);
+        mapper.add(pattern);
 
         result = mapper.match('/user/25/profile');
-        expect(result.route).to.equal(route);
         expect(result).to.deep.equal({
-            route: route,
             rest: '/profile',
             params: {
                 id: 25,
@@ -143,9 +133,7 @@ describe('URLMapper', () => {
         });
 
         result = mapper.match('/user/1xyz/profile');
-        expect(result.route).to.equal(route);
         expect(result).to.deep.equal({
-            route: route,
             rest: 'xyz/profile',
             params: {
                 id: 1,
