@@ -41,6 +41,9 @@ describe('App', function() {
                 expectedAddresses() {
                     return ['first', 'second'];
                 }
+                addressesHandlers() {
+                    return [function(){},function(){}];
+                }
                 expectedOutlets() {
                     return [];
                 }

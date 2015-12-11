@@ -49,6 +49,10 @@ class RootApp extends App {
         return [];
     }
 
+    addressesHandlers() {
+        return [];
+    }
+
     expectedOutlets() {
         return ['main'];
     }

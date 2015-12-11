@@ -235,6 +235,10 @@ class App extends Modifiable {
         return [];
     }
 
+    addressesHandlers() {
+        return [];
+    }
+
     expectedParams() {
         return [];
     }

@@ -1,6 +1,6 @@
 import Outlet from './outlet';
 import ctorName from '../utils/ctor-name';
-import { isnt } from '../utils/is';
+import { is, isnt } from '../utils/is';
 
 const RECEIVED_NOT_ARRAY = 1;
 const EXPECTED_NOT_ARRAY = 2;
@@ -20,6 +20,10 @@ class Expectable {
 
     expectedAddresses() {
         throw new Error(ctorName(this) + ' did not implement expectedAddresses().');
+    }
+
+    addressesHandlers() {
+        throw new Error(ctorName(this) + ' did not implement addressesHandlers().');
     }
 
     expectedOutlets() {
@@ -67,6 +71,45 @@ class Expectable {
                 ].join(''));
             default:
                 break;
+        }
+        let handlers = this.addressesHandlers();
+        if (!Array.isArray(handlers)) {
+            throw new TypeError(`${ctorName(this)}#addressesHandlers() did not return an Array.`);
+        }
+        if (expected.length !== handlers.length) {
+            let ctorname = ctorName(this);
+            throw new Error([
+                ctorname,
+                '#addressesHandlers() did not return the same number of handler functions as addresses returned by ',
+                ctorname,
+                '#expectedAddresses().'
+            ].join(''));
+        }
+        let nonExistentMemberFns = [];
+        let nonFns = [];
+        for (let h of handlers) {
+            if (is(h, 'String') && isnt(this[h], 'Function')) {
+                nonExistentMemberFns.push(h);
+            }
+            if (isnt(h, 'String') && isnt(h, 'Function')) {
+                nonFns.push(h);
+            }
+        }
+        if (nonExistentMemberFns.length) {
+            throw new Error([
+                ctorName(this),
+                '#addressesHandlers() references member function(s) that do not exist: ',
+                JSON.stringify(nonExistentMemberFns),
+                '.',
+            ].join(''));
+        }
+        if (nonFns.length) {
+            throw new Error([
+                ctorName(this),
+                '#addressesHandlers() returned non-function(s): ',
+                JSON.stringify(nonFns),
+                '.'
+            ].join(''));
         }
     }
 

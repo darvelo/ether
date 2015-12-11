@@ -86,6 +86,10 @@ class Route extends Modifiable {
         return [];
     }
 
+    addressesHandlers() {
+        return [];
+    }
+
     expectedParams() {
         return [];
     }

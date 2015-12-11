@@ -4,6 +4,42 @@ import Route from '../../src/classes/route';
 import Outlet from '../../src/classes/outlet';
 import MutableOutlet from '../../src/classes/mutable-outlet';
 
+class TestApp extends App {
+    expectedOutlets() {
+        return [];
+    }
+}
+
+class TestRoute extends Route {
+    expectedOutlets() {
+        return [];
+    }
+}
+
+class OneAddressApp extends TestApp {
+    addressesHandlers() {
+        return [function(){}];
+    }
+}
+
+class OneAddressRoute extends TestRoute {
+    addressesHandlers() {
+        return [function(){}];
+    }
+}
+
+class TwoAddressApp extends TestApp {
+    addressesHandlers() {
+        return [function(){},function(){}];
+    }
+}
+
+class TwoAddressRoute extends TestRoute {
+    addressesHandlers() {
+        return [function(){},function(){}];
+    }
+}
+
 describe('Mounting Functional Tests', () => {
     let defaultOpts;
 
@@ -19,18 +55,16 @@ describe('Mounting Functional Tests', () => {
     describe('Child Instantiation', () => {
         describe('Addresses', () => {
             it('provides no addresses to child routes and apps that haven\'t used the Addressable modifier', () => {
-                class NoOutletApp extends App { expectedOutlets() { return []; } }
-                class NoOutletRoute extends Route { expectedOutlets() { return []; } }
                 class MyRootApp extends RootApp {
                     mount() {
                         return {
-                            'abc': NoOutletApp,
-                            'xyz': NoOutletRoute,
+                            'abc': TestApp,
+                            'xyz': TestRoute,
                         };
                     }
                     mountConditionals() {
                         return {
-                            '*': NoOutletRoute,
+                            '*': TestRoute,
                         };
                     }
                 }
@@ -54,9 +88,7 @@ describe('Mounting Functional Tests', () => {
                         };
                     }
                 }
-                class NoOutletApp extends App { expectedOutlets() { return []; } }
-                class NoOutletRoute extends Route { expectedOutlets() { return []; } }
-                class AddressApp extends NoOutletApp {
+                class AddressApp extends OneAddressApp {
                     expectedAddresses() {
                         return ['addressApp'];
                     }
@@ -72,27 +104,27 @@ describe('Mounting Functional Tests', () => {
                         };
                     }
                 }
-                class AddressRoute extends NoOutletRoute {
+                class AddressRoute extends OneAddressRoute {
                     expectedAddresses() {
                         return ['addressRoute'];
                     }
                 }
-                class AddressConditionalRoute extends NoOutletRoute {
+                class AddressConditionalRoute extends OneAddressRoute {
                     expectedAddresses() {
                         return ['addressConditionalRoute'];
                     }
                 }
-                class ChildApp extends NoOutletApp {
+                class ChildApp extends TwoAddressApp {
                     expectedAddresses() {
                         return ['sameApp', 'anApp'];
                     }
                 }
-                class ChildRoute extends NoOutletRoute {
+                class ChildRoute extends TwoAddressRoute {
                     expectedAddresses() {
                         return ['sameRoute', 'aRoute'];
                     }
                 }
-                class ChildConditionalRoute extends NoOutletRoute {
+                class ChildConditionalRoute extends TwoAddressRoute {
                     expectedAddresses() {
                         return ['starRoute', 'conditional'];
                     }
@@ -162,7 +194,7 @@ describe('Mounting Functional Tests', () => {
                         };
                     }
                 }
-                class OutletApp extends App {
+                class OutletApp extends OneAddressApp {
                     expectedAddresses() {
                         return ['1'];
                     }
@@ -178,7 +210,10 @@ describe('Mounting Functional Tests', () => {
                         return {
                             'abc': ChildApp.addresses('4').outlets('4_1', '4_2'),
                             'xyz': ChildRoute.addresses('5').outlets('5_1', '5_2'),
-                            'alpha': NoOutletApp,
+                            // these will throw errors if any outlets are passed to them,
+                            // for added insurance that outlets are being passed properly
+                            'alpha': TestApp,
+                            'omega': TestRoute,
                         };
                     }
                     mountConditionals() {
@@ -189,7 +224,7 @@ describe('Mounting Functional Tests', () => {
                 }
                 // createOutlets() defaults to returning the inherited outlets,
                 // so for the rest of these, no explicit outlet assignments need to be done
-                class OutletRoute extends Route {
+                class OutletRoute extends OneAddressRoute {
                     expectedAddresses() {
                         return ['2'];
                     }
@@ -197,7 +232,7 @@ describe('Mounting Functional Tests', () => {
                         return ['2_1', '2_2'];
                     }
                 }
-                class OutletConditionalRoute extends Route {
+                class OutletConditionalRoute extends OneAddressRoute {
                     expectedAddresses() {
                         return ['3'];
                     }
@@ -205,7 +240,7 @@ describe('Mounting Functional Tests', () => {
                         return ['3_1', '3_2'];
                     }
                 }
-                class ChildApp extends App {
+                class ChildApp extends OneAddressApp {
                     expectedAddresses() {
                         return ['4'];
                     }
@@ -213,7 +248,7 @@ describe('Mounting Functional Tests', () => {
                         return ['4_1', '4_2'];
                     }
                 }
-                class ChildRoute extends Route {
+                class ChildRoute extends OneAddressRoute {
                     expectedAddresses() {
                         return ['5'];
                     }
@@ -221,27 +256,12 @@ describe('Mounting Functional Tests', () => {
                         return ['5_1', '5_2'];
                     }
                 }
-                class ChildConditionalRoute extends Route {
+                class ChildConditionalRoute extends OneAddressRoute {
                     expectedAddresses() {
                         return ['6'];
                     }
                     expectedOutlets() {
                         return ['6_1', '6_2'];
-                    }
-                }
-                // these will throw errors if any outlets are passed to them,
-                // for added insurance that outlets are being passed properly
-                class NoOutletApp extends App {
-                    expectedAddresses() {
-                        return [];
-                    }
-                    expectedOutlets() {
-                        return [];
-                    }
-                }
-                class NoOutletRoute extends Route {
-                    expectedOutlets() {
-                        return [];
                     }
                 }
                 let rootApp = new MyRootApp(defaultOpts);
@@ -286,21 +306,19 @@ describe('Mounting Functional Tests', () => {
 
         describe('Params', () => {
             it('compounds params before passing them to child routes and apps', () => {
-                class NoOutletApp extends App { expectedOutlets() { return []; } }
-                class NoOutletRoute extends Route { expectedOutlets() { return []; } }
-                class ParamRoute extends NoOutletRoute { expectedParams() { return ['id']; } }
-                class ParamConditionalRoute extends NoOutletRoute { expectedParams() { return []; } }
-                class ChildRoute extends NoOutletRoute {
+                class ParamRoute extends TestRoute { expectedParams() { return ['id']; } }
+                class ParamConditionalRoute extends TestRoute { expectedParams() { return []; } }
+                class ChildRoute extends TestRoute {
                     expectedParams() {
                         return ['name', 'action'];
                     }
                 }
-                class ChildConditionalRoute extends NoOutletRoute {
+                class ChildConditionalRoute extends TestRoute {
                     expectedParams() {
                         return ['name'];
                     }
                 }
-                class ParamApp extends NoOutletApp {
+                class ParamApp extends TestApp {
                     expectedParams() {
                         return ['name'];
                     }

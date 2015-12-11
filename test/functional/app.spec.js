@@ -16,6 +16,18 @@ class TestRoute extends Route {
     }
 }
 
+class OneAddressApp extends TestApp {
+    addressesHandlers() {
+        return [function(){}];
+    }
+}
+
+class OneAddressRoute extends TestRoute {
+    addressesHandlers() {
+        return [function(){}];
+    }
+}
+
 describe('App Functional Tests', () => {
     let defaultOpts;
 
@@ -116,7 +128,7 @@ describe('App Functional Tests', () => {
             it.skip('throws if any conditional mount\'s key requires a mount with an address that the App did not register');
 
             it('throws if any conditional mount is not an instance of Route', () => {
-                class AddressRoute extends TestRoute {
+                class AddressRoute extends OneAddressRoute {
                     expectedAddresses() {
                         return ['abc'];
                     }
@@ -137,12 +149,12 @@ describe('App Functional Tests', () => {
             });
 
             it('allows an array of routes', () => {
-                class AddressRoute extends TestRoute { expectedAddresses() { return ['addy']; } }
-                class AddressRouteTwo extends TestRoute { expectedAddresses() { return ['addy2']; } }
-                class AddressRouteABC extends TestRoute { expectedAddresses() { return ['abc']; } }
-                class AddressRouteXYZ extends TestRoute { expectedAddresses() { return ['xyz']; } }
+                class AddressRoute extends OneAddressRoute { expectedAddresses() { return ['addy']; } }
+                class AddressRouteTwo extends OneAddressRoute { expectedAddresses() { return ['addy2']; } }
+                class AddressRouteABC extends OneAddressRoute { expectedAddresses() { return ['abc']; } }
+                class AddressRouteXYZ extends OneAddressRoute { expectedAddresses() { return ['xyz']; } }
                 class NoOutletRoute extends Route { expectedOutlets() { return []; } }
-                class OutletRoute extends Route {
+                class OutletRoute extends OneAddressRoute {
                     expectedAddresses() { return ['out']; }
                     expectedOutlets() { return ['out']; }
                 }
@@ -189,17 +201,17 @@ describe('App Functional Tests', () => {
             });
 
             it('throws if a required address was not created during mount()', () => {
-                class ChildConditionalRoute extends TestRoute {
+                class ChildConditionalRoute extends OneAddressRoute {
                     expectedAddresses() {
                         return ['four'];
                     }
                 }
-                class ChildRoute extends TestRoute {
+                class ChildRoute extends OneAddressRoute {
                     expectedAddresses() {
                         return ['three'];
                     }
                 }
-                class ChildApp extends TestApp {
+                class ChildApp extends OneAddressApp {
                     expectedAddresses() {
                         return ['one'];
                     }
@@ -239,7 +251,7 @@ describe('App Functional Tests', () => {
             });
 
             it('throws if any conditional mount requests an outlet that the App does not own', () => {
-                class AddressApp extends TestApp {
+                class AddressApp extends OneAddressApp {
                     expectedAddresses() {
                         return ['anApp'];
                     }

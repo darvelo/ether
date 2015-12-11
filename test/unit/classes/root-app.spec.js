@@ -49,6 +49,9 @@ describe('RootApp', () => {
                 expectedAddresses() {
                     return ['first', 'second'];
                 }
+                addressesHandlers() {
+                    return [function(){},function(){}];
+                }
             }
             defaultOpts.addresses = ['first', 'second'];
             let rootApp = new RootAppWithAddresses(defaultOpts);

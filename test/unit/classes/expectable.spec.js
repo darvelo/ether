@@ -1,9 +1,18 @@
 import Expectable from '../../../src/classes/expectable';
 import Outlet from '../../../src/classes/outlet';
 
+class NoAddressesHandlers extends Expectable {
+    expectedAddresses() {
+        return ['first', 'second'];
+    }
+}
+
 class ExpectsAddresses extends Expectable {
     expectedAddresses() {
         return ['first', 'second'];
+    }
+    addressesHandlers() {
+        return [function(){}, function(){}];
     }
 }
 
@@ -76,6 +85,50 @@ describe('Expectable', function() {
                     JSON.stringify(TestExpectable.prototype.expectedAddresses()),
                 '.'
             ].join(''));
+        });
+    });
+
+    describe('addressesHandlers() tests', () => {
+        it('throws if addressesHandlers() is not defined', () => {
+            expect(() => new NoAddressesHandlers(defaultOpts)).to.throw(Error, 'NoAddressesHandlers did not implement addressesHandlers().');
+        });
+
+        it('throws if addressesHandlers() does not return an array', () => {
+            class BadHandlers extends ExpectsAddresses {
+                addressesHandlers() {
+                    return null;
+                }
+            }
+            expect(() => new BadHandlers(defaultOpts)).to.throw(TypeError, 'BadHandlers#addressesHandlers() did not return an Array.');
+        });
+
+        it('throws if addressesHandlers() does not return the same number of handlers as expected addresses', () => {
+            class LessHandlers extends ExpectsAddresses {
+                addressesHandlers() {
+                    return [];
+                }
+            }
+            expect(() => new LessHandlers(defaultOpts)).to.throw(Error, 'LessHandlers#addressesHandlers() did not return the same number of handler functions as addresses returned by LessHandlers#expectedAddresses().');
+        });
+
+        it('throws if a string in the addressesHandlers() array does not have a corresponding member function on `this`', () => {
+            class StringHandler extends ExpectsAddresses {
+                addressesHandlers() {
+                    return ['firstHandler', 'secondHandler'];
+                }
+                firstHandler() { }
+            }
+            expect(() => new StringHandler(defaultOpts)).to.throw(Error, 'StringHandler#addressesHandlers() references member function(s) that do not exist: ["secondHandler"].');
+        });
+
+        it('throws if any handler from addressesHandlers() is not a function or does not represent a member function', () => {
+            class NonFnHandlers extends ExpectsAddresses {
+                addressesHandlers() {
+                    return [null, {}];
+                }
+                firstHandler() { }
+            }
+            expect(() => new NonFnHandlers(defaultOpts)).to.throw(Error, 'NonFnHandlers#addressesHandlers() returned non-function(s): [null,{}].');
         });
     });
 

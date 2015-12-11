@@ -1,4 +1,4 @@
-export default function is(obj, guess) {
+export function is(obj, guess) {
     if ((guess === 'Undefined' || typeof guess === undefined) && typeof obj === 'undefined') {
         return true;
     }
@@ -13,3 +13,5 @@ export default function is(obj, guess) {
 export function isnt(obj, guess) {
     return !is(obj, guess);
 }
+
+export default is;
