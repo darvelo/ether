@@ -93,11 +93,11 @@ describe('App Functional Tests', () => {
                 class MyApp extends TestApp {
                     mountConditionals() {
                         return {
-                            'abc': App,
+                            '!abc': App,
                         };
                     }
                 }
-                expect(() => new MyApp(defaultOpts)).to.throw(TypeError, 'MyApp conditional mount "abc" is not an instance of Route or an array of Route instances.');
+                expect(() => new MyApp(defaultOpts)).to.throw(TypeError, 'MyApp conditional mount "!abc" is not an instance of Route or an array of Route instances.');
             });
 
             it('allows an array of routes', () => {
@@ -152,7 +152,42 @@ describe('App Functional Tests', () => {
                 expect(() => new MyApp(defaultOpts)).to.throw(TypeError, 'MyApp conditional mount "*" is not an instance of Route or an array of Route instances.');
             });
 
-            it.skip('throws if a required address does not exist on the app');
+            it('throws if a required address was not created during mount()', () => {
+                class ChildConditionalRoute extends TestRoute {
+                    expectedAddresses() {
+                        return ['four'];
+                    }
+                }
+                class ChildRoute extends TestRoute {
+                    expectedAddresses() {
+                        return ['three'];
+                    }
+                }
+                class ChildApp extends TestApp {
+                    expectedAddresses() {
+                        return ['one'];
+                    }
+                    mount() {
+                        return {
+                            '/xyz': ChildRoute.addresses('three'),
+                        };
+                    }
+                    mountConditionals() {
+                        return {
+                            '+one,two,three,four': TestRoute,
+                            '!one': ChildConditionalRoute.addresses('four'),
+                        };
+                    }
+                }
+                class MyApp extends TestApp {
+                    mount() {
+                        return {
+                            '/abc': ChildApp.addresses('one'),
+                        };
+                    }
+                }
+                expect(() => new MyApp(defaultOpts)).to.throw(Error, 'ChildApp#mountConditionals() requires addresses that are not created in ChildApp#mount(): ["four","one","two"].');
+            });
 
             it('throws if a mount\'s params overlap the parent\'s params', () => {
                 class ParamRoute extends TestRoute {

@@ -184,7 +184,6 @@ describe('Mounting Functional Tests', () => {
                     mountConditionals() {
                         return {
                             '*': ChildConditionalRoute.addresses('6').outlets('6_1', '6_2'),
-                            '+alpha': NoOutletRoute,
                         };
                     }
                 }

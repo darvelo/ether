@@ -31,6 +31,17 @@ class App extends Modifiable {
         }
         this.outlets = this.createOutlets(opts.outlets);
         this._urlMapper = new URLMapper();
+        // maps paths from mount() to their addresses, if any.
+        // used when testing whether mountConditionals() mounts
+        // are referencing addresses that weren't created here,
+        // and whether on routing conditional mounts need to be
+        // rendered or destroyed.
+        this._mountAddresses = {};
+        // @TODO: make a class that combines URLMapper and NavigationStackMap
+        //        so that it's easier to make queries and check for changes.
+        //        different classes for handling mounts and conditionalMounts
+        //        with a similar API would be nice.
+        this._conditionalMapper = {};
         this._instantiateMounts(opts.params);
     }
 
@@ -67,7 +78,7 @@ class App extends Modifiable {
         }
     }
 
-    _instantiateMountInstance(mount, key, isConditional, params) {
+    _instantiateMountInstance(mount, key, params, isConditional) {
         let missingOutlets = [];
         let opts = {
             rootApp: this._rootApp,
@@ -86,6 +97,11 @@ class App extends Modifiable {
         }
 
         if (mount instanceof Modified) {
+            // the Addressable modifier,
+            // if the user invoked it, sets this array
+            if (!isConditional && Array.isArray(mount.addresses)) {
+                this._mountAddresses[key] = mount.addresses;
+            }
             // the OutletsReceivable modifier,
             // if the user invoked it, sets this array
             if (Array.isArray(mount.outlets)) {
@@ -98,10 +114,8 @@ class App extends Modifiable {
         }
     }
 
+    // @TODO: split this up into two functions
     _instantiateMounts(params) {
-        // @TODO: make sure to compound and forward params in any case below
-        // push params onto the stack (now just a recent-params map)
-
         let mounts = this.mount();
         let cMounts = this.mountConditionals();
         let finalMounts = {
@@ -119,17 +133,17 @@ class App extends Modifiable {
             console.warn(`${ctorName(this)}#mount() returned an empty object.`);
         }
 
-        function conditionalMap(logic, isConditional, params) {
+        function conditionalMap(logic, params, isConditional) {
             return function(mount) {
-                return this._instantiateMountInstance(mount, logic, isConditional, params);
+                return this._instantiateMountInstance(mount, logic, params, isConditional);
             };
         }
 
         for (let path in mounts) {
             if (mounts.hasOwnProperty(path)) {
+                let isConditional = false;
                 let mount = mounts[path];
                 let mountParams = this._urlMapper.add(path).paramNames || [];
-                let isConditional = false;
                 let conflictingParams = [];
                 for (let mountParam of mountParams) {
                     if (params.indexOf(mountParam) !== -1) {
@@ -147,21 +161,62 @@ class App extends Modifiable {
                         '.',
                     ].join(''));
                 }
-                finalMounts.normal[path] = this._instantiateMountInstance(mount, path, isConditional, params.concat(mountParams));
+                finalMounts.normal[path] = this._instantiateMountInstance(mount, path, params.concat(mountParams), isConditional);
+            }
+        }
+        // used to check whether conditional mounts are
+        // referencing addresses that weren't created in mount()
+        let localAddresses = {};
+        let failedAddressLookups = {};
+        let mountAddresses = this._mountAddresses;
+        for (let path in mountAddresses) {
+            if (mountAddresses.hasOwnProperty(path)) {
+                for (let address of mountAddresses[path]) {
+                    localAddresses[address] = true;
+                }
             }
         }
         for (let logic in cMounts) {
             if (cMounts.hasOwnProperty(logic)) {
-                let mount = cMounts[logic];
                 let isConditional = true;
+                let mount = cMounts[logic];
+                this._addConditionalMap(logic, localAddresses, failedAddressLookups);
                 if (!Array.isArray(mount)) {
                     mount = [mount];
                 }
-                finalMounts.conditional[logic] = mount.map(conditionalMap(logic, isConditional, params), this);
+                finalMounts.conditional[logic] = mount.map(conditionalMap(logic, params, isConditional), this);
             }
         }
-
+        failedAddressLookups = Object.keys(failedAddressLookups).sort();
+        if (failedAddressLookups.length) {
+            let ctorname = ctorName(this);
+            throw new Error([
+                ctorname,
+                '#mountConditionals() requires addresses that are not created in ',
+                ctorname,
+                '#mount(): ',
+                JSON.stringify(failedAddressLookups),
+                '.',
+            ].join(''));
+        }
         this._mounts = finalMounts;
+    }
+
+    // @TODO: replace this with a URLMapper type of class
+    _addConditionalMap(logic, localAddresses, failedAddressLookups) {
+        if (['*', '+', '!'].indexOf(logic[0]) === -1) {
+            throw new Error('invalid conditional mount key');
+        }
+        if (logic === '*') {
+            return;
+        }
+        let requiredAddresses = logic.slice(1).split(',');
+        for (let address of requiredAddresses) {
+            if (!localAddresses[address]) {
+                failedAddressLookups[address] = true;
+            }
+        }
+        // create regex
     }
 
     mount() {
