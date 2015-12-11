@@ -77,6 +77,32 @@ describe('RootApp Functional Tests', () => {
                 }
                 expect(() => new MyApp(defaultOpts)).to.throw(TypeError, 'MyApp mount "abc" is not an instance of App or Route.');
             });
+
+            it('throws if a mount\'s params overlap the parent\'s params', () => {
+                class ParamRoute extends TestRoute {
+                    expectedParams() {
+                        return ['id'];
+                    }
+                }
+                class ChildApp extends TestApp {
+                    expectedParams() {
+                        return ['id'];
+                    }
+                    mount() {
+                        return {
+                            '/xyz/{id=\\w+}': ParamRoute,
+                        };
+                    }
+                }
+                class MyRootApp extends RootApp {
+                    mount() {
+                        return {
+                            '/abc/{id=\\w+}': ChildApp,
+                        };
+                    }
+                }
+                expect(() => new MyRootApp(defaultOpts)).to.throw(Error, 'ChildApp mount on "/xyz/{id=\\\\w+}" declares parameter(s) that were already declared higher in the App chain: ["id"].');
+            });
         });
 
         describe('Conditional Mounts', () => {
@@ -178,32 +204,6 @@ describe('RootApp Functional Tests', () => {
                     }
                 }
                 expect(() => new MyRootApp(defaultOpts)).to.throw(Error, 'MyRootApp#mountConditionals() requires addresses that are not created in MyRootApp#mount(): ["four","one","two"].');
-            });
-
-            it('throws if a mount\'s params overlap the parent\'s params', () => {
-                class ParamRoute extends TestRoute {
-                    expectedParams() {
-                        return ['id'];
-                    }
-                }
-                class ChildApp extends TestApp {
-                    expectedParams() {
-                        return ['id'];
-                    }
-                    mount() {
-                        return {
-                            '/xyz/{id=\\w+}': ParamRoute,
-                        };
-                    }
-                }
-                class MyRootApp extends RootApp {
-                    mount() {
-                        return {
-                            '/abc/{id=\\w+}': ChildApp,
-                        };
-                    }
-                }
-                expect(() => new MyRootApp(defaultOpts)).to.throw(Error, 'ChildApp mount on "/xyz/{id=\\\\w+}" declares parameter(s) that were already declared higher in the App chain: ["id"].');
             });
         });
 
