@@ -30,6 +30,7 @@ let transformTests = {
             // this allows us to bypass Expectable expected*() functions
             // and just check that the arguments are transformed correctly
             let stub = sinon.stub(modified, 'klass');
+            expect(modified.addresses).to.deep.equal(this.args);
             modified.create(...transformTestsArgs);
             stub.should.have.been.calledOnce;
             stub.should.have.been.calledWithNew;
