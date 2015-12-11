@@ -51,8 +51,8 @@ class App extends Modifiable {
     }
 
     _makeOutletsImmutable(outlets) {
-        for (let prop in outlets) {
-            if (outlets.hasOwnProperty(prop) && outlets[prop] instanceof MutableOutlet) {
+        for (let prop of Object.keys(outlets)) {
+            if (outlets[prop] instanceof MutableOutlet) {
                 outlets[prop] = new Outlet(outlets[prop].get());
             }
         }
@@ -127,30 +127,28 @@ class App extends Modifiable {
         }
 
         // create mount instances
-        for (let path in mounts) {
-            if (mounts.hasOwnProperty(path)) {
-                let isConditional = false;
-                let mount = mounts[path];
-                let mountParams = this._urlMapper.add(path).paramNames || [];
-                let conflictingParams = [];
-                for (let mountParam of mountParams) {
-                    if (params.indexOf(mountParam) !== -1) {
-                        conflictingParams.push(mountParam);
-                    }
+        for (let path of Object.keys(mounts)) {
+            let isConditional = false;
+            let mount = mounts[path];
+            let mountParams = this._urlMapper.add(path).paramNames || [];
+            let conflictingParams = [];
+            for (let mountParam of mountParams) {
+                if (params.indexOf(mountParam) !== -1) {
+                    conflictingParams.push(mountParam);
                 }
-                // throw if mount's params overlap given params
-                if (conflictingParams.length) {
-                    throw new Error([
-                        ctorName(this),
-                        ' mount on "',
-                        path.replace('\\', '\\\\'),
-                        '" declares parameter(s) that were already declared higher in the App chain: ',
-                        JSON.stringify(conflictingParams),
-                        '.',
-                    ].join(''));
-                }
-                instances[path] = this._instantiateMountInstance(mount, path, params.concat(mountParams), isConditional);
             }
+            // throw if mount's params overlap given params
+            if (conflictingParams.length) {
+                throw new Error([
+                    ctorName(this),
+                    ' mount on "',
+                    path.replace('\\', '\\\\'),
+                    '" declares parameter(s) that were already declared higher in the App chain: ',
+                    JSON.stringify(conflictingParams),
+                    '.',
+                ].join(''));
+            }
+            instances[path] = this._instantiateMountInstance(mount, path, params.concat(mountParams), isConditional);
         }
         this._mounts = instances;
     }
@@ -174,24 +172,20 @@ class App extends Modifiable {
         let localAddresses = {};
         let failedAddressLookups = {};
         let mountAddresses = this._mountAddresses;
-        for (let path in mountAddresses) {
-            if (mountAddresses.hasOwnProperty(path)) {
-                for (let address of mountAddresses[path]) {
-                    localAddresses[address] = true;
-                }
+        for (let path of Object.keys(mountAddresses)) {
+            for (let address of mountAddresses[path]) {
+                localAddresses[address] = true;
             }
         }
         // create conditional mount instances
-        for (let logic in cMounts) {
-            if (cMounts.hasOwnProperty(logic)) {
-                let isConditional = true;
-                let mount = cMounts[logic];
-                this._addConditionalMap(logic, localAddresses, failedAddressLookups);
-                if (!Array.isArray(mount)) {
-                    mount = [mount];
-                }
-                instances[logic] = mount.map(createInstance(logic, params, isConditional), this);
+        for (let logic of Object.keys(cMounts)) {
+            let isConditional = true;
+            let mount = cMounts[logic];
+            this._addConditionalMap(logic, localAddresses, failedAddressLookups);
+            if (!Array.isArray(mount)) {
+                mount = [mount];
             }
+            instances[logic] = mount.map(createInstance(logic, params, isConditional), this);
         }
         // throw if a conditional mount referenced an
         // address that wasn't created in mount()
