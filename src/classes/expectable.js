@@ -53,9 +53,9 @@ class Expectable {
         let result = this._areArraysEqual(addresses, expected);
         switch (result) {
             case RECEIVED_NOT_ARRAY:
-                throw new Error(ctorName(this) + ' constructor\'s options.addresses property was not an Array.');
+                throw new TypeError(ctorName(this) + ' constructor\'s options.addresses property was not an Array.');
             case EXPECTED_NOT_ARRAY:
-                throw new Error(ctorName(this) + '#expectedAddresses() did not return an Array.');
+                throw new TypeError(ctorName(this) + '#expectedAddresses() did not return an Array.');
             case ARRAYS_NOT_EQUAL:
                 throw new Error([
                     ctorName(this),
@@ -72,7 +72,7 @@ class Expectable {
 
     _checkOutlets(outlets) {
         if (isnt(outlets, 'Object')) {
-            throw new Error(ctorName(this) + ' constructor\'s options.outlets property was not an Object.');
+            throw new TypeError(ctorName(this) + ' constructor\'s options.outlets property was not an Object.');
         }
 
         let outletsKeys = Object.keys(outlets).sort();
@@ -80,7 +80,7 @@ class Expectable {
         let result = this._areArraysEqual(outletsKeys, expected);
         switch (result) {
             case EXPECTED_NOT_ARRAY:
-                throw new Error(ctorName(this) + '#expectedOutlets() did not return an Array.');
+                throw new TypeError(ctorName(this) + '#expectedOutlets() did not return an Array.');
             case ARRAYS_NOT_EQUAL:
                 throw new Error([
                     ctorName(this),
@@ -101,7 +101,7 @@ class Expectable {
             }
         }
         if (nonOutlets.length) {
-            throw new Error([
+            throw new TypeError([
                 ctorName(this),
                 ' did not receive instances of Outlet for named outlets: ',
                     JSON.stringify(nonOutlets.sort()),
@@ -122,9 +122,9 @@ class Expectable {
 
         switch (result) {
             case RECEIVED_NOT_ARRAY:
-                throw new Error(ctorName(this) + ' constructor\'s options.params property was not an Array.');
+                throw new TypeError(ctorName(this) + ' constructor\'s options.params property was not an Array.');
             case EXPECTED_NOT_ARRAY:
-                throw new Error(ctorName(this) + '#expectedParams() did not return an Array.');
+                throw new TypeError(ctorName(this) + '#expectedParams() did not return an Array.');
             case ARRAYS_NOT_EQUAL:
                 throw new Error([
                     ctorName(this),

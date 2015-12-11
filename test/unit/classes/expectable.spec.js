@@ -46,7 +46,7 @@ describe('Expectable', function() {
 
         it('throws if options.addresses is not an array', () => {
             delete defaultOpts.addresses;
-            expect(() => new TestExpectable(defaultOpts)).to.throw(Error, 'TestExpectable constructor\'s options.addresses property was not an Array.');
+            expect(() => new TestExpectable(defaultOpts)).to.throw(TypeError, 'TestExpectable constructor\'s options.addresses property was not an Array.');
         });
 
         it('throws if expectedAddresses() doesn\'t return an array', () => {
@@ -55,7 +55,7 @@ describe('Expectable', function() {
                     return null;
                 }
             }
-            expect(() => new Nope(defaultOpts)).to.throw(Error, 'Nope#expectedAddresses() did not return an Array.');
+            expect(() => new Nope(defaultOpts)).to.throw(TypeError, 'Nope#expectedAddresses() did not return an Array.');
         });
 
         it('throws if options.addresses doesn\'t match expectedAddresses()', () => {
@@ -86,7 +86,7 @@ describe('Expectable', function() {
 
         it('throws if options.outlets is not an object', () => {
             delete defaultOpts.outlets;
-            expect(() => new TestExpectable(defaultOpts)).to.throw(Error, 'TestExpectable constructor\'s options.outlets property was not an Object.');
+            expect(() => new TestExpectable(defaultOpts)).to.throw(TypeError, 'TestExpectable constructor\'s options.outlets property was not an Object.');
         });
 
         it('throws if expectedOutlets() doesn\'t return an array', () => {
@@ -95,19 +95,19 @@ describe('Expectable', function() {
                     return null;
                 }
             }
-            expect(() => new Nope(defaultOpts)).to.throw(Error, 'Nope#expectedOutlets() did not return an Array.');
+            expect(() => new Nope(defaultOpts)).to.throw(TypeError, 'Nope#expectedOutlets() did not return an Array.');
         });
 
         it('throws if any outlet in options.outlet is not an instance of Outlet', () => {
             defaultOpts.outlets = {first: null, second: null};
-            expect(() => new TestExpectable(defaultOpts)).to.throw(Error, [
+            expect(() => new TestExpectable(defaultOpts)).to.throw(TypeError, [
                 'TestExpectable did not receive instances of Outlet for named outlets: ',
                     JSON.stringify(Object.keys(defaultOpts.outlets).sort()),
                 '.',
             ].join(''));
 
             defaultOpts.outlets = {first: new Outlet(document.createElement('div')), second: null};
-            expect(() => new TestExpectable(defaultOpts)).to.throw(Error, 'TestExpectable did not receive instances of Outlet for named outlets: ["second"].');
+            expect(() => new TestExpectable(defaultOpts)).to.throw(TypeError, 'TestExpectable did not receive instances of Outlet for named outlets: ["second"].');
         });
 
         it('throws if options.outlets doesn\'t match expectedOutlets()', () => {
@@ -139,7 +139,7 @@ describe('Expectable', function() {
 
         it('throws if options.params is not an array', () => {
             delete defaultOpts.params;
-            expect(() => new TestExpectable(defaultOpts)).to.throw(Error, 'TestExpectable constructor\'s options.params property was not an Array.');
+            expect(() => new TestExpectable(defaultOpts)).to.throw(TypeError, 'TestExpectable constructor\'s options.params property was not an Array.');
         });
 
         it('throws if expectedParams() doesn\'t return an array', () => {
@@ -148,7 +148,7 @@ describe('Expectable', function() {
                     return null;
                 }
             }
-            expect(() => new Nope(defaultOpts)).to.throw(Error, 'Nope#expectedParams() did not return an Array.');
+            expect(() => new Nope(defaultOpts)).to.throw(TypeError, 'Nope#expectedParams() did not return an Array.');
         });
 
         it('throws if options.params doesn\'t match expectedParams()', () => {
