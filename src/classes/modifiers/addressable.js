@@ -1,5 +1,6 @@
 class Addressable {
     static transform(modified, ...names) {
+        modified.addresses = names;
         modified._argsTransformFns.push(this.passAddresses.bind(null, names));
     }
 
