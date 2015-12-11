@@ -116,7 +116,17 @@ describe('App Functional Tests', () => {
             it.skip('throws if any conditional mount\'s key requires a mount with an address that the App did not register');
 
             it('throws if any conditional mount is not an instance of Route', () => {
+                class AddressRoute extends TestRoute {
+                    expectedAddresses() {
+                        return ['abc'];
+                    }
+                }
                 class MyApp extends TestApp {
+                    mount() {
+                        return {
+                            '/route': AddressRoute.addresses('abc'),
+                        };
+                    }
                     mountConditionals() {
                         return {
                             '!abc': App,
