@@ -284,5 +284,53 @@ describe('Mounting Functional Tests', () => {
                 });
             });
         });
+
+        describe('Params', () => {
+            it('compounds params before passing them to child routes and apps', () => {
+                class NoOutletApp extends App { expectedOutlets() { return []; } }
+                class NoOutletRoute extends Route { expectedOutlets() { return []; } }
+                class ParamRoute extends NoOutletRoute { expectedParams() { return ['id']; } }
+                class ParamConditionalRoute extends NoOutletRoute { expectedParams() { return []; } }
+                class ChildRoute extends NoOutletRoute {
+                    expectedParams() {
+                        return ['name', 'action'];
+                    }
+                }
+                class ChildConditionalRoute extends NoOutletRoute {
+                    expectedParams() {
+                        return ['name'];
+                    }
+                }
+                class ParamApp extends NoOutletApp {
+                    expectedParams() {
+                        return ['name'];
+                    }
+                    mount() {
+                        return {
+                            '/xyz/{action=\\w+}': ChildRoute,
+                        };
+                    }
+                    mountConditionals() {
+                        return {
+                            '*': ChildConditionalRoute,
+                        };
+                    }
+                }
+                class MyRootApp extends RootApp {
+                    mount() {
+                        return {
+                            '/abc/{name=\\w+}': ParamApp,
+                            '/abc/{id=\\d+}': ParamRoute,
+                        };
+                    }
+                    mountConditionals() {
+                        return {
+                            '*': ParamConditionalRoute,
+                        };
+                    }
+                }
+                expect(() => new MyRootApp(defaultOpts)).to.not.throw();
+            });
+        });
     });
 });

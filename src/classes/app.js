@@ -3,6 +3,7 @@ import Modified from './modified';
 import MutableOutlet from './mutable-outlet';
 import Outlet from './outlet';
 import Route from './route';
+import URLMapper from './url-mapper';
 import ctorName from '../utils/ctor-name';
 import { isnt } from '../utils/is';
 
@@ -29,7 +30,8 @@ class App extends Modifiable {
             this._makeOutletsImmutable(opts.outlets);
         }
         this.outlets = this.createOutlets(opts.outlets);
-        this._mounts = this._instantiateMounts();
+        this._urlMapper = new URLMapper();
+        this._instantiateMounts(opts.params);
     }
 
     _registerAddresses(addresses) {
@@ -65,15 +67,13 @@ class App extends Modifiable {
         }
     }
 
-    _instantiateMountInstance(mount, key, isConditional) {
-        let self = this;
+    _instantiateMountInstance(mount, key, isConditional, params) {
         let missingOutlets = [];
         let opts = {
             rootApp: this._rootApp,
             addresses: [],
             outlets: {},
-            // @TODO: pass params
-            params: [],
+            params,
         };
 
         this._checkMountInheritance(mount, key, isConditional);
@@ -98,7 +98,7 @@ class App extends Modifiable {
         }
     }
 
-    _instantiateMounts() {
+    _instantiateMounts(params) {
         // @TODO: make sure to compound and forward params in any case below
         // push params onto the stack (now just a recent-params map)
 
@@ -119,17 +119,19 @@ class App extends Modifiable {
             console.warn(`${ctorName(this)}#mount() returned an empty object.`);
         }
 
-        function conditionalMap(logic, isConditional) {
+        function conditionalMap(logic, isConditional, params) {
             return function(mount) {
-                return this._instantiateMountInstance(mount, logic, isConditional);
+                return this._instantiateMountInstance(mount, logic, isConditional, params);
             };
         }
 
         for (let path in mounts) {
             if (mounts.hasOwnProperty(path)) {
                 let mount = mounts[path];
+                let mountParams = this._urlMapper.add(path).paramNames || [];
+
                 let isConditional = false;
-                finalMounts.normal[path] = this._instantiateMountInstance(mount, path, isConditional);
+                finalMounts.normal[path] = this._instantiateMountInstance(mount, path, isConditional, params.concat(mountParams));
             }
         }
         for (let logic in cMounts) {
@@ -139,10 +141,11 @@ class App extends Modifiable {
                 if (!Array.isArray(mount)) {
                     mount = [mount];
                 }
-                finalMounts.conditional[logic] = mount.map(conditionalMap(logic, isConditional), this);
+                finalMounts.conditional[logic] = mount.map(conditionalMap(logic, isConditional, params), this);
             }
         }
-        return finalMounts;
+
+        this._mounts = finalMounts;
     }
 
     mount() {
