@@ -182,8 +182,6 @@ describe('Expectable', function() {
             expect(() => new ExpectsAnyParams(defaultOpts)).to.not.throw();
             defaultOpts.params = ['nope'];
             expect(() => new ExpectsAnyParams(defaultOpts)).to.not.throw();
-            defaultOpts.params = null;
-            expect(() => new ExpectsAnyParams(defaultOpts)).to.not.throw();
         });
     });
 });

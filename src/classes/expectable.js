@@ -114,7 +114,7 @@ class Expectable {
         let expected = this.expectedParams();
         let result;
 
-        if (expected === '*') {
+        if (expected === '*' && Array.isArray(params)) {
             result = EXPECTED_ANY;
         } else {
             result = this._areArraysEqual(params, expected);
