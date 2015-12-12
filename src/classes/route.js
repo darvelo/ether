@@ -9,11 +9,16 @@ class Route extends Modifiable {
         this._registerAddresses(opts.addresses);
         this.outlets = opts.outlets;
         this._events = {};
+        this.init(opts.setup);
     }
 
     _registerAddresses(addresses) {
         addresses.forEach(name => this._rootApp._registerAddress(name, this));
     }
+
+    // receives setup result if the .setup() modifier
+    // was used to create this instance
+    init(setup) { }
 
     DOMListen(element, evtName, callback, context) {
         if (!(element instanceof Element)) {
@@ -82,6 +87,8 @@ class Route extends Modifiable {
         }
     }
 
+    // user-overridable methods
+
     expectedAddresses() {
         return [];
     }
@@ -94,7 +101,11 @@ class Route extends Modifiable {
         return [];
     }
 
-    // user-overridable methods
+    expectedSetup(setup) {
+        // user can throw if `setup` is not as expected
+        return;
+    }
+
     render() { }
     destroy() { }
     willHide() { }

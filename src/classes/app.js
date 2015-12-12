@@ -44,6 +44,7 @@ class App extends Modifiable {
         this._conditionalMapper = {};
         this._instantiateMounts(opts.params);
         this._instantiateConditionalMounts(opts.params);
+        this.init(opts.setup);
     }
 
     _registerAddresses(addresses) {
@@ -108,6 +109,11 @@ class App extends Modifiable {
             if (Array.isArray(mount.outlets)) {
                 mount.outlets.forEach(assignOptOutlets, this);
                 this._checkForMissingOutlets(mount, key, missingOutlets, isConditional);
+            }
+            // the Setupable modifier,
+            // if the user invoked it, sets this array
+            if(Array.isArray(mount.setupFns)) {
+                opts.setup = mount.setupFns.reduce((memo, fn) => fn(memo), undefined);
             }
             return mount.create(opts);
         } else {
@@ -229,6 +235,10 @@ class App extends Modifiable {
         return {};
     }
 
+    // receives setup result if the .setup() modifier
+    // was used to create this instance
+    init(setup) { }
+
     createOutlets(outlets) {
         return outlets;
     }
@@ -243,6 +253,11 @@ class App extends Modifiable {
 
     expectedParams() {
         return [];
+    }
+
+    expectedSetup(setup) {
+        // user can throw if `setup` is not as expected
+        return;
     }
 }
 

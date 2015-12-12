@@ -28,7 +28,13 @@ class ExpectsAddressesOutletsParams extends ExpectsAddressesOutlets {
     }
 }
 
-class TestExpectable extends ExpectsAddressesOutletsParams { }
+class ExpectsAddressesOutletsParamsSetup extends ExpectsAddressesOutletsParams {
+    expectedSetup() {
+        return;
+    }
+}
+
+class TestExpectable extends ExpectsAddressesOutletsParamsSetup { }
 
 describe('Expectable', function() {
     let defaultOpts;
@@ -41,6 +47,7 @@ describe('Expectable', function() {
                 second: new Outlet(document.createElement('div')),
             },
             params: ['id', 'name'],
+            setup: {},
         };
     });
 
@@ -235,6 +242,26 @@ describe('Expectable', function() {
             expect(() => new ExpectsAnyParams(defaultOpts)).to.not.throw();
             defaultOpts.params = ['nope'];
             expect(() => new ExpectsAnyParams(defaultOpts)).to.not.throw();
+        });
+    });
+
+    describe('expectedSetup() tests', () => {
+        it('throws if expectedSetup() is not defined', () => {
+            expect(() => new ExpectsAddressesOutletsParams(defaultOpts)).to.throw(Error, 'ExpectsAddressesOutletsParams did not implement expectedSetup().');
+        });
+
+        it('throws if options.setup doesn\'t match expectedSetup()', () => {
+            defaultOpts.setup.test = {};
+            defaultOpts.setup.test.num = 2;
+            class SetupExpectable extends TestExpectable {
+                expectedSetup(setup) {
+                    if (setup.test.num !== 1) {
+                        throw new Error('setup.test.num was not 1. It was ' + setup.test.num);
+                    }
+                    return setup;
+                }
+            }
+            expect(() => new SetupExpectable(defaultOpts)).to.throw(Error, 'setup.test.num was not 1. It was 2');
         });
     });
 });

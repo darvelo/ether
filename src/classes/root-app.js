@@ -61,6 +61,11 @@ class RootApp extends App {
         return [];
     }
 
+    expectedSetup(setup) {
+        // user can throw if `setup` is not as expected
+        return;
+    }
+
     start() {
         window.addEventListener('popstate', this.popstate.bind(this), false);
         window.addEventListener('click', this.interceptLinks.bind(this), false);

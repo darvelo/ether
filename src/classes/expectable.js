@@ -16,6 +16,7 @@ class Expectable {
         this._checkAddresses(opts.addresses);
         this._checkOutlets(opts.outlets);
         this._checkParams(opts.params);
+        this._checkSetup(opts.setup);
     }
 
     expectedAddresses() {
@@ -32,6 +33,10 @@ class Expectable {
 
     expectedParams() {
         throw new Error(ctorName(this) + ' did not implement expectedParams().');
+    }
+
+    expectedSetup(setup) {
+        throw new Error(ctorName(this) + ' did not implement expectedSetup().');
     }
 
     _areArraysEqual(array, expected) {
@@ -182,6 +187,10 @@ class Expectable {
             default:
                 break;
         }
+    }
+
+    _checkSetup(setup) {
+        this.expectedSetup(setup);
     }
 }
 

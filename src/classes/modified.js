@@ -1,5 +1,6 @@
 import Addressable from './modifiers/addressable';
 import OutletsReceivable from './modifiers/outlets-receivable';
+import Setupable from './modifiers/setupable';
 
 class Modified {
     constructor(klass, transformer, ...args) {
@@ -24,6 +25,11 @@ class Modified {
 
     outlets(...args) {
         this._transform(OutletsReceivable, ...args);
+        return this;
+    }
+
+    setup(...args) {
+        this._transform(Setupable, ...args);
         return this;
     }
 }

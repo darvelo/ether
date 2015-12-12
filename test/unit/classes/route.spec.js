@@ -68,6 +68,37 @@ describe('Route', () => {
             expect(route.outlets.first).to.equal(firstOutlet);
             expect(route.outlets.second).to.equal(secondOutlet);
         });
+
+        it('calls init() after outlets are available', () => {
+            let outlet = new MutableOutlet(document.createElement('div'));
+            defaultOpts.outlets.myOutlet = outlet;
+            let spy = sinon.spy(function(instance) {
+                expect(instance.outlets).to.deep.equal({
+                    myOutlet: outlet,
+                });
+            });
+            class RouteWithOutlets extends TestRoute {
+                expectedOutlets() {
+                    return ['myOutlet'];
+                }
+                init() {
+                    spy(this);
+                }
+            }
+            let route = new RouteWithOutlets(defaultOpts);
+            spy.should.have.been.calledOnce;
+            spy.should.have.been.calledWith(route);
+        });
+
+        it('passes options.setup to init()', () => {
+            defaultOpts.setup = [1, 2, 3];
+            class RouteWithSetup extends TestRoute {
+                init(setup) {
+                    expect(setup).to.deep.equal([1, 2, 3]);
+                }
+            }
+            let route = new RouteWithSetup(defaultOpts);
+        });
     });
 
     describe('DOMEvents', () => {

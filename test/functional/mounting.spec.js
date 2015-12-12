@@ -349,5 +349,174 @@ describe('Mounting Functional Tests', () => {
                 expect(() => new MyRootApp(defaultOpts)).to.not.throw();
             });
         });
+
+        describe('User-Defined Setup', () => {
+            it('calls setupFns in order', () => {
+                let appSpy1 = sinon.spy();
+                let appSpy2 = sinon.spy();
+                let routeSpy1 = sinon.spy();
+                let routeSpy2 = sinon.spy();
+                let conditionalRoute1Spy1 = sinon.spy();
+                let conditionalRoute1Spy2 = sinon.spy();
+                let conditionalRoute2Spy1 = sinon.spy();
+                let conditionalRoute2Spy2 = sinon.spy();
+                class SetupApp extends TestApp { }
+                class SetupRoute extends TestRoute { }
+                class MyRootApp extends RootApp {
+                    mount() {
+                        return {
+                            'abc': SetupApp.setup(appSpy1, appSpy2),
+                            'xyz': SetupRoute.setup(routeSpy1, routeSpy2),
+                        };
+                    }
+                    mountConditionals() {
+                        return {
+                            '*': [
+                                SetupRoute.setup(conditionalRoute1Spy1, conditionalRoute1Spy2),
+                                SetupRoute.setup(conditionalRoute2Spy1, conditionalRoute2Spy2),
+                            ],
+                        };
+                    }
+                }
+                let rootApp = new MyRootApp(defaultOpts);
+                appSpy2.should.have.been.calledAfter(appSpy1);
+                routeSpy2.should.have.been.calledAfter(routeSpy1);
+                conditionalRoute1Spy2.should.have.been.calledAfter(conditionalRoute1Spy1);
+                conditionalRoute2Spy2.should.have.been.calledAfter(conditionalRoute2Spy1);
+            });
+
+            it('passes the cumulative result of the return values of all setupFns to expectedSetup() and init()', () => {
+                let appFns = [
+                    function() { return {appOne: 1}; },
+                    function(obj) { obj.appTwo = 2; return obj; },
+                ];
+                let routeFns = [
+                    function() { return {routeOne: 1}; },
+                    function(obj) { obj.routeTwo = 2; return obj; },
+                ];
+                let conditionalRoute1Fns = [
+                    function() { return {cond1One: 1}; },
+                    function(obj) { obj.cond1Two = 2; return obj; },
+                ];
+                let conditionalRoute2Fns = [
+                    function() { return {cond2One: 1}; },
+                    function(obj) { obj.cond2Two = 2; return obj; },
+                ];
+                let childAppFns = [
+                    function() { return {childAppOne: 1}; },
+                    function(obj) { obj.childAppTwo = 2; return obj; },
+                ];
+                let childRouteFns = [
+                    function() { return {childRouteOne: 1}; },
+                    function(obj) { obj.childRouteTwo = 2; return obj; },
+                ];
+                let childConditionalRoute1Fns = [
+                    function() { return {childCond1One: 1}; },
+                    function(obj) { obj.childCond1Two = 2; return obj; },
+                ];
+                let childConditionalRoute2Fns = [
+                    function() { return {childCond2One: 1}; },
+                    function(obj) { obj.childCond2Two = 2; return obj; },
+                ];
+                class ChildApp extends TestApp {
+                    expectedSetup() { }
+                    init() { }
+                }
+                class ChildRoute extends TestRoute {
+                    expectedSetup() { }
+                    init() { }
+                }
+                class SetupApp extends TestApp {
+                    expectedSetup() { }
+                    init() { }
+                    mount() {
+                        return {
+                            'abc': ChildApp.setup(...childAppFns),
+                            'xyz': ChildRoute.setup(...childRouteFns),
+                        };
+                    }
+                    mountConditionals() {
+                        return {
+                            '*': [
+                                ChildRoute.setup(...childConditionalRoute1Fns),
+                                ChildRoute.setup(...childConditionalRoute2Fns),
+                            ],
+                        };
+                    }
+                }
+                class SetupRoute extends TestRoute {
+                    expectedSetup() { }
+                    init() { }
+                }
+                class MyRootApp extends RootApp {
+                    expectedSetup() { }
+                    init() { }
+                    mount() {
+                        return {
+                            'abc': SetupApp.setup(...appFns),
+                            'xyz': SetupRoute.setup(...routeFns),
+                        };
+                    }
+                    mountConditionals() {
+                        return {
+                            '*': [
+                                SetupRoute.setup(...conditionalRoute1Fns),
+                                SetupRoute.setup(...conditionalRoute2Fns),
+                            ],
+                        };
+                    }
+                }
+                let appExpectedSpy = sinon.spy(SetupApp.prototype, 'expectedSetup');
+                let routeExpectedSpy = sinon.spy(SetupRoute.prototype, 'expectedSetup');
+
+                let appInitSpy = sinon.spy(SetupApp.prototype, 'init');
+                let routeInitSpy = sinon.spy(SetupRoute.prototype, 'init');
+
+                let childAppExpectedSpy = sinon.spy(ChildApp.prototype, 'expectedSetup');
+                let childRouteExpectedSpy = sinon.spy(ChildRoute.prototype, 'expectedSetup');
+
+                let childAppInitSpy = sinon.spy(ChildApp.prototype, 'init');
+                let childRouteInitSpy = sinon.spy(ChildRoute.prototype, 'init');
+
+                let rootApp = new MyRootApp(defaultOpts);
+
+                appExpectedSpy.should.have.been.calledOnce;
+                appExpectedSpy.should.have.been.calledWith({appOne: 1, appTwo: 2});
+                routeExpectedSpy.should.have.been.callThrice;
+                routeExpectedSpy.should.have.been.calledWith({routeOne: 1, routeTwo: 2});
+                routeExpectedSpy.should.have.been.calledWith({cond1One: 1, cond1Two: 2});
+                routeExpectedSpy.should.have.been.calledWith({cond2One: 1, cond2Two: 2});
+
+                appInitSpy.should.have.been.calledOnce;
+                appInitSpy.should.have.been.calledWith({appOne: 1, appTwo: 2});
+                routeInitSpy.should.have.been.callThrice;
+                routeInitSpy.should.have.been.calledWith({routeOne: 1, routeTwo: 2});
+                routeInitSpy.should.have.been.calledWith({cond1One: 1, cond1Two: 2});
+                routeInitSpy.should.have.been.calledWith({cond2One: 1, cond2Two: 2});
+
+                childAppExpectedSpy.should.have.been.calledOnce;
+                childAppExpectedSpy.should.have.been.calledWith({childAppOne: 1, childAppTwo: 2});
+                childRouteExpectedSpy.should.have.been.callThrice;
+                childRouteExpectedSpy.should.have.been.calledWith({childCond2One: 1, childCond2Two: 2});
+                childRouteExpectedSpy.should.have.been.calledWith({childCond1One: 1, childCond1Two: 2});
+                childRouteExpectedSpy.should.have.been.calledWith({childCond2One: 1, childCond2Two: 2});
+
+                childAppInitSpy.should.have.been.calledOnce;
+                childAppInitSpy.should.have.been.calledWith({childAppOne: 1, childAppTwo: 2});
+                childRouteInitSpy.should.have.been.callThrice;
+                childRouteInitSpy.should.have.been.calledWith({childCond2One: 1, childCond2Two: 2});
+                childRouteInitSpy.should.have.been.calledWith({childCond1One: 1, childCond1Two: 2});
+                childRouteInitSpy.should.have.been.calledWith({childCond2One: 1, childCond2Two: 2});
+
+                appExpectedSpy.restore();
+                routeExpectedSpy.restore();
+                appInitSpy.restore();
+                routeInitSpy.restore();
+                childAppExpectedSpy.restore();
+                childRouteExpectedSpy.restore();
+                childAppInitSpy.restore();
+                childRouteInitSpy.restore();
+            });
+        });
     });
 });

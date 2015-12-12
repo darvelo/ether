@@ -137,5 +137,36 @@ describe('App', function() {
             app.outlets.first.append(child);
             expect(child.parentNode).to.equal(parent);
         });
+
+        it('calls init() after outlets are available', () => {
+            let outlet = new MutableOutlet(document.createElement('div'));
+            let spy = sinon.spy(function(instance) {
+                expect(instance.outlets).to.deep.equal({
+                    myOutlet: outlet,
+                });
+            });
+            class AppWithOutlets extends TestApp {
+                createOutlets(outlets) {
+                    outlets.myOutlet = outlet;
+                    return outlets;
+                }
+                init() {
+                    spy(this);
+                }
+            }
+            let app = new AppWithOutlets(defaultOpts);
+            spy.should.have.been.calledOnce;
+            spy.should.have.been.calledWith(app);
+        });
+
+        it('passes options.setup to init()', () => {
+            defaultOpts.setup = [1, 2, 3];
+            class AppWithSetup extends TestApp {
+                init(setup) {
+                    expect(setup).to.deep.equal([1, 2, 3]);
+                }
+            }
+            let app = new AppWithSetup(defaultOpts);
+        });
     });
 });
