@@ -387,36 +387,36 @@ describe('Mounting Functional Tests', () => {
 
             it('passes the cumulative result of the return values of all setupFns to expectedSetup() and init()', () => {
                 let appFns = [
-                    function() { return {appOne: 1}; },
-                    function(obj) { obj.appTwo = 2; return obj; },
+                    function() { return 1; },
+                    function(num) { return {app: num+1}; },
                 ];
                 let routeFns = [
-                    function() { return {routeOne: 1}; },
-                    function(obj) { obj.routeTwo = 2; return obj; },
+                    function() { return 1; },
+                    function(num) { return {route: num+1}; },
                 ];
                 let conditionalRoute1Fns = [
-                    function() { return {cond1One: 1}; },
-                    function(obj) { obj.cond1Two = 2; return obj; },
+                    function() { return 1; },
+                    function(num) { return {cond1: num+1}; },
                 ];
                 let conditionalRoute2Fns = [
-                    function() { return {cond2One: 1}; },
-                    function(obj) { obj.cond2Two = 2; return obj; },
+                    function() { return 1; },
+                    function(num) { return {cond2: num+1}; },
                 ];
                 let childAppFns = [
-                    function() { return {childAppOne: 1}; },
-                    function(obj) { obj.childAppTwo = 2; return obj; },
+                    function() { return 1; },
+                    function(num) { return {childApp: num+1}; },
                 ];
                 let childRouteFns = [
-                    function() { return {childRouteOne: 1}; },
-                    function(obj) { obj.childRouteTwo = 2; return obj; },
+                    function() { return 1; },
+                    function(num) { return {childRoute: num+1}; },
                 ];
                 let childConditionalRoute1Fns = [
-                    function() { return {childCond1One: 1}; },
-                    function(obj) { obj.childCond1Two = 2; return obj; },
+                    function() { return 1; },
+                    function(num) { return {childCond1: num+1}; },
                 ];
                 let childConditionalRoute2Fns = [
-                    function() { return {childCond2One: 1}; },
-                    function(obj) { obj.childCond2Two = 2; return obj; },
+                    function() { return 1; },
+                    function(num) { return {childCond2: num+1}; },
                 ];
                 class ChildApp extends TestApp {
                     expectedSetup() { }
@@ -481,32 +481,32 @@ describe('Mounting Functional Tests', () => {
                 let rootApp = new MyRootApp(defaultOpts);
 
                 appExpectedSpy.should.have.been.calledOnce;
-                appExpectedSpy.should.have.been.calledWith({appOne: 1, appTwo: 2});
+                appExpectedSpy.should.have.been.calledWith({app: 2});
                 routeExpectedSpy.should.have.been.callThrice;
-                routeExpectedSpy.should.have.been.calledWith({routeOne: 1, routeTwo: 2});
-                routeExpectedSpy.should.have.been.calledWith({cond1One: 1, cond1Two: 2});
-                routeExpectedSpy.should.have.been.calledWith({cond2One: 1, cond2Two: 2});
+                routeExpectedSpy.should.have.been.calledWith({route: 2});
+                routeExpectedSpy.should.have.been.calledWith({cond1: 2});
+                routeExpectedSpy.should.have.been.calledWith({cond2: 2});
 
                 appInitSpy.should.have.been.calledOnce;
-                appInitSpy.should.have.been.calledWith({appOne: 1, appTwo: 2});
+                appInitSpy.should.have.been.calledWith({app: 2});
                 routeInitSpy.should.have.been.callThrice;
-                routeInitSpy.should.have.been.calledWith({routeOne: 1, routeTwo: 2});
-                routeInitSpy.should.have.been.calledWith({cond1One: 1, cond1Two: 2});
-                routeInitSpy.should.have.been.calledWith({cond2One: 1, cond2Two: 2});
+                routeInitSpy.should.have.been.calledWith({route: 2});
+                routeInitSpy.should.have.been.calledWith({cond1: 2});
+                routeInitSpy.should.have.been.calledWith({cond2: 2});
 
                 childAppExpectedSpy.should.have.been.calledOnce;
-                childAppExpectedSpy.should.have.been.calledWith({childAppOne: 1, childAppTwo: 2});
+                childAppExpectedSpy.should.have.been.calledWith({childApp: 2});
                 childRouteExpectedSpy.should.have.been.callThrice;
-                childRouteExpectedSpy.should.have.been.calledWith({childCond2One: 1, childCond2Two: 2});
-                childRouteExpectedSpy.should.have.been.calledWith({childCond1One: 1, childCond1Two: 2});
-                childRouteExpectedSpy.should.have.been.calledWith({childCond2One: 1, childCond2Two: 2});
+                childRouteExpectedSpy.should.have.been.calledWith({childRoute: 2});
+                childRouteExpectedSpy.should.have.been.calledWith({childCond1: 2});
+                childRouteExpectedSpy.should.have.been.calledWith({childCond2: 2});
 
                 childAppInitSpy.should.have.been.calledOnce;
-                childAppInitSpy.should.have.been.calledWith({childAppOne: 1, childAppTwo: 2});
+                childAppInitSpy.should.have.been.calledWith({childApp: 2});
                 childRouteInitSpy.should.have.been.callThrice;
-                childRouteInitSpy.should.have.been.calledWith({childCond2One: 1, childCond2Two: 2});
-                childRouteInitSpy.should.have.been.calledWith({childCond1One: 1, childCond1Two: 2});
-                childRouteInitSpy.should.have.been.calledWith({childCond2One: 1, childCond2Two: 2});
+                childRouteInitSpy.should.have.been.calledWith({childRoute: 2});
+                childRouteInitSpy.should.have.been.calledWith({childCond1: 2});
+                childRouteInitSpy.should.have.been.calledWith({childCond2: 2});
 
                 appExpectedSpy.restore();
                 routeExpectedSpy.restore();
