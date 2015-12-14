@@ -1,4 +1,4 @@
-import URLMapper from '../../../src/classes/url-mapper';
+import MountMapper from '../../../src/classes/mount-mapper';
 
 // test regex equality
 // see: http://stackoverflow.com/questions/10776600/testing-for-equality-of-regular-expressions
@@ -20,11 +20,11 @@ function regexEqual(r1, r2) {
     return true;
 }
 
-describe('URLMapper', () => {
+describe('MountMapper', () => {
     let mapper;
 
     beforeEach(() => {
-        mapper = new URLMapper();
+        mapper = new MountMapper();
     });
 
     it('processes url regex-like specs into actual regex', () => {

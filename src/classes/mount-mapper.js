@@ -4,14 +4,14 @@ function isNumeric(str) {
     return !isNaN(str);
 }
 
-class URLMapper {
+class MountMapper {
     constructor() {
-        this._urlMap = {};
+        this._crumbMap = {};
         this._sortedPatterns = [];
     }
 
     clear() {
-        this._urlMap = {};
+        this._crumbMap = {};
         this._sortedPatterns = [];
     }
 
@@ -84,25 +84,25 @@ class URLMapper {
                     mode = PARAM_VALUE_MODE;
                     let name = patternStr.slice(leftBound, cursor);
                     if (existingParamNames[name]) {
-                        throw new RangeError('URLMapper: Parameter name "' + name + '" was given more than once in pattern ' + patternStr);
+                        throw new RangeError('MountMapper: Parameter name "' + name + '" was given more than once in pattern ' + patternStr);
                     }
                     existingParamNames[name] = true;
                     paramNames.push(name);
                     finalRegex.push('(');
                     leftBound = cursor+1;
                 } else if (escapes[c] || c === '{' || c === '}') {
-                    throw new Error('Ether URLMapper: The "' + c + '" character is not allowed in a parameter name. Pattern given was ' + patternStr);
+                    throw new Error('Ether MountMapper: The "' + c + '" character is not allowed in a parameter name. Pattern given was ' + patternStr);
                 }
             } else if (mode === PARAM_VALUE_MODE) {
                 if (c === '/') {
-                    throw new Error('Ether URLMapper: The "/" character is not allowed in the regex of a parameter value. Pattern given was ' + patternStr);
+                    throw new Error('Ether MountMapper: The "/" character is not allowed in the regex of a parameter value. Pattern given was ' + patternStr);
                 } else if (c === '(' && patternStr[cursor-1] !== '\\') {
                     let token = patternStr.slice(cursor, cursor+3);
                     if (token !== '(?:' &&
                         token !== '(?=' &&
                         token !== '(?!' )
                     {
-                        throw new Error('Ether URLMapper: Capturing groups are not allowed in the regex of a parameter value. Pattern given was ' + patternStr);
+                        throw new Error('Ether MountMapper: Capturing groups are not allowed in the regex of a parameter value. Pattern given was ' + patternStr);
                     }
                 } else if (c === '{') {
                     bracesCount++;
@@ -120,7 +120,7 @@ class URLMapper {
         }
 
         if (mode !== NORMAL_MODE) {
-            throw new Error('Ether URLMapper: Malformed pattern ' + patternStr);
+            throw new Error('Ether MountMapper: Malformed pattern ' + patternStr);
         }
 
         if (leftBound < cursor) {
@@ -131,7 +131,7 @@ class URLMapper {
         // any "extra" chars will be passed along to child Apps
         finalRegex.push('(.*)');
 
-        let mapped = this._urlMap[patternStr] = {
+        let mapped = this._crumbMap[patternStr] = {
             regex: new RegExp(finalRegex.join('')),
             slashes: slashesCount,
             paramNames: paramNames.length ? paramNames : null,
@@ -166,7 +166,7 @@ class URLMapper {
             // somehow we have more params than expected,
             // even though we took match's first array val
             // and the captured value of the "rest of path" into account
-            throw new Error('Ether URLMapper: The number of parameters in the given path exceeded the amount given in the pattern. This is likely a bug. Path was "' + path + '" and regex was ' + pattern.regex.source);
+            throw new Error('Ether MountMapper: The number of parameters in the given path exceeded the amount given in the pattern. This is likely a bug. Path was "' + path + '" and regex was ' + pattern.regex.source);
         }
 
         let ret = {params:{}};
@@ -183,19 +183,19 @@ class URLMapper {
     }
 
     regexFor(pattern) {
-        let mapped = this._urlMap[pattern];
+        let mapped = this._crumbMap[pattern];
         return mapped && mapped.regex;
     }
 
     paramsFor(pattern) {
-        let mapped = this._urlMap[pattern];
+        let mapped = this._crumbMap[pattern];
         return mapped && mapped.paramNames;
     }
 
     slashesFor(pattern) {
-        let mapped = this._urlMap[pattern];
+        let mapped = this._crumbMap[pattern];
         return mapped && mapped.slashes;
     }
 }
 
-export default URLMapper;
+export default MountMapper;

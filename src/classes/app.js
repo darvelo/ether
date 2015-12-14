@@ -3,7 +3,7 @@ import Modified from './modified';
 import MutableOutlet from './mutable-outlet';
 import Outlet from './outlet';
 import Route from './route';
-import URLMapper from './url-mapper';
+import MountMapper from './mount-mapper';
 import ctorName from '../utils/ctor-name';
 import { isnt } from '../utils/is';
 
@@ -30,14 +30,14 @@ class App extends Modifiable {
             this._makeOutletsImmutable(opts.outlets);
         }
         this.outlets = this.createOutlets(opts.outlets);
-        this._urlMapper = new URLMapper();
+        this._mountMapper = new MountMapper();
         // maps paths from mount() to their addresses, if any.
         // used when testing whether mountConditionals() mounts
         // are referencing addresses that weren't created here,
         // and whether on routing conditional mounts need to be
         // rendered or destroyed.
         this._mountAddresses = {};
-        // @TODO: make a class that combines URLMapper and NavigationStackMap
+        // @TODO: make a class that combines MountMapper and NavigationStackMap
         //        so that it's easier to make queries and check for changes.
         //        different classes for handling mounts and conditionalMounts
         //        with a similar API would be nice.
@@ -136,7 +136,7 @@ class App extends Modifiable {
         for (let path of Object.keys(mounts)) {
             let isConditional = false;
             let mount = mounts[path];
-            let mountParams = this._urlMapper.add(path).paramNames || [];
+            let mountParams = this._mountMapper.add(path).paramNames || [];
             let conflictingParams = [];
             for (let mountParam of mountParams) {
                 if (params.indexOf(mountParam) !== -1) {
@@ -210,7 +210,7 @@ class App extends Modifiable {
         this._cMounts = instances;
     }
 
-    // @TODO: replace this with a URLMapper type of class
+    // @TODO: replace this with a MountMapper type of class
     _addConditionalMap(logic, localAddresses, failedAddressLookups) {
         if (['*', '+', '!'].indexOf(logic[0]) === -1) {
             throw new Error('invalid conditional mount key');
