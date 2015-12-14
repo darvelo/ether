@@ -33,6 +33,7 @@
         "expect": true,
         "require": true,
         "sinon": true,
-        "Element": true
+        "Element": true,
+        "regexEqual": true
     }
 }
