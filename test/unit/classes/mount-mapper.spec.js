@@ -101,23 +101,50 @@ describe('MountMapper', () => {
     });
 
     describe('Info Retrieval', () => {
-        it('gets regex for a crumb', () => {
-            let crumb = '/path/{id=\\d+}/somewhere';
-            let expected = /^\/path\/(\d+)\/somewhere(.*)/;
-            mapper.add(crumb);
-            expect(regexEqual(expected, mapper.regexFor(crumb))).to.be.ok;
+        describe('Getting Regex', () => {
+            it('returns undefined for a non-existent crumb', () => {
+                let crumb = '/path/{id=\\d+}/somewhere';
+                expect(mapper.regexFor(crumb)).to.equal(undefined);
+            });
+
+            it('returns regex for a crumb', () => {
+                let crumb = '/path/{id=\\d+}/somewhere';
+                let expected = /^\/path\/(\d+)\/somewhere(.*)/;
+                mapper.add(crumb);
+                expect(regexEqual(expected, mapper.regexFor(crumb))).to.be.ok;
+            });
         });
 
-        it('gets param names for a crumb', () => {
-            let crumb = '/path/{id=\\d+}/somewhere';
-            mapper.add(crumb);
-            expect(mapper.paramNamesFor(crumb)).to.deep.equal(['id']);
+        describe('Getting Param Names', () => {
+            it('returns undefined for a non-existent crumb', () => {
+                let crumb = '/path/{id=\\d+}/somewhere';
+                expect(mapper.paramNamesFor(crumb)).to.equal(undefined);
+            });
+
+            it('returns an empty array if a crumb has no params', () => {
+                let crumb = '/path/to/somewhere';
+                mapper.add(crumb);
+                expect(mapper.paramNamesFor(crumb)).to.deep.equal([]);
+            });
+
+            it('gets param names for a crumb', () => {
+                let crumb = '/path/{id=\\d+}/somewhere';
+                mapper.add(crumb);
+                expect(mapper.paramNamesFor(crumb)).to.deep.equal(['id']);
+            });
         });
 
-        it('gets slash character count for a crumb', () => {
-            let crumb = '/path/to/somewhere';
-            mapper.add(crumb);
-            expect(mapper.slashesFor(crumb)).to.equal(3);
+        describe('Getting Slashes', () => {
+            it('returns undefined for a non-existent crumb', () => {
+                let crumb = '/path/{id=\\d+}/somewhere';
+                expect(mapper.slashesFor(crumb)).to.equal(undefined);
+            });
+
+            it('gets slash character count for a crumb', () => {
+                let crumb = '/path/to/somewhere';
+                mapper.add(crumb);
+                expect(mapper.slashesFor(crumb)).to.equal(3);
+            });
         });
     });
 

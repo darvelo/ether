@@ -137,7 +137,8 @@ class App extends Modifiable {
         for (let path of Object.keys(mounts)) {
             let isConditional = false;
             let mount = mounts[path];
-            let mountParams = this._mountMapper.add(path).paramNames || [];
+            this._mountMapper.add(path);
+            let mountParams =  this._mountMapper.paramNamesFor(path);
             let conflictingParams = [];
             for (let mountParam of mountParams) {
                 if (params.indexOf(mountParam) !== -1) {

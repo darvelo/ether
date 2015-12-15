@@ -138,7 +138,6 @@ class MountMapper {
         this._crumbMap[crumb] = parseResult;
         this._sortedCrumbs.push(parseResult);
         mergesort(this._sortedCrumbs, this._sortFn);
-        return parseResult;
     }
 
     // @TODO: parse querystring parameters
@@ -188,7 +187,11 @@ class MountMapper {
 
     paramNamesFor(crumb) {
         let mapped = this._crumbMap[crumb];
-        return mapped && mapped.paramNames;
+        if (mapped) {
+            return mapped.paramNames || [];
+        }
+        // return undefined if crumb didn't exist
+        return;
     }
 
     slashesFor(crumb) {
