@@ -7,28 +7,28 @@ function isNumeric(str) {
 class MountMapper {
     constructor() {
         this._crumbMap = {};
-        this._sortedPatterns = [];
+        this._sortedCrumbs = [];
     }
 
     clear() {
         this._crumbMap = {};
-        this._sortedPatterns = [];
+        this._sortedCrumbs = [];
     }
 
     _sortFn(a, b) {
-        // patterns with more slashes are are placed at the beginning
+        // crumbs with more slashes are are placed at the beginning
         return b.slashes - a.slashes;
     }
 
-    add(patternStr) {
+    add(crumb) {
         const NORMAL_MODE = 1;
         const PARAM_NAME_MODE = 2;
         const PARAM_VALUE_MODE = 3;
 
         let mode = NORMAL_MODE;
-        let len = patternStr.length;
+        let len = crumb.length;
         let finalRegex = [];
-        // holds user-supplied properties encoded within pattern string
+        // holds user-supplied properties encoded within crumb
         let paramNames = [];
         let existingParamNames = {};
         // keeps track of string position when we need to push a slice of it
@@ -36,7 +36,7 @@ class MountMapper {
         let leftBound = 0;
         // the current position (index) while processing the string
         let cursor = 0;
-        // used to test for malformed pattern string
+        // used to test for malformed crumb
         let bracesCount = 0;
         // will be stored in final urlmap data structure.
         // useful for sorting mapped urls by "path length"
@@ -56,7 +56,7 @@ class MountMapper {
         finalRegex.push('^');
 
         for (; cursor < len; ++cursor) {
-            let c = patternStr[cursor];
+            let c = crumb[cursor];
             if (mode === NORMAL_MODE) {
                 let pushSlice = false;
                 let escape    = false;
@@ -73,7 +73,7 @@ class MountMapper {
                 }
 
                 if (pushSlice) {
-                    finalRegex.push(patternStr.slice(leftBound, cursor));
+                    finalRegex.push(crumb.slice(leftBound, cursor));
                     leftBound = cursor+1;
                 }
                 if (escape) {
@@ -82,27 +82,27 @@ class MountMapper {
             } else if (mode === PARAM_NAME_MODE) {
                 if (c === '=') {
                     mode = PARAM_VALUE_MODE;
-                    let name = patternStr.slice(leftBound, cursor);
+                    let name = crumb.slice(leftBound, cursor);
                     if (existingParamNames[name]) {
-                        throw new RangeError('MountMapper: Parameter name "' + name + '" was given more than once in pattern ' + patternStr);
+                        throw new RangeError('MountMapper: Parameter name "' + name + '" was given more than once in breadcrumb ' + crumb);
                     }
                     existingParamNames[name] = true;
                     paramNames.push(name);
                     finalRegex.push('(');
                     leftBound = cursor+1;
                 } else if (escapes[c] || c === '{' || c === '}') {
-                    throw new Error('Ether MountMapper: The "' + c + '" character is not allowed in a parameter name. Pattern given was ' + patternStr);
+                    throw new Error('Ether MountMapper: The "' + c + '" character is not allowed in a parameter name. Breadcrumb given was ' + crumb);
                 }
             } else if (mode === PARAM_VALUE_MODE) {
                 if (c === '/') {
-                    throw new Error('Ether MountMapper: The "/" character is not allowed in the regex of a parameter value. Pattern given was ' + patternStr);
-                } else if (c === '(' && patternStr[cursor-1] !== '\\') {
-                    let token = patternStr.slice(cursor, cursor+3);
+                    throw new Error('Ether MountMapper: The "/" character is not allowed in the regex of a parameter value. Breadcrumb given was ' + crumb);
+                } else if (c === '(' && crumb[cursor-1] !== '\\') {
+                    let token = crumb.slice(cursor, cursor+3);
                     if (token !== '(?:' &&
                         token !== '(?=' &&
                         token !== '(?!' )
                     {
-                        throw new Error('Ether MountMapper: Capturing groups are not allowed in the regex of a parameter value. Pattern given was ' + patternStr);
+                        throw new Error('Ether MountMapper: Capturing groups are not allowed in the regex of a parameter value. Breadcrumb given was ' + crumb);
                     }
                 } else if (c === '{') {
                     bracesCount++;
@@ -111,7 +111,7 @@ class MountMapper {
                         bracesCount--;
                     } else {
                         mode = NORMAL_MODE;
-                        finalRegex.push(patternStr.slice(leftBound, cursor));
+                        finalRegex.push(crumb.slice(leftBound, cursor));
                         finalRegex.push(')');
                         leftBound = cursor+1;
                     }
@@ -120,35 +120,35 @@ class MountMapper {
         }
 
         if (mode !== NORMAL_MODE) {
-            throw new Error('Ether MountMapper: Malformed pattern ' + patternStr);
+            throw new Error('Ether MountMapper: Malformed breadcrumb ' + crumb);
         }
 
         if (leftBound < cursor) {
-            finalRegex.push(patternStr.slice(leftBound, cursor));
+            finalRegex.push(crumb.slice(leftBound, cursor));
         }
 
-        // capture anything after the user-given pattern string.
+        // capture anything after the user-given crumb.
         // any "extra" chars will be passed along to child Apps
         finalRegex.push('(.*)');
 
-        let mapped = this._crumbMap[patternStr] = {
+        let mapped = this._crumbMap[crumb] = {
             regex: new RegExp(finalRegex.join('')),
             slashes: slashesCount,
             paramNames: paramNames.length ? paramNames : null,
         };
 
-        this._sortedPatterns.push(mapped);
-        mergesort(this._sortedPatterns, this._sortFn);
+        this._sortedCrumbs.push(mapped);
+        mergesort(this._sortedCrumbs, this._sortFn);
         return mapped;
     }
 
     // @TODO: parse querystring parameters
     match(path) {
-        let pattern;
+        let crumb;
         let theMatch;
 
-        for (pattern of this._sortedPatterns) {
-            theMatch = pattern.regex.exec(path);
+        for (crumb of this._sortedCrumbs) {
+            theMatch = crumb.regex.exec(path);
             if (theMatch) {
                 break;
             }
@@ -159,14 +159,14 @@ class MountMapper {
         }
 
         let len = theMatch.length;
-        let paramNames = pattern.paramNames;
+        let paramNames = crumb.paramNames;
         let namesLen = paramNames ? paramNames.length : 0;
 
         if (len-namesLen > 2) {
             // somehow we have more params than expected,
             // even though we took match's first array val
             // and the captured value of the "rest of path" into account
-            throw new Error('Ether MountMapper: The number of parameters in the given path exceeded the amount given in the pattern. This is likely a bug. Path was "' + path + '" and regex was ' + pattern.regex.source);
+            throw new Error('Ether MountMapper: The number of parameters in the given path exceeded the amount given in the breadcrumb. This is likely a bug. Path was "' + path + '" and regex was ' + crumb.regex.source);
         }
 
         let ret = {params:{}};
@@ -182,18 +182,18 @@ class MountMapper {
         return ret;
     }
 
-    regexFor(pattern) {
-        let mapped = this._crumbMap[pattern];
+    regexFor(crumb) {
+        let mapped = this._crumbMap[crumb];
         return mapped && mapped.regex;
     }
 
-    paramNamesFor(pattern) {
-        let mapped = this._crumbMap[pattern];
+    paramNamesFor(crumb) {
+        let mapped = this._crumbMap[crumb];
         return mapped && mapped.paramNames;
     }
 
-    slashesFor(pattern) {
-        let mapped = this._crumbMap[pattern];
+    slashesFor(crumb) {
+        let mapped = this._crumbMap[crumb];
         return mapped && mapped.slashes;
     }
 }
