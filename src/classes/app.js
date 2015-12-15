@@ -4,6 +4,7 @@ import MutableOutlet from './mutable-outlet';
 import Outlet from './outlet';
 import Route from './route';
 import MountMapper from './mount-mapper';
+import ConditionalMountMapper from './conditional-mount-mapper';
 import ctorName from '../utils/ctor-name';
 import { isnt } from '../utils/is';
 
@@ -31,6 +32,7 @@ class App extends Modifiable {
         }
         this.outlets = this.createOutlets(opts.outlets);
         this._mountMapper = new MountMapper();
+        this._conditionalMountMapper = new ConditionalMountMapper();
         // maps paths from mount() to their addresses, if any.
         // used when testing whether mountConditionals() mounts
         // are referencing addresses that weren't created here,
@@ -160,70 +162,42 @@ class App extends Modifiable {
 
     _instantiateConditionalMounts(params) {
         let cMounts = this.mountConditionals();
-        let instances = {};
 
         if (isnt(cMounts, 'Object')) {
             throw new TypeError(ctorName(this) + '#mountConditionals() did not return an object.');
         }
 
-        function createInstance(logic, params, isConditional) {
-            return function(mount) {
-                return this._instantiateMountInstance(mount, logic, params, isConditional);
-            };
-        }
+        // data the ConditionalMountMapper uses in
+        // the creation of the conditional mount instance
+        let data = {
+            rootApp: this._rootApp,
+            parentApp: this,
+            outlets: this.outlets,
+            params,
+        };
 
         // used to check whether conditional mounts are
         // referencing addresses that weren't created in mount()
-        let localAddresses = {};
-        let failedAddressLookups = {};
+        let localAddresses = [];
         let mountAddresses = this._mountAddresses;
         for (let path of Object.keys(mountAddresses)) {
             for (let address of mountAddresses[path]) {
-                localAddresses[address] = true;
+                localAddresses.push(address);
             }
         }
+
+        // an immutable list of addresses created locally on this App;
+        // a whitelist of addresses a conditional mount can reference
+        this._conditionalMountMapper.setAddresses(localAddresses);
+
         // create conditional mount instances
         for (let logic of Object.keys(cMounts)) {
-            let isConditional = true;
-            let mount = cMounts[logic];
-            this._addConditionalMap(logic, localAddresses, failedAddressLookups);
-            if (!Array.isArray(mount)) {
-                mount = [mount];
+            let mounts = cMounts[logic];
+            if (!Array.isArray(mounts)) {
+                mounts = [mounts];
             }
-            instances[logic] = mount.map(createInstance(logic, params, isConditional), this);
+            this._conditionalMountMapper.add(logic, mounts, data);
         }
-        // throw if a conditional mount referenced an
-        // address that wasn't created in mount()
-        failedAddressLookups = Object.keys(failedAddressLookups).sort();
-        if (failedAddressLookups.length) {
-            let ctorname = ctorName(this);
-            throw new Error([
-                ctorname,
-                '#mountConditionals() requires addresses that are not created in ',
-                ctorname,
-                '#mount(): ',
-                JSON.stringify(failedAddressLookups),
-                '.',
-            ].join(''));
-        }
-        this._cMounts = instances;
-    }
-
-    // @TODO: replace this with a MountMapper type of class
-    _addConditionalMap(logic, localAddresses, failedAddressLookups) {
-        if (['*', '+', '!'].indexOf(logic[0]) === -1) {
-            throw new Error('invalid conditional mount key');
-        }
-        if (logic === '*') {
-            return;
-        }
-        let requiredAddresses = logic.slice(1).split(',');
-        for (let address of requiredAddresses) {
-            if (!localAddresses[address]) {
-                failedAddressLookups[address] = true;
-            }
-        }
-        // create regex
     }
 
     mount() {
