@@ -127,9 +127,6 @@ describe('RootApp Functional Tests', () => {
                 expect(() => new MyApp(defaultOpts)).to.throw(TypeError, 'MyApp#mountConditionals() did not return an object.');
             });
 
-            it.skip('throws if a conditional mount\'s address-based id cannot be parsed');
-            it.skip('throws if any conditional mount\'s id requires a mount with an address that the RootApp did not register');
-
             it('throws if any conditional mount is not an instance of Route', () => {
                 class AddressRoute extends OneAddressRoute {
                     expectedAddresses() {
