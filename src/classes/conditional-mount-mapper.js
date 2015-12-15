@@ -148,6 +148,19 @@ class ConditionalMountMapper {
         }
 
         let parseResult = this.parse(logic);
+        let unknownAddresses = parseResult.addresses.filter(addy => !this._addresses[addy]).sort();
+        if (unknownAddresses.length) {
+            let ctorname = ctorName(parentData.parentApp);
+            throw new Error([
+                ctorname,
+                '#mountConditionals() requires addresses that are not created in ',
+                ctorname,
+                '#mount(): ',
+                JSON.stringify(unknownAddresses),
+                '.',
+            ].join(''));
+        }
+
         this._mounts[logic] = {
             regex: parseResult.regex,
             mounts: mounts.map(mount => {
