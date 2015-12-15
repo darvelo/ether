@@ -15,7 +15,7 @@ class MountMapper {
         return b.slashes - a.slashes;
     }
 
-    add(crumb) {
+    parse(crumb) {
         const NORMAL_MODE = 1;
         const PARAM_NAME_MODE = 2;
         const PARAM_VALUE_MODE = 3;
@@ -126,15 +126,19 @@ class MountMapper {
         // any "extra" chars will be passed along to child Apps
         finalRegex.push('(.*)');
 
-        let mapped = this._crumbMap[crumb] = {
+        return {
             regex: new RegExp(finalRegex.join('')),
-            slashes: slashesCount,
             paramNames: paramNames.length ? paramNames : null,
+            slashes: slashesCount,
         };
+    }
 
-        this._sortedCrumbs.push(mapped);
+    add(crumb) {
+        let parseResult = this.parse(crumb);
+        this._crumbMap[crumb] = parseResult;
+        this._sortedCrumbs.push(parseResult);
         mergesort(this._sortedCrumbs, this._sortFn);
-        return mapped;
+        return parseResult;
     }
 
     // @TODO: parse querystring parameters
