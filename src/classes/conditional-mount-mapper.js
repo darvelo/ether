@@ -146,6 +146,12 @@ class ConditionalMountMapper {
         if (!(parentData.parentApp instanceof App)) {
             throw new TypeError(ctorName(this) + '#add() did not receive an App instance for parentData.parentApp.');
         }
+        if (isnt(parentData.outlets, 'Object')) {
+            throw new TypeError(ctorName(this) + '#add() did not receive an object for parentData.outlets.');
+        }
+        if (isnt(parentData.params, 'Array')) {
+            throw new TypeError(ctorName(this) + '#add() did not receive an array for parentData.params.');
+        }
 
         let parseResult = this.parse(logic);
         let unknownAddresses = parseResult.addresses.filter(addy => !this._addresses[addy]).sort();

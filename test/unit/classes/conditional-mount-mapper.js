@@ -17,6 +17,8 @@ describe('ConditionalMountMapper', () => {
         parentData = {
             rootApp,
             parentApp: rootApp,
+            outlets: {},
+            params: [],
         };
     });
 
@@ -99,6 +101,18 @@ describe('ConditionalMountMapper', () => {
             mapper.setAddresses(addresses);
             parentData.parentApp = null;
             expect(() => mapper.add('*', [], parentData)).to.throw(TypeError, 'ConditionalMountMapper#add() did not receive an App instance for parentData.parentApp.');
+        });
+
+        it('throws if parentData.outlets is not an Object', () => {
+            mapper.setAddresses(addresses);
+            parentData.outlets = null;
+            expect(() => mapper.add('*', [], parentData)).to.throw(TypeError, 'ConditionalMountMapper#add() did not receive an object for parentData.outlets.');
+        });
+
+        it('throws if parentData.params is not an Array', () => {
+            mapper.setAddresses(addresses);
+            parentData.params = null;
+            expect(() => mapper.add('*', [], parentData)).to.throw(TypeError, 'ConditionalMountMapper#add() did not receive an array for parentData.params.');
         });
     });
 });
