@@ -187,7 +187,7 @@ class MountMapper {
         return mapped && mapped.regex;
     }
 
-    paramsFor(pattern) {
+    paramNamesFor(pattern) {
         let mapped = this._crumbMap[pattern];
         return mapped && mapped.paramNames;
     }

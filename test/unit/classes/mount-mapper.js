@@ -1,25 +1,5 @@
 import MountMapper from '../../../src/classes/mount-mapper';
 
-// test regex equality
-// see: http://stackoverflow.com/questions/10776600/testing-for-equality-of-regular-expressions
-function regexEqual(r1, r2) {
-    function throwUsefulError() {
-        throw new Error(['RegExp ', r1.source, ' was not equal to ', r2.source].join(''));
-    }
-
-    if (!(r1 instanceof RegExp && r2 instanceof RegExp)) {
-        throwUsefulError();
-    }
-
-    ['global', 'multiline', 'ignoreCase', 'source'].forEach(prop => {
-        if (r1[prop] !== r2[prop]) {
-            throwUsefulError();
-        }
-    });
-
-    return true;
-}
-
 describe('MountMapper', () => {
     let mapper;
 
@@ -68,7 +48,7 @@ describe('MountMapper', () => {
         let expected = /^\/name\/(\d+)\/view(.*)/;
         mapper.add(pattern);
         expect(regexEqual(expected, mapper.regexFor(pattern))).to.be.ok;
-        expect(mapper.paramsFor(pattern)).to.deep.equal(['id']);
+        expect(mapper.paramNamesFor(pattern)).to.deep.equal(['id']);
     });
 
     it('throws if a parameter name is given more than once', () => {
@@ -122,7 +102,7 @@ describe('MountMapper', () => {
         let pattern = '/user/{id=\\d+}';
         expect(mapper.add(pattern)).to.deep.equal({
             regex: mapper.regexFor(pattern),
-            paramNames: mapper.paramsFor(pattern),
+            paramNames: mapper.paramNamesFor(pattern),
             slashes: mapper.slashesFor(pattern),
         });
     });
