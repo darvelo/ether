@@ -76,7 +76,7 @@ describe('ConditionalMountMapper', () => {
         });
     });
 
-    describe('Add', () => {
+    describe('Adding', () => {
         it('requires having set a list of addresses', () => {
             expect(() => mapper.add('*', [], parentData)).to.throw(Error, 'ConditionalMountMapper#add() was called but #setAddresses() needed to have been called first.');
         });

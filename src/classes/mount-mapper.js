@@ -10,11 +10,6 @@ class MountMapper {
         this._sortedCrumbs = [];
     }
 
-    clear() {
-        this._crumbMap = {};
-        this._sortedCrumbs = [];
-    }
-
     _sortFn(a, b) {
         // crumbs with more slashes are are placed at the beginning
         return b.slashes - a.slashes;

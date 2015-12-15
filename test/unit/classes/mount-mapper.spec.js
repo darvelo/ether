@@ -14,14 +14,6 @@ describe('MountMapper', () => {
         expect(regexEqual(expected, mapper.regexFor(crumb))).to.be.ok;
     });
 
-    it('clears cached data', () => {
-        expect(mapper.regexFor('word')).to.not.be.ok;
-        mapper.add('word');
-        expect(mapper.regexFor('word')).to.be.an.instanceof(RegExp);
-        mapper.clear();
-        expect(mapper.regexFor('word')).to.not.be.ok;
-    });
-
     it('processes slashes correctly', () => {
         let crumb = '/first/second';
         let expected = /^\/first\/second(.*)/;
