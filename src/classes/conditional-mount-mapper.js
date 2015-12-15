@@ -40,25 +40,44 @@ class ConditionalMountMapper {
             throw new Error(`${ctorName(this)} only supports the initial character being one of this list: ${JSON.stringify(this._acceptedOperators)}.`);
         }
 
-        if (operator === '*') {
-            return /.*/;
+        // the empty string means no addresses
+        let addresses = logic.slice(1);
+        if (addresses) {
+            addresses = addresses.split(',');
+        } else if (operator !== '*') {
+            throw new Error('Conditional mounts that are not "*" require a comma-delimited list of required addresses.');
+        } else {
+            addresses = [];
         }
 
-        let keywords = logic.slice(1).split(',');
-        if (operator === '+') {
-            return new RegExp([
-                '^(?:',
-                keywords.join('|'),
-                ')$',
-            ].join(''));
+        let regex;
+        switch (operator) {
+            case '*':
+                regex = /.*/;
+                break;
+            case '+':
+                regex = new RegExp([
+                    '^(?:',
+                    addresses.join('|'),
+                    ')$',
+                ].join(''));
+                break;
+            case '!':
+                regex = new RegExp([
+                    '^(?!',
+                    addresses.map(addr => addr + '$').join('|'),
+                    ').*',
+                ].join(''));
+                break;
+            default:
+                break;
         }
-        if (operator === '!') {
-            return new RegExp([
-                '^(?!',
-                keywords.map(kw => kw + '$').join('|'),
-                ').*',
-            ].join(''));
-        }
+
+        return {
+            operator,
+            addresses,
+            regex,
+        };
     }
 
     _checkMountInheritance(mount, logic, parentApp) {
@@ -80,7 +99,7 @@ class ConditionalMountMapper {
             params: parentData.params,
         };
 
-        this._checkMountInheritance(mount, logic);
+        this._checkMountInheritance(mount, logic, parentData.parentApp);
 
         function assignOptOutlets(name) {
             let outlet = parentData.outlets[name];
@@ -128,8 +147,9 @@ class ConditionalMountMapper {
             throw new TypeError(ctorName(this) + '#add() did not receive an App instance for parentData.parentApp.');
         }
 
+        let parseResult = this.parse(logic);
         this._mounts[logic] = {
-            regex: this.parse(logic),
+            regex: parseResult.regex,
             mounts: mounts.map(mount => {
                 return this._instantiateMountInstance(mount, logic, parentData);
             }),

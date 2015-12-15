@@ -45,18 +45,32 @@ describe('ConditionalMountMapper', () => {
         });
 
         it('parses *', () => {
-            let expected = /.*/;
-            expect(regexEqual(expected, mapper.parse('*'))).to.be.ok;
+            let expectedRegex = /.*/;
+            let result = mapper.parse('*');
+            expect(regexEqual(expectedRegex, result.regex)).to.be.ok;
+            result.operator.should.equal('*');
+            result.addresses.should.deep.equal([]);
         });
 
         it('parses +', () => {
-            let expected = /^(?:first|second|third)$/;
-            expect(regexEqual(expected, mapper.parse('+first,second,third'))).to.be.ok;
+            let expectedRegex = /^(?:first|second|third)$/;
+            let result = mapper.parse('+first,second,third');
+            expect(regexEqual(expectedRegex, result.regex)).to.be.ok;
+            result.operator.should.equal('+');
+            result.addresses.should.deep.equal(['first', 'second', 'third']);
         });
 
         it('parses !', () => {
-            let expected = /^(?!first$|second$|third$).*/;
-            expect(regexEqual(expected, mapper.parse('!first,second,third'))).to.be.ok;
+            let expectedRegex = /^(?!first$|second$|third$).*/;
+            let result = mapper.parse('!first,second,third');
+            expect(regexEqual(expectedRegex, result.regex)).to.be.ok;
+            result.operator.should.equal('!');
+            result.addresses.should.deep.equal(['first', 'second', 'third']);
+        });
+
+        it('throws if operator is not * and no addresses are listed', () => {
+            expect(() => mapper.parse('!')).to.throw(Error, 'Conditional mounts that are not "*" require a comma-delimited list of required addresses.');
+            expect(() => mapper.parse('+')).to.throw(Error, 'Conditional mounts that are not "*" require a comma-delimited list of required addresses.');
         });
     });
 
