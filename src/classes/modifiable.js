@@ -5,6 +5,10 @@ import OutletsReceivable from './modifiers/outlets-receivable';
 import Setupable from './modifiers/setupable';
 
 class Modifiable extends Expectable {
+    static create(...args) {
+        return new this(...args);
+    }
+
     static addresses(...args) {
         return new Modified(this, Addressable, ...args);
     }

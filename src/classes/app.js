@@ -115,10 +115,9 @@ class App extends Modifiable {
             if(Array.isArray(mount.setupFns)) {
                 opts.setup = mount.setupFns.reduce((memo, fn) => fn(memo), undefined);
             }
-            return mount.create(opts);
-        } else {
-            return new mount(opts);
         }
+
+        return mount.create(opts);
     }
 
     _instantiateMounts(params) {
