@@ -66,6 +66,7 @@ describe('ConditionalMountMapper', () => {
                 outlets: {
                     first: new Outlet(document.createElement('div')),
                     second: new Outlet(document.createElement('div')),
+                    unused: new Outlet(document.createElement('div')),
                 },
                 params: ['id', 'action'],
             };
