@@ -134,6 +134,9 @@ class ConditionalMountMapper {
         if (isnt(mounts, 'Array')) {
             throw new Error(ctorName(this) + '#add() expected an array of mounts.');
         }
+        if (mounts.length === 0) {
+            throw new Error(ctorName(this) + '#add() received an empty array.');
+        }
         if (isnt(parentData, 'Object')) {
             throw new Error(ctorName(this) + '#add() expected an object containing the mount\'s parent data.');
         }
