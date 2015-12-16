@@ -133,11 +133,20 @@ class App extends Modifiable {
             console.warn(`${ctorName(this)}#mount() returned an empty object.`);
         }
 
+        // data the MountMapper uses in
+        // the creation of the mount instance
+        let data = {
+            rootApp: this._rootApp,
+            parentApp: this,
+            outlets: this.outlets,
+            params,
+        };
+
         // create mount instances
         for (let path of Object.keys(mounts)) {
             let isConditional = false;
             let mount = mounts[path];
-            this._mountMapper.add(path);
+            this._mountMapper.add(path, mount, data);
             let mountParams =  this._mountMapper.paramNamesFor(path);
             let conflictingParams = [];
             for (let mountParam of mountParams) {

@@ -1,4 +1,7 @@
+import App from './app';
 import mergesort from '../utils/mergesort';
+import ctorName from '../utils/ctor-name';
+import { isnt } from '../utils/is';
 
 function isNumeric(str) {
     return !isNaN(str);
@@ -133,14 +136,29 @@ class MountMapper {
         };
     }
 
-    add(crumb) {
+    add(crumb, mount, parentData) {
+        if (isnt(parentData, 'Object')) {
+            throw new Error(ctorName(this) + '#add() expected an object containing the mount\'s parent data.');
+        }
+        if (!(parentData.rootApp instanceof App)) {
+            throw new TypeError(ctorName(this) + '#add() did not receive an App instance for parentData.rootApp.');
+        }
+        if (!(parentData.parentApp instanceof App)) {
+            throw new TypeError(ctorName(this) + '#add() did not receive an App instance for parentData.parentApp.');
+        }
+        if (isnt(parentData.outlets, 'Object')) {
+            throw new TypeError(ctorName(this) + '#add() did not receive an object for parentData.outlets.');
+        }
+        if (isnt(parentData.params, 'Array')) {
+            throw new TypeError(ctorName(this) + '#add() did not receive an array for parentData.params.');
+        }
+
         let parseResult = this.parse(crumb);
         this._crumbMap[crumb] = parseResult;
         this._sortedCrumbs.push(parseResult);
         mergesort(this._sortedCrumbs, this._sortFn);
     }
 
-    // @TODO: parse querystring parameters
     match(path) {
         let crumb;
         let theMatch;
