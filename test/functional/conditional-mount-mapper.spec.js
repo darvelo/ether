@@ -64,7 +64,7 @@ describe('ConditionalMountMapper', () => {
                   setupSpy ] = mounts.map(route => sinon.spy(route, 'create'));
             let parentData = {
                 outlets: {
-                    first: new Outlet(document.createElement('div')),
+                    first:  new Outlet(document.createElement('div')),
                     second: new Outlet(document.createElement('div')),
                     unused: new Outlet(document.createElement('div')),
                 },
@@ -89,48 +89,59 @@ describe('ConditionalMountMapper', () => {
             mapper.add('!second', mounts, parentData);
 
             paramSpy.should.have.been.calledThrice;
-            // sinon goes into an infinite loop if I use always.calledWith().
-            // I think it's trying to do a deepEqual() on rootApp.
+            // since we use a different rootApp for each call
             // we must check each call's arguments manually
-            [0,1,2].forEach(callNum => {
+            rootApps.forEach((rootApp, callNum) => {
                 let opts = paramSpy.getCall(callNum).args[0];
                 // we need an explicit equals here to make sure it's an
                 // exact reference match and not a deep equals match
-                expect(opts.rootApp).to.equal(rootApps[callNum]);
-                // ConditionalMountMapper should make a shallow copy of params
+                expect(opts.rootApp).to.equal(rootApp);
+                // ConditionalMountMapper should make a shallow
+                // copy of what it needs from parent's data
+                expect(opts.outlets).to.not.equal(parentData.outlets);
                 expect(opts.params).to.not.equal(parentData.params);
                 opts.should.deep.equal({
-                    rootApp: rootApps[callNum],
+                    rootApp,
                     addresses: [],
                     outlets: {},
                     params: ['id', 'action'],
                 });
             });
+
             addressSpy.should.have.been.calledThrice;
-            [0,1,2].forEach(callNum => {
+            // since we use a different rootApp for each call
+            // we must check each call's arguments manually
+            rootApps.forEach((rootApp, callNum) => {
                 let opts = addressSpy.getCall(callNum).args[0];
                 // we need an explicit equals here to make sure it's an
                 // exact reference match and not a deep equals match
-                expect(opts.rootApp).to.equal(rootApps[callNum]);
-                // ConditionalMountMapper should make a shallow copy of params
+                expect(opts.rootApp).to.equal(rootApp);
+                // ConditionalMountMapper should make a shallow
+                // copy of what it needs from parent's data
+                expect(opts.outlets).to.not.equal(parentData.outlets);
                 expect(opts.params).to.not.equal(parentData.params);
                 opts.should.deep.equal({
-                    rootApp: rootApps[callNum],
+                    rootApp,
                     addresses: ['fourth'],
                     outlets: {},
                     params: ['id', 'action'],
                 });
             });
+
             outletSpy.should.have.been.calledThrice;
-            [0,1,2].forEach(callNum => {
+            // since we use a different rootApp for each call
+            // we must check each call's arguments manually
+            rootApps.forEach((rootApp, callNum) => {
                 let opts = outletSpy.getCall(callNum).args[0];
                 // we need an explicit equals here to make sure it's an
                 // exact reference match and not a deep equals match
-                expect(opts.rootApp).to.equal(rootApps[callNum]);
-                // ConditionalMountMapper should make a shallow copy of params
+                expect(opts.rootApp).to.equal(rootApp);
+                // ConditionalMountMapper should make a shallow
+                // copy of what it needs from parent's data
+                expect(opts.outlets).to.not.equal(parentData.outlets);
                 expect(opts.params).to.not.equal(parentData.params);
                 opts.should.deep.equal({
-                    rootApp: rootApps[callNum],
+                    rootApp,
                     addresses: [],
                     outlets: {
                         first: parentData.outlets.first,
@@ -139,16 +150,21 @@ describe('ConditionalMountMapper', () => {
                     params: ['id', 'action'],
                 });
             });
+
             setupSpy.should.have.been.calledThrice;
-            [0,1,2].forEach(callNum => {
+            // since we use a different rootApp for each call
+            // we must check each call's arguments manually
+            rootApps.forEach((rootApp, callNum) => {
                 let opts = setupSpy.getCall(callNum).args[0];
                 // we need an explicit equals here to make sure it's an
                 // exact reference match and not a deep equals match
-                expect(opts.rootApp).to.equal(rootApps[callNum]);
-                // ConditionalMountMapper should make a shallow copy of params
+                expect(opts.rootApp).to.equal(rootApp);
+                // ConditionalMountMapper should make a shallow
+                // copy of what it needs from parent's data
+                expect(opts.outlets).to.not.equal(parentData.outlets);
                 expect(opts.params).to.not.equal(parentData.params);
                 opts.should.deep.equal({
-                    rootApp: rootApps[callNum],
+                    rootApp,
                     addresses: [],
                     outlets: {},
                     params: ['id', 'action'],
