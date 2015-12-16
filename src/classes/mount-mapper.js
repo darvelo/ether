@@ -1,4 +1,6 @@
 import App from './app';
+import Route from './route';
+import Modified from './modified';
 import mergesort from '../utils/mergesort';
 import ctorName from '../utils/ctor-name';
 import { isnt } from '../utils/is';
@@ -136,6 +138,93 @@ class MountMapper {
         };
     }
 
+    _mergeMountParams(mount, crumb, mountParams, parentData) {
+        let conflictingParams = [];
+        let parentParams = parentData.params.reduce((memo, p) => memo[p] = true && memo, {});
+        let totalParams = parentData.params.slice();
+
+        for (let mountParam of mountParams) {
+            if (parentParams[mountParam]) {
+                conflictingParams.push(mountParam);
+            } else {
+                totalParams.push(mountParam);
+            }
+        }
+
+        // throw if mount's params overlap given params
+        if (conflictingParams.length) {
+            throw new Error([
+                ctorName(parentData.parentApp),
+                ' mount on "',
+                crumb.replace('\\', '\\\\'),
+                '" declares parameter(s) that were already declared higher in the App chain: ',
+                JSON.stringify(conflictingParams),
+                '.',
+            ].join(''));
+        }
+
+        return totalParams;
+    }
+
+    _checkMountInheritance(mount, crumb, parentApp) {
+        if (mount instanceof Modified) {
+            mount = mount.klass;
+        }
+        let obj = Object.create(mount.prototype);
+        if (!(obj instanceof App) && !(obj instanceof Route)) {
+            throw new TypeError(`${ctorName(parentApp)} mount "${crumb}" is not an instance of App or Route.`);
+        }
+    }
+
+    _instantiateMountInstance(mount, crumb, mountParams, parentData) {
+        let mountAddresses = [];
+        let missingOutlets = [];
+        let opts = {
+            rootApp: parentData.rootApp,
+            addresses: [],
+            outlets: {},
+            params: this._mergeMountParams(mount, crumb, mountParams, parentData),
+        };
+
+        this._checkMountInheritance(mount, crumb, parentData.parentApp);
+
+        function assignOptOutlets(name) {
+            let outlet = parentData.outlets[name];
+            if (!outlet) {
+                missingOutlets.push(name);
+            } else {
+                opts.outlets[name] = outlet;
+            }
+        }
+
+        if (mount instanceof Modified) {
+            // the Addressable modifier,
+            // if the user invoked it, sets this array
+            if (Array.isArray(mount.addresses)) {
+                mountAddresses = mount.addresses;
+            }
+            // the OutletsReceivable modifier,
+            // if the user invoked it, sets this array
+            if (Array.isArray(mount.outlets)) {
+                mount.outlets.forEach(assignOptOutlets);
+            }
+            if (missingOutlets.length) {
+                let ctorname = ctorName(parentData.parentApp);
+                throw new Error(`${ctorname} mount "${crumb}" requested these outlets that ${ctorname} does not own: ${JSON.stringify(missingOutlets)}.`);
+            }
+            // the Setupable modifier,
+            // if the user invoked it, sets this array
+            if(Array.isArray(mount.setupFns)) {
+                opts.setup = mount.setupFns.reduce((memo, fn) => fn(memo), undefined);
+            }
+        }
+
+        return {
+            addresses: mountAddresses,
+            instance: mount.create(opts),
+        };
+    }
+
     add(crumb, mount, parentData) {
         if (isnt(parentData, 'Object')) {
             throw new Error(ctorName(this) + '#add() expected an object containing the mount\'s parent data.');
@@ -154,9 +243,18 @@ class MountMapper {
         }
 
         let parseResult = this.parse(crumb);
-        this._crumbMap[crumb] = parseResult;
-        this._sortedCrumbs.push(parseResult);
+        let paramNames = parseResult.paramNames || [];
+        let instantiationResult = this._instantiateMountInstance(mount, crumb, paramNames, parentData);
+        let crumbData = {
+            mount: instantiationResult.instance,
+            addresses: instantiationResult.addresses,
+            regex: parseResult.regex,
+            paramNames: parseResult.paramNames,
+            slashes: parseResult.slashes,
+        };
+        this._sortedCrumbs.push(crumbData);
         mergesort(this._sortedCrumbs, this._sortFn);
+        this._crumbMap[crumb] = crumbData;
     }
 
     match(path) {
@@ -196,6 +294,22 @@ class MountMapper {
         // turn the empty string into null
         ret.rest = theMatch[len-1] || null;
         return ret;
+    }
+
+    allAddresses() {
+        return this._sortedCrumbs.reduce((memo, crumbData) => {
+            crumbData.addresses.forEach(address => memo.push(address));
+            return memo;
+        }, []).sort();
+    }
+
+    addressesFor(crumb) {
+        let mapped = this._crumbMap[crumb];
+        if (mapped) {
+            return mapped.addresses || [];
+        }
+        // return undefined if crumb didn't exist
+        return;
     }
 
     regexFor(crumb) {
