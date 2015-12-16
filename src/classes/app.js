@@ -25,7 +25,7 @@ class App extends Modifiable {
         this._registerAddresses(opts.addresses);
         if (this !== this._rootApp) {
             // only the creator of a MutableOutlet
-            // should have access to its mutability
+            // should have control over its mutability
             this._makeOutletsImmutable(opts.outlets);
         }
         this.outlets = this.createOutlets(opts.outlets);
@@ -41,8 +41,8 @@ class App extends Modifiable {
     }
 
     _makeOutletsImmutable(outlets) {
-        for (let prop of Object.keys(outlets)) {
-            if (outlets[prop] instanceof MutableOutlet) {
+        for (let prop in outlets) {
+            if (outlets.hasOwnProperty(prop) && outlets[prop] instanceof MutableOutlet) {
                 outlets[prop] = new Outlet(outlets[prop].get());
             }
         }
@@ -54,7 +54,10 @@ class App extends Modifiable {
         if (isnt(mounts, 'Object')) {
             throw new TypeError(ctorName(this) + '#mount() did not return an object.');
         }
-        if (this._rootApp._debugMode && Object.keys(mounts).length === 0) {
+
+        let crumbs = Object.keys(mounts);
+
+        if (this._rootApp._debugMode && crumbs.length === 0) {
             console.warn(`${ctorName(this)}#mount() returned an empty object.`);
         }
 
@@ -68,9 +71,9 @@ class App extends Modifiable {
         };
 
         // create mount instances
-        for (let path of Object.keys(mounts)) {
-            let mount = mounts[path];
-            this._mountMapper.add(path, mount, data);
+        for (let crumb of crumbs) {
+            let mount = mounts[crumb];
+            this._mountMapper.add(crumb, mount, data);
         }
     }
 
@@ -95,12 +98,14 @@ class App extends Modifiable {
         this._conditionalMountMapper.setAddresses(this._mountMapper.allAddresses());
 
         // create conditional mount instances
-        for (let logic of Object.keys(cMounts)) {
-            let mounts = cMounts[logic];
-            if (!Array.isArray(mounts)) {
-                mounts = [mounts];
+        for (let logic in cMounts) {
+            if (cMounts.hasOwnProperty(logic)) {
+                let mounts = cMounts[logic];
+                if (!Array.isArray(mounts)) {
+                    mounts = [mounts];
+                }
+                this._conditionalMountMapper.add(logic, mounts, data);
             }
-            this._conditionalMountMapper.add(logic, mounts, data);
         }
     }
 
