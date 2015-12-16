@@ -96,7 +96,7 @@ class ConditionalMountMapper {
             rootApp: parentData.rootApp,
             addresses: [],
             outlets: {},
-            params: parentData.params,
+            params: parentData.params.slice(),
         };
 
         this._checkMountInheritance(mount, logic, parentData.parentApp);

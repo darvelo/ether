@@ -97,6 +97,8 @@ describe('ConditionalMountMapper', () => {
                 // we need an explicit equals here to make sure it's an
                 // exact reference match and not a deep equals match
                 expect(opts.rootApp).to.equal(rootApps[callNum]);
+                // ConditionalMountMapper should make a shallow copy of params
+                expect(opts.params).to.not.equal(parentData.params);
                 opts.should.deep.equal({
                     rootApp: rootApps[callNum],
                     addresses: [],
@@ -110,6 +112,8 @@ describe('ConditionalMountMapper', () => {
                 // we need an explicit equals here to make sure it's an
                 // exact reference match and not a deep equals match
                 expect(opts.rootApp).to.equal(rootApps[callNum]);
+                // ConditionalMountMapper should make a shallow copy of params
+                expect(opts.params).to.not.equal(parentData.params);
                 opts.should.deep.equal({
                     rootApp: rootApps[callNum],
                     addresses: ['fourth'],
@@ -123,6 +127,8 @@ describe('ConditionalMountMapper', () => {
                 // we need an explicit equals here to make sure it's an
                 // exact reference match and not a deep equals match
                 expect(opts.rootApp).to.equal(rootApps[callNum]);
+                // ConditionalMountMapper should make a shallow copy of params
+                expect(opts.params).to.not.equal(parentData.params);
                 opts.should.deep.equal({
                     rootApp: rootApps[callNum],
                     addresses: [],
@@ -139,6 +145,8 @@ describe('ConditionalMountMapper', () => {
                 // we need an explicit equals here to make sure it's an
                 // exact reference match and not a deep equals match
                 expect(opts.rootApp).to.equal(rootApps[callNum]);
+                // ConditionalMountMapper should make a shallow copy of params
+                expect(opts.params).to.not.equal(parentData.params);
                 opts.should.deep.equal({
                     rootApp: rootApps[callNum],
                     addresses: [],
