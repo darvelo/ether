@@ -56,9 +56,11 @@ describe('MutableOutlet', function() {
         });
 
         it('clears its element from the DOM', function() {
+            let parent = document.createElement('div');
             let element = document.createElement('div');
+            parent.appendChild(element);
             let outlet = new MutableOutlet(element);
-            let mock = sinon.mock(element.parentNode);
+            let mock = sinon.mock(parent);
             mock.expects('removeChild').once().withArgs(element);
             outlet.clear();
             mock.verify();

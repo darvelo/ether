@@ -16,7 +16,7 @@ class MutableOutlet extends Outlet {
     }
 
     clear() {
-        if (this._element) {
+        if (this._element && this._element.parentNode) {
             this._element.parentNode.removeChild(this._element);
         }
         this._element = null;
