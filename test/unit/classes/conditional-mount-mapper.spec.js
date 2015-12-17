@@ -1,6 +1,7 @@
 import ConditionalMountMapper from '../../../src/classes/conditional-mount-mapper';
 import RootApp from '../../../src/classes/root-app';
 import Route from '../../../src/classes/route';
+import regexEqual from '../../utils/regex-equal';
 
 class TestRootApp extends RootApp {
     expectedOutlets() {
