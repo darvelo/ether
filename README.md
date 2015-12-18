@@ -1,6 +1,6 @@
 # Ether
 
-A front-end JavaScript framework written in ES6.
+A minimalistic JavaScript framework for creating modular, *composable* apps.
 
 # License
 
