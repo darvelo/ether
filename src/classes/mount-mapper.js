@@ -1,3 +1,4 @@
+import BaseMountMapper from './base-mount-mapper';
 import App from './app';
 import Route from './route';
 import Modified from './modified';
@@ -9,8 +10,9 @@ function isNumeric(str) {
     return !isNaN(str);
 }
 
-class MountMapper {
-    constructor() {
+class MountMapper extends BaseMountMapper {
+    constructor(...args) {
+        super(...args);
         this._crumbMap = {};
         this._sortedCrumbs = [];
     }
@@ -138,7 +140,7 @@ class MountMapper {
         };
     }
 
-    _mergeMountParams(mount, crumb, mountParams, parentData) {
+    _compileMountParams(mount, crumb, mountParams, parentData) {
         let conflictingParams = [];
         let parentParams = parentData.params.reduce((memo, p) => memo[p] = true && memo, {});
         let totalParams = parentData.params.slice();
@@ -177,50 +179,18 @@ class MountMapper {
     }
 
     _instantiateMountInstance(mount, crumb, mountParams, parentData) {
-        let mountAddresses = [];
-        let missingOutlets = [];
-        let opts = {
-            rootApp: parentData.rootApp,
-            addresses: [],
-            outlets: {},
-            params: this._mergeMountParams(mount, crumb, mountParams, parentData),
-        };
-
         this._checkMountInheritance(mount, crumb, parentData.parentApp);
 
-        function assignOptOutlets(name) {
-            let outlet = parentData.outlets[name];
-            if (!outlet) {
-                missingOutlets.push(name);
-            } else {
-                opts.outlets[name] = outlet;
-            }
-        }
-
-        if (mount instanceof Modified) {
-            // the Addressable modifier,
-            // if the user invoked it, sets this array
-            if (Array.isArray(mount.addresses)) {
-                mountAddresses = mount.addresses;
-            }
-            // the OutletsReceivable modifier,
-            // if the user invoked it, sets this array
-            if (Array.isArray(mount.outlets)) {
-                mount.outlets.forEach(assignOptOutlets);
-            }
-            if (missingOutlets.length) {
-                let ctorname = ctorName(parentData.parentApp);
-                throw new Error(`${ctorname} mount "${crumb}" requested these outlets that ${ctorname} does not own: ${JSON.stringify(missingOutlets)}.`);
-            }
-            // the Setupable modifier,
-            // if the user invoked it, sets this array
-            if(Array.isArray(mount.setupFns)) {
-                opts.setup = mount.setupFns.reduce((memo, fn) => fn(memo), undefined);
-            }
-        }
+        let opts = {
+            rootApp: parentData.rootApp,
+            addresses: this._compileMountAddresses(mount),
+            outlets: this._compileMountOutlets(mount, crumb, parentData),
+            setup: this._compileMountSetupFns(mount),
+            params: this._compileMountParams(mount, crumb, mountParams, parentData),
+        };
 
         return {
-            addresses: mountAddresses,
+            addresses: opts.addresses,
             instance: mount.create(opts),
         };
     }

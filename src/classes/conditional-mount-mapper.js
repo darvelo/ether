@@ -1,11 +1,13 @@
+import BaseMountMapper from './base-mount-mapper';
 import Modified from './modified';
 import App from './app';
 import Route from './route';
 import { is, isnt } from '../utils/is';
 import ctorName from '../utils/ctor-name';
 
-class ConditionalMountMapper {
-    constructor() {
+class ConditionalMountMapper extends BaseMountMapper {
+    constructor(...args) {
+        super(...args);
         this._addresses = null;
         this._acceptedOperators = ['*', '+', '!'];
         this._mounts = {};
@@ -91,41 +93,15 @@ class ConditionalMountMapper {
     }
 
     _instantiateMountInstance(mount, logic, parentData) {
-        let missingOutlets = [];
-        let opts = {
-            rootApp: parentData.rootApp,
-            addresses: [],
-            outlets: {},
-            params: parentData.params.slice(),
-        };
-
         this._checkMountInheritance(mount, logic, parentData.parentApp);
 
-        function assignOptOutlets(name) {
-            let outlet = parentData.outlets[name];
-            if (!outlet) {
-                missingOutlets.push(name);
-            } else {
-                opts.outlets[name] = outlet;
-            }
-        }
-
-        if (mount instanceof Modified) {
-            // the OutletsReceivable modifier,
-            // if the user invoked it, sets this array
-            if (Array.isArray(mount.outlets)) {
-                mount.outlets.forEach(assignOptOutlets);
-            }
-            if (missingOutlets.length) {
-                let ctorname = ctorName(parentData.parentApp);
-                throw new Error(`${ctorname} conditional mount "${logic}" requested these outlets that ${ctorname} does not own: ${JSON.stringify(missingOutlets)}.`);
-            }
-            // the Setupable modifier,
-            // if the user invoked it, sets this array
-            if(Array.isArray(mount.setupFns)) {
-                opts.setup = mount.setupFns.reduce((memo, fn) => fn(memo), undefined);
-            }
-        }
+        let opts = {
+            rootApp: parentData.rootApp,
+            addresses: this._compileMountAddresses(mount),
+            outlets: this._compileMountOutlets(mount, logic, parentData, true),
+            setup: this._compileMountSetupFns(mount),
+            params: parentData.params.slice(),
+        };
 
         return mount.create(opts);
     }
