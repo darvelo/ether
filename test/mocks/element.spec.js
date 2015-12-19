@@ -19,22 +19,37 @@ describe('Element Mock', () => {
         expect(element.parentNode).to.equal(element.parentNode);
     });
 
-    it ('can get innerHTML when element has no children', () => {
-        element.innerHTML.should.equal('');
-    });
+    describe('innerHTML', () => {
+        it('can set innerHTML when element has no children', () => {
+            let html = '<div class="mydiv"></div>';
+            element.innerHTML = html;
+        });
 
-    it('throws when getting innerHTML when element has children', () => {
-        element.appendChild(new Element());
-        expect(() => element.innerHTML).to.throw();
-    });
+        it('can set innerHTML to empty string to clear children', () => {
+            element.children.should.have.length(0);
+            element.appendChild(new Element());
+            element.appendChild(new Element());
+            element.children.should.have.length(2);
+            element.innerHTML = '';
+            element.children.should.have.length(0);
+        });
 
-    it('can set innerHTML to empty string to clear children', () => {
-        element.children.should.have.length(0);
-        element.appendChild(new Element());
-        element.appendChild(new Element());
-        element.children.should.have.length(2);
-        element.innerHTML = '';
-        element.children.should.have.length(0);
+        it('throws when setting innerHTML when element has children', () => {
+            element.appendChild(new Element());
+            expect(() => element.innerHTML = '<div></div>').to.throw(Error, 'Element#innerHTML set not implemented for when element has children and the string is not empty.');
+        });
+
+        it ('can get innerHTML when element has no children', () => {
+            element.innerHTML.should.equal('');
+            let html = '<div class="mydiv"></div>';
+            element.innerHTML = html;
+            element.innerHTML.should.equal(html);
+        });
+
+        it('throws when getting innerHTML when element has children', () => {
+            element.appendChild(new Element());
+            expect(() => element.innerHTML).to.throw('Element#innerHTML get not implemented for when element has children.');
+        });
     });
 
     describe('appendChild', () => {

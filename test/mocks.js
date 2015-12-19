@@ -46,6 +46,10 @@ export var document = {
 };
 
 export class Element extends Eventable {
+    constructor(...args) {
+        super(...args);
+        this._innerHTML = '';
+    }
     click() {
         this.fire('click');
     }
@@ -56,15 +60,20 @@ export class Element extends Eventable {
         this._children = array;
     }
     get innerHTML() {
-        if (!this.children.length) {
-            return '';
+        if (this._children && this._children.length) {
+            throw new Error('Element#innerHTML get not implemented for when element has children.');
         }
-        throw new Error('Element#innerHTML not implemented for when element has children.');
+        return this._innerHTML;
     }
     set innerHTML(value) {
-        if (value === '' && this.children) {
-            this.children.length = 0;
+        if (this._children) {
+            if (value === '') {
+                this.children.length = 0;
+            } else {
+                throw new Error('Element#innerHTML set not implemented for when element has children and the string is not empty.');
+            }
         }
+        this._innerHTML = value;
     }
     get parentNode() {
         if (!this._parentNode) {
