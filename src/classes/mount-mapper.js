@@ -143,13 +143,18 @@ class MountMapper extends BaseMountMapper {
     _compileMountParams(mount, crumb, mountParams, parentData) {
         let conflictingParams = [];
         let parentParams = parentData.params.reduce((memo, p) => memo[p] = true && memo, {});
-        let totalParams = parentData.params.slice();
+        let totalParams = mountParams.slice();
+        let expectedParams;
+
+        if (mount instanceof Modified) {
+            expectedParams = mount.klass.prototype.expectedParams();
+        } else {
+            expectedParams = mount.prototype.expectedParams();
+        }
 
         for (let mountParam of mountParams) {
             if (parentParams[mountParam]) {
                 conflictingParams.push(mountParam);
-            } else {
-                totalParams.push(mountParam);
             }
         }
 
@@ -163,6 +168,12 @@ class MountMapper extends BaseMountMapper {
                 JSON.stringify(conflictingParams),
                 '.',
             ].join(''));
+        }
+
+        for (let expectedParam of expectedParams) {
+            if (parentParams[expectedParam]) {
+                totalParams.push(expectedParam);
+            }
         }
 
         return totalParams;

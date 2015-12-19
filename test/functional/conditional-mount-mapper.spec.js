@@ -28,12 +28,17 @@ describe('ConditionalMountMapper', () => {
 
     describe('Add', () => {
         it('calls create() on each mount instance with the proper options', () => {
-            class ParamRoute extends TestRoute {
+            class OneParamRoute extends TestRoute {
+                expectedParams() {
+                    return ['action'];
+                }
+            }
+            class BothParamsRoute extends TestRoute {
                 expectedParams() {
                     return ['id', 'action'];
                 }
             }
-            class AddressesRoute extends ParamRoute {
+            class AddressesRoute extends BothParamsRoute {
                 expectedAddresses() {
                     return ['fourth'];
                 }
@@ -41,24 +46,26 @@ describe('ConditionalMountMapper', () => {
                     return [function(){}];
                 }
             }
-            class OutletRoute extends ParamRoute {
+            class OutletRoute extends BothParamsRoute {
                 expectedOutlets() {
                     return ['first', 'second'];
                 }
             }
-            class SetupRoute extends ParamRoute {
+            class SetupRoute extends BothParamsRoute {
                 init(setup, ...args) {
                     super.init(setup, ...args);
                     this.setup = setup;
                 }
             }
             let mounts = [
-                ParamRoute,
+                OneParamRoute,
+                BothParamsRoute,
                 AddressesRoute.addresses('fourth'),
                 OutletRoute.outlets('first', 'second'),
                 SetupRoute.setup(function() { return 42; }),
             ];
-            let [ paramSpy,
+            let [ oneParamSpy,
+                  bothParamsSpy,
                   addressSpy,
                   outletSpy,
                   setupSpy ] = mounts.map(route => sinon.spy(route, 'create'));
@@ -88,11 +95,32 @@ describe('ConditionalMountMapper', () => {
             rootApps.push(parentData.rootApp);
             mapper.add('!second', mounts, parentData);
 
-            paramSpy.should.have.been.calledThrice;
+            oneParamSpy.should.have.been.calledThrice;
             // since we use a different rootApp for each call
             // we must check each call's arguments manually
             rootApps.forEach((rootApp, callNum) => {
-                let opts = paramSpy.getCall(callNum).args[0];
+                let opts = oneParamSpy.getCall(callNum).args[0];
+                // we need an explicit equals here to make sure it's an
+                // exact reference match and not a deep equals match
+                expect(opts.rootApp).to.equal(rootApp);
+                // ConditionalMountMapper should make a shallow
+                // copy of what it needs from parent's data
+                expect(opts.outlets).to.not.equal(parentData.outlets);
+                expect(opts.params).to.not.equal(parentData.params);
+                opts.should.deep.equal({
+                    rootApp,
+                    addresses: [],
+                    outlets: {},
+                    params: ['action'],
+                    setup: undefined,
+                });
+            });
+
+            bothParamsSpy.should.have.been.calledThrice;
+            // since we use a different rootApp for each call
+            // we must check each call's arguments manually
+            rootApps.forEach((rootApp, callNum) => {
+                let opts = bothParamsSpy.getCall(callNum).args[0];
                 // we need an explicit equals here to make sure it's an
                 // exact reference match and not a deep equals match
                 expect(opts.rootApp).to.equal(rootApp);
@@ -105,6 +133,7 @@ describe('ConditionalMountMapper', () => {
                     addresses: [],
                     outlets: {},
                     params: ['id', 'action'],
+                    setup: undefined,
                 });
             });
 
@@ -125,6 +154,7 @@ describe('ConditionalMountMapper', () => {
                     addresses: ['fourth'],
                     outlets: {},
                     params: ['id', 'action'],
+                    setup: undefined,
                 });
             });
 
@@ -148,6 +178,7 @@ describe('ConditionalMountMapper', () => {
                         second: parentData.outlets.second,
                     },
                     params: ['id', 'action'],
+                    setup: undefined,
                 });
             });
 
@@ -172,7 +203,8 @@ describe('ConditionalMountMapper', () => {
                 });
             });
 
-            paramSpy.restore();
+            oneParamSpy.restore();
+            bothParamsSpy.restore();
             addressSpy.restore();
             outletSpy.restore();
             setupSpy.restore();

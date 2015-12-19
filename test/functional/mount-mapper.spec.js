@@ -26,12 +26,17 @@ describe('MountMapper', () => {
 
     describe('Add', () => {
         it('calls create() on each mount instance with the proper options', () => {
-            class ParamRoute extends TestRoute {
+            class OneParamRoute extends TestRoute {
+                expectedParams() {
+                    return ['action'];
+                }
+            }
+            class BothParamsRoute extends TestRoute {
                 expectedParams() {
                     return ['id', 'action'];
                 }
             }
-            class AddressesRoute extends ParamRoute {
+            class AddressesRoute extends BothParamsRoute {
                 expectedAddresses() {
                     return ['addressRoute'];
                 }
@@ -39,32 +44,36 @@ describe('MountMapper', () => {
                     return [function(){}];
                 }
             }
-            class OutletRoute extends ParamRoute {
+            class OutletRoute extends BothParamsRoute {
                 expectedOutlets() {
                     return ['first', 'second'];
                 }
             }
-            class SetupRoute extends ParamRoute {
+            class SetupRoute extends BothParamsRoute {
                 init(setup, ...args) {
                     super.init(setup, ...args);
                     this.setup = setup;
                 }
             }
-            let paramRoute   = ParamRoute;
-            let paramSpy     = sinon.spy(paramRoute, 'create');
-            let paramCrumb   = '/param/{action=\\w+}/';
+            let oneParamRoute   = OneParamRoute;
+            let oneParamSpy     = sinon.spy(oneParamRoute, 'create');
+            let oneParamCrumb   = '/one-param/{action=\\w+}/';
 
-            let addressRoute = AddressesRoute.addresses('addressRoute');
-            let addressSpy   = sinon.spy(addressRoute, 'create');
-            let addressCrumb = '/address/{action=\\w+}/';
+            let bothParamsRoute = BothParamsRoute;
+            let bothParamsSpy   = sinon.spy(bothParamsRoute, 'create');
+            let bothParamsCrumb = '/both-params/{action=\\w+}/';
 
-            let outletRoute  = OutletRoute.outlets('first', 'second');
-            let outletSpy    = sinon.spy(outletRoute, 'create');
-            let outletCrumb  = '/outlet/{action=\\w+}/';
+            let addressRoute    = AddressesRoute.addresses('addressRoute');
+            let addressSpy      = sinon.spy(addressRoute, 'create');
+            let addressCrumb    = '/address/{action=\\w+}/';
 
-            let setupRoute   = SetupRoute.setup(function() { return 42; });
-            let setupSpy     = sinon.spy(setupRoute, 'create');
-            let setupCrumb   = '/setup/{action=\\w+}/';
+            let outletRoute     = OutletRoute.outlets('first', 'second');
+            let outletSpy       = sinon.spy(outletRoute, 'create');
+            let outletCrumb     = '/outlet/{action=\\w+}/';
+
+            let setupRoute      = SetupRoute.setup(function() { return 42; });
+            let setupSpy        = sinon.spy(setupRoute, 'create');
+            let setupCrumb      = '/setup/{action=\\w+}/';
 
             let parentData = {
                 outlets: {
@@ -77,15 +86,16 @@ describe('MountMapper', () => {
 
             let rootApp = parentData.rootApp = parentData.parentApp = createRootApp();
 
-            mapper.add(paramCrumb,   paramRoute,   parentData);
-            mapper.add(addressCrumb, addressRoute, parentData);
-            mapper.add(outletCrumb,  outletRoute,  parentData);
-            mapper.add(setupCrumb,   setupRoute,   parentData);
+            mapper.add(oneParamCrumb,   oneParamRoute,   parentData);
+            mapper.add(bothParamsCrumb, bothParamsRoute, parentData);
+            mapper.add(addressCrumb,    addressRoute,    parentData);
+            mapper.add(outletCrumb,     outletRoute,     parentData);
+            mapper.add(setupCrumb,      setupRoute,      parentData);
 
             let opts;
 
-            paramSpy.should.have.been.calledOnce;
-            opts = paramSpy.getCall(0).args[0];
+            oneParamSpy.should.have.been.calledOnce;
+            opts = oneParamSpy.getCall(0).args[0];
             // we need an explicit equals here to make sure it's an
             // exact reference match and not a deep equals match
             expect(opts.rootApp).to.equal(rootApp);
@@ -97,7 +107,25 @@ describe('MountMapper', () => {
                 rootApp,
                 addresses: [],
                 outlets: {},
-                params: ['id', 'action'],
+                params: ['action'],
+                setup: undefined,
+            });
+
+            bothParamsSpy.should.have.been.calledOnce;
+            opts = bothParamsSpy.getCall(0).args[0];
+            // we need an explicit equals here to make sure it's an
+            // exact reference match and not a deep equals match
+            expect(opts.rootApp).to.equal(rootApp);
+            // MountMapper should make a shallow copy of
+            // what it needs from parent's data
+            expect(opts.outlets).to.not.equal(parentData.outlets);
+            expect(opts.params).to.not.equal(parentData.params);
+            opts.should.deep.equal({
+                rootApp,
+                addresses: [],
+                outlets: {},
+                params: ['action', 'id'],
+                setup: undefined,
             });
 
             addressSpy.should.have.been.calledOnce;
@@ -113,7 +141,8 @@ describe('MountMapper', () => {
                 rootApp,
                 addresses: ['addressRoute'],
                 outlets: {},
-                params: ['id', 'action'],
+                params: ['action', 'id'],
+                setup: undefined,
             });
 
             outletSpy.should.have.been.calledOnce;
@@ -132,7 +161,8 @@ describe('MountMapper', () => {
                     first: parentData.outlets.first,
                     second: parentData.outlets.second,
                 },
-                params: ['id', 'action'],
+                params: ['action', 'id'],
+                setup: undefined,
             });
 
             setupSpy.should.have.been.calledOnce;
@@ -148,11 +178,12 @@ describe('MountMapper', () => {
                 rootApp,
                 addresses: [],
                 outlets: {},
-                params: ['id', 'action'],
+                params: ['action', 'id'],
                 setup: 42,
             });
 
-            paramSpy.restore();
+            oneParamSpy.restore();
+            bothParamsSpy.restore();
             addressSpy.restore();
             outletSpy.restore();
             setupSpy.restore();

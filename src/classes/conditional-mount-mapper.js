@@ -82,6 +82,26 @@ class ConditionalMountMapper extends BaseMountMapper {
         };
     }
 
+    _compileMountParams(mount, parentData) {
+        let parentParams = parentData.params.reduce((memo, p) => memo[p] = true && memo, {});
+        let totalParams = [];
+        let expectedParams;
+
+        if (mount instanceof Modified) {
+            expectedParams = mount.klass.prototype.expectedParams();
+        } else {
+            expectedParams = mount.prototype.expectedParams();
+        }
+
+        for (let expectedParam of expectedParams) {
+            if (parentParams[expectedParam]) {
+                totalParams.push(expectedParam);
+            }
+        }
+
+        return totalParams;
+    }
+
     _checkMountInheritance(mount, logic, parentApp) {
         if (mount instanceof Modified) {
             mount = mount.klass;
@@ -100,7 +120,7 @@ class ConditionalMountMapper extends BaseMountMapper {
             addresses: this._compileMountAddresses(mount),
             outlets: this._compileMountOutlets(mount, logic, parentData, true),
             setup: this._compileMountSetupFns(mount),
-            params: parentData.params.slice(),
+            params: this._compileMountParams(mount, parentData),
         };
 
         return mount.create(opts);
