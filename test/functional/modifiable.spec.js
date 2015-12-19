@@ -41,10 +41,7 @@ let transformTests = {
             stub.should.have.been.calledOnce;
             stub.should.have.been.calledWithNew;
             let callArgs = stub.getCall(0).args;
-            callArgs.should.have.length(transformTestsArgs.length);
-            callArgs.slice(1).should.deep.equal(transformTestsArgs.slice(1));
-            callArgs[0].should.have.property('addresses');
-            callArgs[0].addresses.should.deep.equal(this.args);
+            callArgs.should.deep.equal(transformTestsArgs);
             stub.restore();
             return modified;
         }
