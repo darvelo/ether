@@ -9,6 +9,7 @@ class ConditionalMountMapper extends BaseMountMapper {
     constructor(...args) {
         super(...args);
         this._addresses = null;
+        this._outlets = null;
         this._acceptedOperators = ['*', '+', '!'];
         this._mounts = {};
     }
@@ -28,11 +29,19 @@ class ConditionalMountMapper extends BaseMountMapper {
         }
     }
 
-    getAddresses() {
-        if (is(this._addresses, 'Null')) {
-            return null;
+    setOutlets(outlets) {
+        if (isnt(this._outlets, 'Null')) {
+            throw new Error(ctorName(this) + ' only allows setting outlets once.');
         }
-        return Object.keys(this._addresses).sort();
+
+        if (isnt(outlets, 'Array')) {
+            throw new TypeError(ctorName(this) + '#setOutlets() expects an array.');
+        }
+
+        this._outlets = {};
+        for (let name of outlets) {
+            this._outlets[name] = true;
+        }
     }
 
     parse(logic) {
@@ -123,6 +132,10 @@ class ConditionalMountMapper extends BaseMountMapper {
             params: this._compileMountParams(mount, parentData),
         };
 
+        // add outlet names we are passing to our list of already-passed outlets
+        // throw if multiple mounts are passed the same outlet
+        this._addToPassedOutletsList(opts.outlets, parentData.parentApp);
+
         return mount.create(opts);
     }
 
@@ -138,6 +151,9 @@ class ConditionalMountMapper extends BaseMountMapper {
         }
         if (is(this._addresses, 'Null')) {
             throw new Error(ctorName(this) + '#add() was called but #setAddresses() needed to have been called first.');
+        }
+        if (is(this._outlets, 'Null')) {
+            throw new Error(ctorName(this) + '#add() was called but #setOutlets() needed to have been called first.');
         }
         if (!(parentData.rootApp instanceof App)) {
             throw new TypeError(ctorName(this) + '#add() did not receive an App instance for parentData.rootApp.');

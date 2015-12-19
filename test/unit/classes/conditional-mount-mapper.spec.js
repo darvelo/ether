@@ -16,12 +16,13 @@ class TestRoute extends Route {
 }
 
 describe('ConditionalMountMapper', () => {
-    let mapper, addresses, parentData;
+    let mapper, addresses, outlets, parentData;
 
     beforeEach(() => {
         let rootApp = new TestRootApp({});
         mapper = new ConditionalMountMapper();
         addresses = ['first', 'second', 'third'];
+        outlets = ['first', 'second', 'third'];
         parentData = {
             rootApp,
             parentApp: rootApp,
@@ -30,23 +31,34 @@ describe('ConditionalMountMapper', () => {
         };
     });
 
-    it('sets a list of addresses', () => {
-        mapper.setAddresses(addresses);
+    describe('Setting Addresses', () => {
+        it('sets a list of addresses', () => {
+            mapper.setAddresses(addresses);
+        });
+
+        it('list of addresses needs to be an array', () => {
+            expect(() => mapper.setAddresses({})).to.throw(TypeError, 'ConditionalMountMapper#setAddresses() expects an array.');
+        });
+
+        it('can only set addresses once', () => {
+            mapper.setAddresses(addresses);
+            expect(() => mapper.setAddresses(addresses)).to.throw(Error, 'ConditionalMountMapper only allows setting addresses once.');
+        });
     });
 
-    it('list of addresses needs to be an array', () => {
-        expect(() => mapper.setAddresses({})).to.throw(TypeError, 'ConditionalMountMapper#setAddresses() expects an array.');
-    });
+    describe('Setting Outlets', () => {
+        it('sets a list of outlets', () => {
+            mapper.setOutlets(outlets);
+        });
 
-    it('can only set addresses once', () => {
-        mapper.setAddresses(addresses);
-        expect(() => mapper.setAddresses(addresses)).to.throw(Error, 'ConditionalMountMapper only allows setting addresses once.');
-    });
+        it('list of outlets needs to be an array', () => {
+            expect(() => mapper.setOutlets({})).to.throw(TypeError, 'ConditionalMountMapper#setOutlets() expects an array.');
+        });
 
-    it('can retrieve a sorted list of its addresses', () => {
-        expect(mapper.getAddresses()).to.equal(null);
-        mapper.setAddresses(addresses.concat('hello'));
-        expect(mapper.getAddresses()).to.deep.equal(['first', 'hello', 'second', 'third']);
+        it('can only set outlets once', () => {
+            mapper.setOutlets(outlets);
+            expect(() => mapper.setOutlets(outlets)).to.throw(Error, 'ConditionalMountMapper only allows setting outlets once.');
+        });
     });
 
     describe('Parsing', () => {
@@ -98,31 +110,41 @@ describe('ConditionalMountMapper', () => {
             expect(() => mapper.add('*', [TestRoute], parentData)).to.throw(Error, 'ConditionalMountMapper#add() was called but #setAddresses() needed to have been called first.');
         });
 
+        it('requires having set a list of outlets', () => {
+            mapper.setAddresses(addresses);
+            expect(() => mapper.add('*', [TestRoute], parentData)).to.throw(Error, 'ConditionalMountMapper#add() was called but #setOutlets() needed to have been called first.');
+        });
+
         it('expects parentData to be an object', () => {
             mapper.setAddresses(addresses);
+            mapper.setOutlets(outlets);
             expect(() => mapper.add('*', [TestRoute], [])).to.throw(Error, 'ConditionalMountMapper#add() expected an object containing the mount\'s parent data.');
         });
 
         it('throws if parentData.rootApp is not an App instance', () => {
             mapper.setAddresses(addresses);
+            mapper.setOutlets(outlets);
             parentData.rootApp = null;
             expect(() => mapper.add('*', [TestRoute], parentData)).to.throw(TypeError, 'ConditionalMountMapper#add() did not receive an App instance for parentData.rootApp.');
         });
 
         it('throws if parentData.parentApp is not an App instance', () => {
             mapper.setAddresses(addresses);
+            mapper.setOutlets(outlets);
             parentData.parentApp = null;
             expect(() => mapper.add('*', [TestRoute], parentData)).to.throw(TypeError, 'ConditionalMountMapper#add() did not receive an App instance for parentData.parentApp.');
         });
 
         it('throws if parentData.outlets is not an Object', () => {
             mapper.setAddresses(addresses);
+            mapper.setOutlets(outlets);
             parentData.outlets = null;
             expect(() => mapper.add('*', [TestRoute], parentData)).to.throw(TypeError, 'ConditionalMountMapper#add() did not receive an object for parentData.outlets.');
         });
 
         it('throws if parentData.params is not an Array', () => {
             mapper.setAddresses(addresses);
+            mapper.setOutlets(outlets);
             parentData.params = null;
             expect(() => mapper.add('*', [TestRoute], parentData)).to.throw(TypeError, 'ConditionalMountMapper#add() did not receive an array for parentData.params.');
         });

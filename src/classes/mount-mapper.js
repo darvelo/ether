@@ -15,6 +15,7 @@ class MountMapper extends BaseMountMapper {
         super(...args);
         this._crumbMap = {};
         this._sortedCrumbs = [];
+        this._outlets = {};
     }
 
     _sortFn(a, b) {
@@ -200,6 +201,10 @@ class MountMapper extends BaseMountMapper {
             params: this._compileMountParams(mount, crumb, mountParams, parentData),
         };
 
+        // add outlet names we are passing to our list of already-passed outlets
+        // throw if multiple mounts are passed the same outlet
+        this._addToPassedOutletsList(opts.outlets, parentData.parentApp);
+
         return {
             addresses: opts.addresses,
             instance: mount.create(opts),
@@ -291,6 +296,10 @@ class MountMapper extends BaseMountMapper {
         }
         // return undefined if crumb didn't exist
         return;
+    }
+
+    allOutlets() {
+        return Object.keys(this._outlets).sort();
     }
 
     regexFor(crumb) {

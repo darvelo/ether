@@ -96,6 +96,9 @@ class App extends Modifiable {
         // an immutable list of addresses created locally on this App;
         // a whitelist of addresses a conditional mount can reference
         this._conditionalMountMapper.setAddresses(this._mountMapper.allAddresses());
+        // an immutable list of outlets created locally on this App;
+        // a blacklist of outlets a conditional mount cannot be passed
+        this._conditionalMountMapper.setOutlets(this._mountMapper.allOutlets());
 
         // create conditional mount instances
         for (let logic in cMounts) {

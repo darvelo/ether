@@ -56,6 +56,26 @@ class BaseMountMapper {
 
         return setupFns;
     }
+
+    _addToPassedOutletsList(outletsToPass, parentApp) {
+        let alreadyPassedOutlets = [];
+        let outlets = this._outlets;
+        for (let name in outletsToPass) {
+            if (outlets.hasOwnProperty(name) && outlets[name]) {
+                alreadyPassedOutlets.push(name);
+            } else {
+                outlets[name] = true;
+            }
+        }
+        if (alreadyPassedOutlets.length) {
+            throw new Error([
+                ctorName(parentApp),
+                ' tried to send these outlets to more than one mount: ',
+                JSON.stringify(alreadyPassedOutlets.sort()),
+                '.',
+            ].join(''));
+        }
+    }
 }
 
 export default BaseMountMapper;

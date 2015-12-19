@@ -302,6 +302,124 @@ describe('Mounting Functional Tests', () => {
                     '6_2': outlet6_2,
                 });
             });
+
+            it('throws if two mounts are sent the same outlet', () => {
+                class TwoOutletsRoute extends TestRoute {
+                    expectedOutlets() {
+                        return ['first', 'second'];
+                    }
+                }
+                class ThreeOutletsRoute extends TestRoute {
+                    expectedOutlets() {
+                        return ['first', 'second', 'third'];
+                    }
+                }
+                class MyRootApp extends RootApp {
+                    createOutlets() {
+                        return {
+                            first:  new Outlet(document.createElement('div')),
+                            second: new Outlet(document.createElement('div')),
+                            third:  new Outlet(document.createElement('div')),
+                        };
+                    }
+                    mount() {
+                        return {
+                            'abc': TwoOutletsRoute.outlets('first', 'second'),
+                            'xyz': ThreeOutletsRoute.outlets('first', 'second', 'third'),
+                        };
+                    }
+                }
+                expect(() => new MyRootApp(defaultOpts)).to.throw('MyRootApp tried to send these outlets to more than one mount: ["first","second"].');
+            });
+
+            it('throws if two conditional mounts are sent the same outlet', () => {
+                class TwoOutletsRoute extends TestRoute {
+                    expectedOutlets() {
+                        return ['first', 'second'];
+                    }
+                }
+                class ThreeOutletsRoute extends TestRoute {
+                    expectedOutlets() {
+                        return ['first', 'second', 'third'];
+                    }
+                }
+                class FirstAddressRoute extends OneAddressRoute {
+                    expectedAddresses() {
+                        return ['first'];
+                    }
+                }
+                class SecondAddressRoute extends OneAddressRoute {
+                    expectedAddresses() {
+                        return ['second'];
+                    }
+                }
+                class MyRootApp extends RootApp {
+                    createOutlets() {
+                        return {
+                            first:  new Outlet(document.createElement('div')),
+                            second: new Outlet(document.createElement('div')),
+                            third:  new Outlet(document.createElement('div')),
+                        };
+                    }
+                    mount() {
+                        return {
+                            'abc': FirstAddressRoute.addresses('first'),
+                            'xyz': SecondAddressRoute.addresses('second'),
+                        };
+                    }
+                    mountConditionals() {
+                        return {
+                            '+first': TwoOutletsRoute.outlets('first', 'second'),
+                            '+second': [ThreeOutletsRoute.outlets('first', 'second', 'third')],
+                        };
+                    }
+                }
+                expect(() => new MyRootApp(defaultOpts)).to.throw('MyRootApp tried to send these outlets to more than one mount: ["first","second"].');
+            });
+
+            it('throws if a mount and conditional mount are sent the same outlet', () => {
+                class FirstAddressRoute extends OneAddressRoute {
+                    expectedAddresses() {
+                        return ['first'];
+                    }
+                    expectedOutlets() {
+                        return ['first'];
+                    }
+                }
+                class SecondAddressRoute extends OneAddressRoute {
+                    expectedAddresses() {
+                        return ['second'];
+                    }
+                    expectedOutlets() {
+                        return ['second'];
+                    }
+                }
+                class BothOutletsRoute extends TestRoute {
+                    expectedOutlets() {
+                        return ['first', 'second'];
+                    }
+                }
+                class MyRootApp extends RootApp {
+                    createOutlets() {
+                        return {
+                            first:  new Outlet(document.createElement('div')),
+                            second: new Outlet(document.createElement('div')),
+                        };
+                    }
+                    mount() {
+                        return {
+                            'abc': FirstAddressRoute.addresses('first').outlets('first'),
+                            'xyz': SecondAddressRoute.addresses('second').outlets('second'),
+                        };
+                    }
+                    mountConditionals() {
+                        return {
+                            '+first': BothOutletsRoute.outlets('first', 'second'),
+                        };
+                    }
+                }
+                expect(() => new MyRootApp(defaultOpts)).to.throw('MyRootApp tried to send these outlets to more than one mount: ["first","second"].');
+            });
         });
 
         describe('Params', () => {

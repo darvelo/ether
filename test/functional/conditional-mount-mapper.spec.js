@@ -18,12 +18,14 @@ function createRootApp() {
 }
 
 describe('ConditionalMountMapper', () => {
-    let mapper, addresses;
+    let mapper, addresses, outlets;
 
     beforeEach(() => {
         mapper = new ConditionalMountMapper();
         addresses = ['first', 'second', 'third'];
+        outlets = ['first', 'second', 'third'];
         mapper.setAddresses(addresses);
+        mapper.setOutlets(outlets);
     });
 
     describe('Add', () => {
@@ -48,7 +50,7 @@ describe('ConditionalMountMapper', () => {
             }
             class OutletRoute extends BothParamsRoute {
                 expectedOutlets() {
-                    return ['first', 'second'];
+                    return ['fourth', 'fifth'];
                 }
             }
             class SetupRoute extends BothParamsRoute {
@@ -61,7 +63,7 @@ describe('ConditionalMountMapper', () => {
                 OneParamRoute,
                 BothParamsRoute,
                 AddressesRoute.addresses('fourth'),
-                OutletRoute.outlets('first', 'second'),
+                OutletRoute.outlets('fourth', 'fifth'),
                 SetupRoute.setup(function() { return 42; }),
             ];
             let [ oneParamSpy,
@@ -71,8 +73,8 @@ describe('ConditionalMountMapper', () => {
                   setupSpy ] = mounts.map(route => sinon.spy(route, 'create'));
             let parentData = {
                 outlets: {
-                    first:  new Outlet(document.createElement('div')),
-                    second: new Outlet(document.createElement('div')),
+                    fourth:  new Outlet(document.createElement('div')),
+                    fifth: new Outlet(document.createElement('div')),
                     unused: new Outlet(document.createElement('div')),
                 },
                 params: ['id', 'action'],
@@ -147,8 +149,8 @@ describe('ConditionalMountMapper', () => {
                 rootApp,
                 addresses: [],
                 outlets: {
-                    first: parentData.outlets.first,
-                    second: parentData.outlets.second,
+                    fourth: parentData.outlets.fourth,
+                    fifth: parentData.outlets.fifth,
                 },
                 params: ['id', 'action'],
                 setup: undefined,
