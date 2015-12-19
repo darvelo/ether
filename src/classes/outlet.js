@@ -11,6 +11,7 @@ class Outlet {
             throw new TypeError(ctorName(this) + ' constructor was not passed an "Element" instance.');
         }
 
+        element.innerHTML = '';
         this._element = element;
     }
 

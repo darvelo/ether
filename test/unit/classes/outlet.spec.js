@@ -7,6 +7,15 @@ describe('Outlet', function() {
             expect(() => new Outlet({})).to.throw(TypeError, 'Outlet constructor was not passed an "Element" instance.');
         });
 
+        it('clears the innerHTML of the passed-in element', () => {
+            let element = document.createElement('div');
+            let html = '<span></span>';
+            element.innerHTML = html;
+            expect(element.innerHTML).to.equal(html);
+            let outlet = new Outlet(element);
+            expect(element.innerHTML).to.equal('');
+        });
+
         it('accepts a CSS selector', () => {
             let selector = '#myElement';
             let spy = sinon.spy(document, 'querySelector');
