@@ -31,6 +31,7 @@ export class Eventable {
 
 export var window = {
     __proto__: Eventable,
+    EtherTestEnvironment: true,
 };
 
 export var document = {

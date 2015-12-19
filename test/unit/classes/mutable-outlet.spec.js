@@ -22,20 +22,42 @@ describe('MutableOutlet', function() {
             expect(element.innerHTML).to.equal('');
         });
 
-        it('accepts a CSS selector', () => {
-            let selector = '#myElement';
-            let spy = sinon.spy(document, 'querySelector');
-            expect(() => new MutableOutlet(selector)).to.throw();
-            spy.should.have.been.calledOnce;
-            spy.should.have.thrown;
-            spy.restore();
-            let element = document.createElement('div');
-            let stub = sinon.stub(document, 'querySelector').returns(element);
+        it('accepts a html string to construct an empty element', () => {
+            let html = '<span><a href="go.html">Hello!</a></span>';
+            let clearedHTML = '<span></span>';
+            let surrogate = document.createElement('div');
+            var span;
+
+            // for mocked browser environment
+            // we have to mock the parsing and extraction process
+            if (window.EtherTestEnvironment) {
+                span = document.createElement('span');
+                Object.defineProperties(surrogate, {
+                    'innerHTML': {
+                        get() {
+                            return this._innerHTML;
+                        },
+                        set() {
+                            // Outlet internal code should clear
+                            // the innerHTML of the child element.
+                            // though it's not done on setting
+                            // surrogate.innerHTML in a browser env,
+                            // we do it here for simplicity's sake.
+                            this._innerHTML = clearedHTML;
+                            this._children = [span];
+                        }
+                    },
+                });
+            }
+
+            let stub = sinon.stub(document, 'createElement').returns(surrogate);
             let outlet;
-            expect(() => outlet = new MutableOutlet(selector)).to.not.throw();
-            expect(outlet.get()).to.equal(element);
+            expect(() => outlet = new MutableOutlet(html)).to.not.throw();
             stub.should.have.been.calledOnce;
-            stub.should.have.been.calledWith(selector);
+            stub.should.have.been.calledWith('div');
+            expect(surrogate.innerHTML).to.equal(clearedHTML);
+            expect(outlet._element).to.equal(surrogate.children[0]);
+            expect(outlet._element.innerHTML).to.equal('');
             stub.restore();
         });
     });

@@ -3,8 +3,11 @@ import ctorName from '../utils/ctor-name';
 
 class Outlet {
     constructor(element) {
+        // parse HTML string and extract its root element
         if (is(element, 'String')) {
-            element = document.querySelector(element);
+            let surrogate = document.createElement('div');
+            surrogate.innerHTML = element;
+            element = surrogate.children[0];
         }
 
         if (!(element instanceof Element)) {
