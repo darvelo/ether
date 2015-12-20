@@ -10,13 +10,7 @@ export default function regexEqual(r1, r2) {
 
     ['global', 'multiline', 'ignoreCase', 'source'].forEach(prop => {
         if (r1[prop] !== r2[prop]) {
-            throw new Error([
-                'regexEqual: r1.', prop,
-                ' !== r2.', prop,
-                '. r1.',  prop, ': "', r1[prop],
-                '". r2.', prop, ': "', r2[prop],
-                '".',
-            ].join(''));
+            throw new Error(`regexEqual: r1.${prop} !== r2.${prop}. r1.${prop}: "${r1[prop]}". r2.${prop}: "${r2[prop]}".`);
         }
     });
 
