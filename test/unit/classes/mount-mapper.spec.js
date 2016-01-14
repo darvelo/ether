@@ -46,35 +46,35 @@ describe('MountMapper', () => {
     describe('Parsing', () => {
         it('processes url regex-like specs into actual regex', () => {
             let crumb = 'word';
-            let expected = /^word(.*)/;
+            let expected = /^\/?word(.*)/;
             let result = mapper.parse(crumb);
             expect(regexEqual(expected, result.regex)).to.be.ok;
         });
 
         it('processes slashes correctly', () => {
             let crumb = '/first/second';
-            let expected = /^\/first\/second(.*)/;
+            let expected = /^\/?first\/second(.*)/;
             let result = mapper.parse(crumb);
             expect(regexEqual(expected, result.regex)).to.be.ok;
         });
 
         it('processes backslashes correctly', () => {
             let crumb = '\\first\\second\\';
-            let expected = /^\\first\\second\\(.*)/;
+            let expected = /^\/?\\first\\second\\(.*)/;
             let result = mapper.parse(crumb);
             expect(regexEqual(expected, result.regex)).to.be.ok;
         });
 
         it('processes a combination of slashes and backslashes correctly', () => {
             let crumb = '/\\first/\\/second\\';
-            let expected = /^\/\\first\/\\\/second\\(.*)/;
+            let expected = /^\/?\\first\/\\\/second\\(.*)/;
             let result = mapper.parse(crumb);
             expect(regexEqual(expected, result.regex)).to.be.ok;
         });
 
         it('can extract parameter variables from regex', () => {
             let crumb = '/name/{id=\\d+}/view';
-            let expected = /^\/name\/(\d+)\/view(.*)/;
+            let expected = /^\/?name\/(\d+)\/view(.*)/;
             let result = mapper.parse(crumb);
             expect(regexEqual(expected, result.regex)).to.be.ok;
             expect(result.paramNames).to.deep.equal(['id']);
@@ -87,7 +87,7 @@ describe('MountMapper', () => {
 
         it('escapes parentheses and brackets when not processing a parameter', () => {
             let crumb = '/[user]/(item)';
-            let expected = /^\/\[user\]\/\(item\)(.*)/;
+            let expected = /^\/?\[user\]\/\(item\)(.*)/;
             let result = mapper.parse(crumb);
             expect(regexEqual(expected, result.regex)).to.be.ok;
         });
@@ -105,7 +105,7 @@ describe('MountMapper', () => {
 
         it('escapes parentheses that the user escaped with backslashes', () => {
             let crumb = '/user/{id=\\(\\d+\\)}';
-            let expected = /^\/user\/(\(\d+\))(.*)/;
+            let expected = /^\/?user\/(\(\d+\))(.*)/;
             let result;
             expect(() => result = mapper.parse(crumb)).to.not.throw();
             expect(regexEqual(expected, result.regex)).to.be.ok;
@@ -124,10 +124,33 @@ describe('MountMapper', () => {
 
         it('returns the parsing results', () => {
             let crumb = '/user/{id=\\d+}';
-            expect(mapper.parse(crumb)).to.deep.equal({
-                regex: /^\/user\/(\d+)(.*)/,
+            let expectedRegex = /^\/?user\/(\d+)(.*)/;
+            let result = mapper.parse(crumb);
+            expect(regexEqual(expectedRegex, result.regex)).to.be.ok;
+            expect(result).to.deep.equal({
+                regex: expectedRegex,
                 paramNames: ['id'],
                 slashes: 2,
+            });
+        });
+
+        it('makes a leading slash optional', () => {
+            let hasSlash = '/user/{id=\\d+}';
+            let noSlash = 'user/{id=\\d+}';
+            let expectedRegex = /^\/?user\/(\d+)(.*)/;
+            let resultHasSlash = mapper.parse(hasSlash);
+            let resultNoSlash = mapper.parse(noSlash);
+            expect(regexEqual(expectedRegex, resultHasSlash.regex)).to.be.ok;
+            expect(resultHasSlash).to.deep.equal({
+                regex: expectedRegex,
+                paramNames: ['id'],
+                slashes: 2,
+            });
+            expect(regexEqual(expectedRegex, resultNoSlash.regex)).to.be.ok;
+            expect(resultNoSlash).to.deep.equal({
+                regex: expectedRegex,
+                paramNames: ['id'],
+                slashes: 1,
             });
         });
     });
@@ -167,7 +190,7 @@ describe('MountMapper', () => {
 
             it('returns regex for a crumb', () => {
                 let crumb = '/path/{id=\\d+}/somewhere';
-                let expected = /^\/path\/(\d+)\/somewhere(.*)/;
+                let expected = /^\/?path\/(\d+)\/somewhere(.*)/;
                 mapper.add(crumb, IdParamRoute, parentData);
                 expect(regexEqual(expected, mapper.regexFor(crumb))).to.be.ok;
             });
@@ -289,17 +312,25 @@ describe('MountMapper', () => {
             result = mapper.match('/user/25/profile');
             expect(result).to.deep.equal({
                 rest: '/profile',
-                params: {
-                    id: 25,
-                },
+                params: {id: 25},
             });
 
             result = mapper.match('/user/1xyz/profile');
             expect(result).to.deep.equal({
                 rest: 'xyz/profile',
-                params: {
-                    id: 1,
-                },
+                params: {id: 1},
+            });
+        });
+
+        it('matches within a path resource', () => {
+            mapper.add('/user/{id=\\d+}red_', IdParamRoute, parentData);
+            expect(mapper.match('/user/1red_block')).to.deep.equal({
+                rest: 'block',
+                params: {id: 1},
+            });
+            expect(mapper.match('/user/1red_sphere')).to.deep.equal({
+                rest: 'sphere',
+                params: {id: 1},
             });
         });
 

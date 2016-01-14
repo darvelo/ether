@@ -56,7 +56,13 @@ class MountMapper extends BaseMountMapper {
             ')': '\\)',
         };
 
-        finalRegex.push('^');
+        // make leading slashes optional. this does a couple of things:
+        // reflects a mount point's relative, rather than absolute, nature.
+        // implicitly requires REST resource trailing-slash style to be explicit
+        finalRegex.push('^\\/?');
+        if (len && crumb[0] === '/') {
+            cursor = leftBound = slashesCount = 1;
+        }
 
         for (; cursor < len; ++cursor) {
             let c = crumb[cursor];
