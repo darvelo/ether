@@ -153,4 +153,38 @@ describe('RootApp', () => {
             expect(() => rootApp._registerAddress('hello2', new TestRoute(childOpts))).to.not.throw();
         });
     });
+
+    describe('Parsing Query Params', () => {
+        it('returns empty object when there are no query params', () => {
+            let rootApp = new RootApp(defaultOpts);
+            expect(rootApp.parseForQueryParams('/user/25')).to.deep.equal({
+                path: '/user/25',
+                queryParams: {},
+            });
+        });
+
+        it('parses multiple query params when path has no trailing slash', () => {
+            let rootApp = new RootApp(defaultOpts);
+            expect(rootApp.parseForQueryParams('/user/25?x=10&y=20&z=hello')).to.deep.equal({
+                path: '/user/25',
+                queryParams: {
+                    x: 10,
+                    y: 20,
+                    z: 'hello',
+                },
+            });
+        });
+
+        it('parses multiple query params when path has a trailing slash', () => {
+            let rootApp = new RootApp(defaultOpts);
+            expect(rootApp.parseForQueryParams('/user/25/?x=10&y=20&z=hello')).to.deep.equal({
+                path: '/user/25/',
+                queryParams: {
+                    x: 10,
+                    y: 20,
+                    z: 'hello',
+                },
+            });
+        });
+    });
 });

@@ -82,6 +82,36 @@ class RootApp extends App {
         // and descend from this.rootURL, then preventDefault()
         // also should pushState()
     }
+
+    /**
+    * @typedef QueryParamParseResult
+    * @type {object}
+    * @property {string} path Essentially window.location.pathname with the querystring removed.
+    * @property {object} queryParams An object containing the query parameters as the object's keys with values. Empty object if there was no query string.
+    */
+
+    /**
+    * Parses a URL path, which may contain query params.
+    * @param {string} urlPath A string analogous to window.location.pathname.
+    * @return {QueryParamParseResult} The results of the parsing operation.
+    */
+    parseForQueryParams(urlPath) {
+        let [ path, queryParams ] = urlPath.split('?');
+        if (queryParams) {
+            queryParams = queryParams.split('&');
+        } else {
+            queryParams = [];
+        }
+        queryParams = queryParams.reduce((memo, pairStr) => {
+            let [ key, val ] = pairStr.split('=');
+            if (!isNaN(val)) {
+                val = Number(val);
+            }
+            memo[key] = val;
+            return memo;
+        }, {});
+        return {path, queryParams};
+    }
 }
 
 export default RootApp;
