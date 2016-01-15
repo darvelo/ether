@@ -1,11 +1,7 @@
 import { isnt } from './is';
 
 function throwTypeErr(argNum, prop, val) {
-    throw new TypeError(`diffObjects(): argument ${argNum} had a property "${prop}" that was not a number or a string: ${JSON.stringify(val)}.`);
-}
-
-function throwMismatchError(prop, p1, p2) {
-    throw new TypeError(`diffObjects(): arguments had a property "${prop}" that was not of the same type for both: ${JSON.stringify([p1,p2])}.`);
+    throw new TypeError(`diffObjects(): argument ${argNum} had a property "${prop}" that was not a number, string, or undefined: ${JSON.stringify(val)}.`);
 }
 
 export default function diffObjects(o1, o2) {
@@ -30,9 +26,6 @@ export default function diffObjects(o1, o2) {
             if (typeof p2 !== 'number' && typeof p2 !== 'string') {
                 throwTypeErr(2, prop, p2);
             }
-            if (typeof p1 !== typeof p2) {
-                throwMismatchError(prop, p1, p2);
-            }
             if (p1 !== p2) {
                 hadDiffs = true;
                 result[prop] = [p1, p2];
@@ -48,9 +41,6 @@ export default function diffObjects(o1, o2) {
             let p1 = o1[prop];
             if (typeof p1 !== 'number' && typeof p1 !== 'string') {
                 throwTypeErr(1, prop, p1);
-            }
-            if (typeof p1 !== typeof p2) {
-                throwMismatchError(prop, p1, p2);
             }
             if (p1 !== p2) {
                 hadDiffs = true;

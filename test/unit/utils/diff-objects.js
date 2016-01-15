@@ -39,12 +39,6 @@ describe('Diff Objects Util', () => {
         expect(diffObjects({}, {})).to.equal(null);
     });
 
-    it('throws if properties are not of the same type', () => {
-        let o1 = {a:  1};
-        let o2 = {a: '2'};
-        expect(() => diffObjects(o1, o2)).to.throw(TypeError, 'diffObjects(): arguments had a property "a" that was not of the same type for both: [1,"2"].');
-    });
-
     it('throws if an object property is not a number or string', () => {
         let o1 = {};
         let o2 = {};
