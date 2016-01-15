@@ -24,6 +24,15 @@ describe('Diff Objects Util', () => {
         });
     });
 
+    it('returns differences if a property exists on one object but not the other', () => {
+        let o1 = {a: 1};
+        let o2 = {b: 2};
+        expect(diffObjects(o1, o2)).to.deep.equal({
+            a: [1, undefined],
+            b: [undefined, 2],
+        });
+    });
+
     it('returns null if no differences', () => {
         let o1 = {
             a: 1,
@@ -39,15 +48,15 @@ describe('Diff Objects Util', () => {
         expect(diffObjects({}, {})).to.equal(null);
     });
 
-    it('throws if an object property is not a number or string', () => {
+    it('throws if an existing object property is not a number or string', () => {
         let o1 = {};
         let o2 = {};
         o1.a = ['hi'];
-        expect(() => diffObjects(o1, o2)).to.throw(TypeError, 'diffObjects(): argument 1 had a property "a" that was not a number or a string: ["hi"].');
-        o1.a = undefined;
-        expect(() => diffObjects(o1, o2)).to.throw(TypeError, 'diffObjects(): argument 1 had a property "a" that was not a number or a string: undefined.');
+        expect(() => diffObjects(o1, o2)).to.throw(TypeError, 'diffObjects(): argument 1 had a property "a" that was not a number or string: ["hi"].');
+        o1.a = {hi:1};
+        expect(() => diffObjects(o1, o2)).to.throw(TypeError, 'diffObjects(): argument 1 had a property "a" that was not a number or string: {"hi":1}.');
         delete o1.a;
         o2.b = null;
-        expect(() => diffObjects(o1, o2)).to.throw(TypeError, 'diffObjects(): argument 2 had a property "b" that was not a number or a string: null.');
+        expect(() => diffObjects(o1, o2)).to.throw(TypeError, 'diffObjects(): argument 2 had a property "b" that was not a number or string: null.');
     });
 });

@@ -1,7 +1,7 @@
 import { isnt } from './is';
 
 function throwTypeErr(argNum, prop, val) {
-    throw new TypeError(`diffObjects(): argument ${argNum} had a property "${prop}" that was not a number, string, or undefined: ${JSON.stringify(val)}.`);
+    throw new TypeError(`diffObjects(): argument ${argNum} had a property "${prop}" that was not a number or string: ${JSON.stringify(val)}.`);
 }
 
 export default function diffObjects(o1, o2) {
@@ -19,11 +19,15 @@ export default function diffObjects(o1, o2) {
         if (o1.hasOwnProperty(prop)) {
             checked[prop] = true;
             let p1 = o1[prop];
-            if (typeof p1 !== 'number' && typeof p1 !== 'string') {
+            // don't specifically test for undefined since
+            // if it hasOwn we assume that it's an actual value
+            if (isnt(p1, 'Number') && isnt(p1, 'String')) {
                 throwTypeErr(1, prop, p1);
             }
             let p2 = o2[prop];
-            if (typeof p2 !== 'number' && typeof p2 !== 'string') {
+            // if `o2` doesn't hasOwn `prop` we
+            // allow `undefined` as an acceptable value
+            if (o2.hasOwnProperty(prop) && isnt(p2, 'Number') && isnt(p2, 'String')) {
                 throwTypeErr(2, prop, p2);
             }
             if (p1 !== p2) {
@@ -35,11 +39,15 @@ export default function diffObjects(o1, o2) {
     for (let prop in o2) {
         if (!checked[prop] && o2.hasOwnProperty(prop)) {
             let p2 = o2[prop];
-            if (typeof p2 !== 'number' && typeof p2 !== 'string') {
+            // don't specifically test for undefined since
+            // if it hasOwn we assume that it's an actual value
+            if (isnt(p2, 'Number') && isnt(p2, 'String')) {
                 throwTypeErr(2, prop, p2);
             }
             let p1 = o1[prop];
-            if (typeof p1 !== 'number' && typeof p1 !== 'string') {
+            // if `o1` doesn't hasOwn `prop` we
+            // allow `undefined` as an acceptable value
+            if (o1.hasOwnProperty(prop) && isnt(p1, 'Number') && isnt(p1, 'String')) {
                 throwTypeErr(1, prop, p1);
             }
             if (p1 !== p2) {
