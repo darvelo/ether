@@ -84,33 +84,26 @@ class RootApp extends App {
     }
 
     /**
-    * @typedef QueryParamParseResult
-    * @type {object}
-    * @property {string} path Essentially window.location.pathname with the querystring removed.
-    * @property {object} queryParams An object containing the query parameters as the object's keys with values. Empty object if there was no query string.
+    * Parses a query string.
+    * @param {string} queryString A string analogous to window.location.search.
+    * @return {object} An object containing the query parameters as the object's keys with values.
     */
-
-    /**
-    * Parses a URL path, which may contain query params.
-    * @param {string} urlPath A string analogous to window.location.pathname.
-    * @return {QueryParamParseResult} The results of the parsing operation.
-    */
-    parseForQueryParams(urlPath) {
-        let [ path, queryParams ] = urlPath.split('?');
-        if (queryParams) {
-            queryParams = queryParams.split('&');
-        } else {
-            queryParams = [];
+    parseQueryString(queryString) {
+        if (queryString[0] === '?') {
+            queryString = queryString.slice(1);
         }
-        queryParams = queryParams.reduce((memo, pairStr) => {
+        let queryParams = queryString.split('&').reduce((memo, pairStr) => {
             let [ key, val ] = pairStr.split('=');
-            if (!isNaN(val)) {
+            val = decodeURIComponent(val);
+            // isNaN will coerce empty string or all spaces to 0
+            // so we need to guard against that case with regex
+            if (!isNaN(val) && !/^\s*$/.test(val)) {
                 val = Number(val);
             }
             memo[key] = val;
             return memo;
         }, {});
-        return {path, queryParams};
+        return queryParams;
     }
 }
 

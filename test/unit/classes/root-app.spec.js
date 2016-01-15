@@ -154,36 +154,31 @@ describe('RootApp', () => {
         });
     });
 
-    describe('Parsing Query Params', () => {
-        it('returns empty object when there are no query params', () => {
+    describe('Parsing Query String', () => {
+        it('parses multiple query params when querystring has a question mark', () => {
             let rootApp = new RootApp(defaultOpts);
-            expect(rootApp.parseForQueryParams('/user/25')).to.deep.equal({
-                path: '/user/25',
-                queryParams: {},
+            expect(rootApp.parseQueryString('?x=10&y=20&z=hello')).to.deep.equal({
+                x: 10,
+                y: 20,
+                z: 'hello',
             });
         });
 
-        it('parses multiple query params when path has no trailing slash', () => {
+        it('parses multiple query params when querystring has no question mark', () => {
             let rootApp = new RootApp(defaultOpts);
-            expect(rootApp.parseForQueryParams('/user/25?x=10&y=20&z=hello')).to.deep.equal({
-                path: '/user/25',
-                queryParams: {
-                    x: 10,
-                    y: 20,
-                    z: 'hello',
-                },
+            expect(rootApp.parseQueryString('x=10&y=20&z=hello')).to.deep.equal({
+                x: 10,
+                y: 20,
+                z: 'hello',
             });
         });
 
-        it('parses multiple query params when path has a trailing slash', () => {
+        it('decodes URI components', () => {
             let rootApp = new RootApp(defaultOpts);
-            expect(rootApp.parseForQueryParams('/user/25/?x=10&y=20&z=hello')).to.deep.equal({
-                path: '/user/25/',
-                queryParams: {
-                    x: 10,
-                    y: 20,
-                    z: 'hello',
-                },
+            expect(rootApp.parseQueryString('x=yes%2C%20sir&y=%20&z=%3Chello%3E%20there')).to.deep.equal({
+                x: 'yes, sir',
+                y: ' ',
+                z: '<hello> there',
             });
         });
     });
