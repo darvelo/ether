@@ -207,10 +207,6 @@ class MountMapper extends BaseMountMapper {
             params: this._compileMountParams(mount, crumb, mountParams, parentData),
         };
 
-        // add outlet names we are passing to our list of already-passed outlets
-        // throw if multiple mounts are passed the same outlet
-        this._addToPassedOutletsList(opts.outlets, parentData.parentApp);
-
         return {
             addresses: opts.addresses,
             instance: mount.create(opts),

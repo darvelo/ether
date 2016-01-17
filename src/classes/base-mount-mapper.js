@@ -40,6 +40,10 @@ class BaseMountMapper {
             }
         }
 
+        // add outlet names we are passing to our list of already-passed outlets.
+        // throw if any other mount/cMount was already passed any of them.
+        this._addToPassedOutletsList(outlets, parentData.parentApp);
+
         return outlets;
     }
 
