@@ -156,28 +156,32 @@ describe('MountMapper', () => {
     });
 
     describe('Adding', () => {
+        it('expects mounts to be an object', () => {
+            expect(() => mapper.add([], [])).to.throw(Error, 'MountMapper#add() expected an object containing the mounts.');
+        });
+
         it('expects parentData to be an object', () => {
-            expect(() => mapper.add('/', TestRoute, [])).to.throw(Error, 'MountMapper#add() expected an object containing the mount\'s parent data.');
+            expect(() => mapper.add({'/': TestRoute}, [])).to.throw(Error, 'MountMapper#add() expected an object containing the mount\'s parent data.');
         });
 
         it('throws if parentData.rootApp is not an App instance', () => {
             parentData.rootApp = null;
-            expect(() => mapper.add('/', TestRoute, parentData)).to.throw(TypeError, 'MountMapper#add() did not receive an App instance for parentData.rootApp.');
+            expect(() => mapper.add({'/': TestRoute}, parentData)).to.throw(TypeError, 'MountMapper#add() did not receive an App instance for parentData.rootApp.');
         });
 
         it('throws if parentData.parentApp is not an App instance', () => {
             parentData.parentApp = null;
-            expect(() => mapper.add('/', TestRoute, parentData)).to.throw(TypeError, 'MountMapper#add() did not receive an App instance for parentData.parentApp.');
+            expect(() => mapper.add({'/': TestRoute}, parentData)).to.throw(TypeError, 'MountMapper#add() did not receive an App instance for parentData.parentApp.');
         });
 
         it('throws if parentData.outlets is not an Object', () => {
             parentData.outlets = null;
-            expect(() => mapper.add('/', TestRoute, parentData)).to.throw(TypeError, 'MountMapper#add() did not receive an object for parentData.outlets.');
+            expect(() => mapper.add({'/': TestRoute}, parentData)).to.throw(TypeError, 'MountMapper#add() did not receive an object for parentData.outlets.');
         });
 
         it('throws if parentData.params is not an Array', () => {
             parentData.params = null;
-            expect(() => mapper.add('/', TestRoute, parentData)).to.throw(TypeError, 'MountMapper#add() did not receive an array for parentData.params.');
+            expect(() => mapper.add({'/': TestRoute}, parentData)).to.throw(TypeError, 'MountMapper#add() did not receive an array for parentData.params.');
         });
     });
 
@@ -191,7 +195,7 @@ describe('MountMapper', () => {
             it('returns regex for a crumb', () => {
                 let crumb = '/path/{id=\\d+}/somewhere';
                 let expected = /^\/?path\/(\d+)\/somewhere(.*)/;
-                mapper.add(crumb, IdParamRoute, parentData);
+                mapper.add({[crumb]: IdParamRoute}, parentData);
                 expect(regexEqual(expected, mapper.regexFor(crumb))).to.be.ok;
             });
         });
@@ -204,13 +208,13 @@ describe('MountMapper', () => {
 
             it('returns an empty array if a crumb has no params', () => {
                 let crumb = '/path/to/somewhere';
-                mapper.add(crumb, TestRoute, parentData);
+                mapper.add({[crumb]: TestRoute}, parentData);
                 expect(mapper.paramNamesFor(crumb)).to.deep.equal([]);
             });
 
             it('gets param names for a crumb', () => {
                 let crumb = '/path/{id=\\d+}/somewhere';
-                mapper.add(crumb, IdParamRoute, parentData);
+                mapper.add({[crumb]: IdParamRoute}, parentData);
                 expect(mapper.paramNamesFor(crumb)).to.deep.equal(['id']);
             });
         });
@@ -223,7 +227,7 @@ describe('MountMapper', () => {
 
             it('gets slash character count for a crumb', () => {
                 let crumb = '/path/to/somewhere';
-                mapper.add(crumb, TestRoute, parentData);
+                mapper.add({[crumb]: TestRoute}, parentData);
                 expect(mapper.slashesFor(crumb)).to.equal(3);
             });
         });
@@ -236,7 +240,7 @@ describe('MountMapper', () => {
 
             it('returns an empty array if a crumb\'s mount has no addresses', () => {
                 let crumb = '/path/to/somewhere';
-                mapper.add(crumb, TestRoute, parentData);
+                mapper.add({[crumb]: TestRoute}, parentData);
                 expect(mapper.addressesFor(crumb)).to.deep.equal([]);
             });
 
@@ -250,7 +254,7 @@ describe('MountMapper', () => {
                     }
                 }
                 let crumb = '/path/to/somewhere';
-                mapper.add(crumb, AddressApp.addresses('addressApp', 'myApp'), parentData);
+                mapper.add({[crumb]: AddressApp.addresses('addressApp', 'myApp')}, parentData);
                 expect(mapper.addressesFor(crumb)).to.deep.equal(['addressApp', 'myApp']);
             });
 
@@ -271,8 +275,10 @@ describe('MountMapper', () => {
                         return [function(){},function(){}];
                     }
                 }
-                mapper.add('/path/somewhere', AddressApp.addresses('addressApp', 'myApp'), parentData);
-                mapper.add('/path/somewhere/else', AddressApp2.addresses('addressApp2', 'myApp2'), parentData);
+                mapper.add({
+                    '/path/somewhere': AddressApp.addresses('addressApp', 'myApp'),
+                    '/path/somewhere/else': AddressApp2.addresses('addressApp2', 'myApp2'),
+                }, parentData);
                 expect(mapper.allAddresses()).to.deep.equal(['addressApp', 'addressApp2', 'myApp', 'myApp2']);
             });
         });
@@ -295,8 +301,10 @@ describe('MountMapper', () => {
                         return ['third', 'fourth'];
                     }
                 }
-                mapper.add('/path/somewhere', OutletApp.outlets('first', 'second'), parentData);
-                mapper.add('/path/somewhere/else', OutletApp2.outlets('third', 'fourth'), parentData);
+                mapper.add({
+                    '/path/somewhere': OutletApp.outlets('first', 'second'),
+                    '/path/somewhere/else': OutletApp2.outlets('third', 'fourth'),
+                }, parentData);
                 expect(mapper.allOutlets()).to.deep.equal(['first', 'fourth', 'second', 'third']);
             });
         });
@@ -307,7 +315,7 @@ describe('MountMapper', () => {
             let crumb = '/user/{id=\\d+}';
             let result;
 
-            mapper.add(crumb, IdParamRoute, parentData);
+            mapper.add({[crumb]: IdParamRoute}, parentData);
 
             result = mapper.match('/user/25/profile');
             expect(result).to.deep.equal({
@@ -323,7 +331,7 @@ describe('MountMapper', () => {
         });
 
         it('matches within a path resource', () => {
-            mapper.add('/user/{id=\\d+}red_', IdParamRoute, parentData);
+            mapper.add({'/user/{id=\\d+}red_': IdParamRoute}, parentData);
             expect(mapper.match('/user/1red_block')).to.deep.equal({
                 rest: 'block',
                 params: {id: 1},
@@ -336,34 +344,44 @@ describe('MountMapper', () => {
 
         it('returns null if a match is not found', () => {
             let crumb = '/user/{id=\\d+}';
-            mapper.add(crumb, IdParamRoute, parentData);
+            mapper.add({[crumb]: IdParamRoute}, parentData);
             expect(mapper.match('/user/xyz/profile')).to.equal(null);
             expect(mapper.match('/user/xyz1/profile')).to.equal(null);
             expect(mapper.match('/user/x1yz/profile')).to.equal(null);
         });
 
         it('matches crumbs in order of slash count', () => {
-            let result;
-            mapper.add('/user/{id=\\d+}', IdParamRoute, parentData);
-            result = mapper.match('/user/1/profile/edit');
-            expect(result.rest).to.equal('/profile/edit');
+            mapper.add({
+                '/user/{id=\\d+}': IdParamRoute,
+                // this crumb, though it would match, is a worse match than the below.
+                // the above crumb has more slashes, and so is tested before this
+                // crumb in order to find the best match first
+                '/user/{id=\\d+}/profile': IdParamRoute,
+                // has the most slashes, is tested first when matching
+                '/user/{id=\\d+}/profile/edit': IdParamRoute,
+            }, parentData);
 
-            // has the most slashes, is tested first when matching
-            mapper.add('/user/{id=\\d+}/profile/edit', IdParamRoute, parentData);
-            result = mapper.match('/user/1/profile/edit');
+            let spy1 = sinon.spy(mapper.regexFor('/user/{id=\\d+}'), 'exec');
+            let spy2 = sinon.spy(mapper.regexFor('/user/{id=\\d+}/profile'), 'exec');
+            let spy3 = sinon.spy(mapper.regexFor('/user/{id=\\d+}/profile/edit'), 'exec');
+
+            let result = mapper.match('/user/1/profile/edit');
             expect(result.rest).to.equal(null);
+            spy1.should.not.have.been.called;
+            spy2.should.not.have.been.called;
+            spy3.should.have.been.calledOnce;
 
-            // this crumb, though it would match, is a worse match than the above.
-            // the above crumb has more slashes, and so is tested before this
-            // crumb in order to find the best match first
-            mapper.add('/user/{id=\\d+}/profile', IdParamRoute, parentData);
-
-            let spy1 = sinon.spy(mapper.regexFor('/user/{id=\\d+}/profile'), 'exec');
-            let spy2 = sinon.spy(mapper.regexFor('/user/{id=\\d+}/profile/edit'), 'exec');
-            result = mapper.match('/user/1/profile/edit');
+            result = mapper.match('/user/1/profile');
             expect(result.rest).to.equal(null);
             spy1.should.not.have.been.called;
             spy2.should.have.been.calledOnce;
+            spy3.should.have.been.calledTwice;
+
+            result = mapper.match('/user/1');
+            expect(result.rest).to.equal(null);
+            spy1.should.have.been.calledOnce;
+            spy2.should.have.been.calledTwice;
+            spy3.should.have.been.calledThrice;
         });
 
         it('does a stable sort when sorting by slash count', () => {
@@ -373,20 +391,22 @@ describe('MountMapper', () => {
             //     Chrome is known not to do a stable sort if array size > 10,
             //        where quicksort is used over insertionsort.
             //        see: https://github.com/v8/v8/blob/master/src/js/array.js#L964
-            mapper.add('/user/{id=\\d+}', IdParamRoute, parentData);
-            mapper.add('/user/{id=\\d+}a', IdParamRoute, parentData);
-            mapper.add('/user/{id=\\d+}ab', IdParamRoute, parentData);
-            mapper.add('/user/{id=\\d+}abc', IdParamRoute, parentData);
-            mapper.add('/user/{id=\\d+}abcd', IdParamRoute, parentData);
-            mapper.add('/user/{id=\\d+}abcde', IdParamRoute, parentData);
-            mapper.add('/user/{id=\\d+}abcdef', IdParamRoute, parentData);
-            mapper.add('/user/{id=\\d+}abcdefg', IdParamRoute, parentData);
-            mapper.add('/user/{id=\\d+}abcdefgh', IdParamRoute, parentData);
-            mapper.add('/user/{id=\\d+}abcdefghi', IdParamRoute, parentData);
-            mapper.add('/user/{id=\\d+}abcdefghij', IdParamRoute, parentData);
-            mapper.add('/user/{id=\\d+}abcdefghijk', IdParamRoute, parentData);
-            mapper.add('/user/{id=\\d+}abcdefghijkl', IdParamRoute, parentData);
-            mapper.add('/user/{id=\\d+}abcdefghijklm', IdParamRoute, parentData);
+            mapper.add({
+                '/user/{id=\\d+}': IdParamRoute,
+                '/user/{id=\\d+}a': IdParamRoute,
+                '/user/{id=\\d+}ab': IdParamRoute,
+                '/user/{id=\\d+}abc': IdParamRoute,
+                '/user/{id=\\d+}abcd': IdParamRoute,
+                '/user/{id=\\d+}abcde': IdParamRoute,
+                '/user/{id=\\d+}abcdef': IdParamRoute,
+                '/user/{id=\\d+}abcdefg': IdParamRoute,
+                '/user/{id=\\d+}abcdefgh': IdParamRoute,
+                '/user/{id=\\d+}abcdefghi': IdParamRoute,
+                '/user/{id=\\d+}abcdefghij': IdParamRoute,
+                '/user/{id=\\d+}abcdefghijk': IdParamRoute,
+                '/user/{id=\\d+}abcdefghijkl': IdParamRoute,
+                '/user/{id=\\d+}abcdefghijklm': IdParamRoute,
+            }, parentData);
             let result = mapper.match('/user/25abcdefghijklmnopqrstuvwxyz');
             expect(result.rest).to.equal('abcdefghijklmnopqrstuvwxyz');
         });

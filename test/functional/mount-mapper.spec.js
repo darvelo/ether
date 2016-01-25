@@ -137,11 +137,13 @@ describe('MountMapper', () => {
 
             let rootApp = parentData.rootApp = parentData.parentApp = createRootApp();
 
-            mapper.add(oneParamCrumb,   oneParamRoute,   parentData);
-            mapper.add(bothParamsCrumb, bothParamsRoute, parentData);
-            mapper.add(addressCrumb,    addressRoute,    parentData);
-            mapper.add(outletCrumb,     outletRoute,     parentData);
-            mapper.add(setupCrumb,      setupRoute,      parentData);
+            mapper.add({
+                [oneParamCrumb]:   oneParamRoute,
+                [bothParamsCrumb]: bothParamsRoute,
+                [addressCrumb]:    addressRoute,
+                [outletCrumb]:     outletRoute,
+                [setupCrumb]:      setupRoute,
+            }, parentData);
 
             let opts;
 

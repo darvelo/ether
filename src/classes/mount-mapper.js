@@ -217,7 +217,10 @@ class MountMapper extends BaseMountMapper {
         };
     }
 
-    add(crumb, mount, parentData) {
+    add(mounts, parentData) {
+        if (isnt(mounts, 'Object')) {
+            throw new Error(ctorName(this) + '#add() expected an object containing the mounts.');
+        }
         if (isnt(parentData, 'Object')) {
             throw new Error(ctorName(this) + '#add() expected an object containing the mount\'s parent data.');
         }
@@ -234,19 +237,25 @@ class MountMapper extends BaseMountMapper {
             throw new TypeError(ctorName(this) + '#add() did not receive an array for parentData.params.');
         }
 
-        let parseResult = this.parse(crumb);
-        let paramNames = parseResult.paramNames || [];
-        let instantiationResult = this._instantiateMountInstance(mount, crumb, paramNames, parentData);
-        let crumbData = {
-            mount: instantiationResult.instance,
-            addresses: instantiationResult.addresses,
-            regex: parseResult.regex,
-            paramNames: parseResult.paramNames,
-            slashes: parseResult.slashes,
-        };
-        this._sortedCrumbs.push(crumbData);
+        for (let crumb in mounts) {
+            if (!mounts.hasOwnProperty(crumb)) {
+                continue;
+            }
+            let mount = mounts[crumb];
+            let parseResult = this.parse(crumb);
+            let paramNames = parseResult.paramNames || [];
+            let instantiationResult = this._instantiateMountInstance(mount, crumb, paramNames, parentData);
+            let crumbData = {
+                mount: instantiationResult.instance,
+                addresses: instantiationResult.addresses,
+                regex: parseResult.regex,
+                paramNames: parseResult.paramNames,
+                slashes: parseResult.slashes,
+            };
+            this._sortedCrumbs.push(crumbData);
+            this._crumbMap[crumb] = crumbData;
+        }
         mergesort(this._sortedCrumbs, this._sortFn);
-        this._crumbMap[crumb] = crumbData;
     }
 
     match(path) {

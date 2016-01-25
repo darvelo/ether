@@ -55,10 +55,17 @@ class App extends Modifiable {
             throw new TypeError(ctorName(this) + '#mount() did not return an object.');
         }
 
-        let crumbs = Object.keys(mounts);
-
-        if (this._rootApp._debugMode && crumbs.length === 0) {
-            console.warn(`${ctorName(this)}#mount() returned an empty object.`);
+        if (this._rootApp._debugMode) {
+            let empty = true;
+            for (let crumb in mounts) {
+                if (mounts.hasOwnProperty(crumb)) {
+                    empty = false;
+                    break;
+                }
+            }
+            if (empty) {
+                console.warn(`${ctorName(this)}#mount() returned an empty object.`);
+            }
         }
 
         // data the MountMapper uses in
@@ -71,10 +78,7 @@ class App extends Modifiable {
         };
 
         // create mount instances
-        for (let crumb of crumbs) {
-            let mount = mounts[crumb];
-            this._mountMapper.add(crumb, mount, data);
-        }
+        this._mountMapper.add(mounts, data);
     }
 
     _instantiateConditionalMounts(params) {
