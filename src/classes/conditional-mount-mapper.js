@@ -12,6 +12,7 @@ class ConditionalMountMapper extends BaseMountMapper {
         this._outlets = null;
         this._acceptedOperators = ['*', '+', '!'];
         this._mounts = {};
+        this._mountsAdded = false;
     }
 
     setAddresses(addresses) {
@@ -130,6 +131,11 @@ class ConditionalMountMapper extends BaseMountMapper {
     }
 
     add(mounts, parentData) {
+        if (this._mountsAdded) {
+            throw new Error(ctorName(this) + '#add() can only be called once.');
+        } else {
+            this._mountsAdded = true;
+        }
         if (isnt(mounts, 'Object')) {
             throw new Error(ctorName(this) + '#add() expected an object of mounts.');
         }

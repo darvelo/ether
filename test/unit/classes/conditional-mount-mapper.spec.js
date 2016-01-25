@@ -158,5 +158,12 @@ describe('ConditionalMountMapper', () => {
             mapper.setOutlets(outlets);
             expect(() => mapper.add({'*': []}, parentData)).to.throw(Error, 'ConditionalMountMapper#add() received an empty array for a mount.');
         });
+
+        it('only allows adding mounts once', () => {
+            mapper.setAddresses(addresses);
+            mapper.setOutlets(outlets);
+            expect(() => mapper.add({'*': TestRoute}, parentData)).to.not.throw();
+            expect(() => mapper.add({'*': TestRoute}, parentData)).to.throw(Error, 'ConditionalMountMapper#add() can only be called once.');
+        });
     });
 });
