@@ -188,6 +188,38 @@ describe('MountMapper', () => {
             expect(() => mapper.add({'/a': TestRoute}, parentData)).to.not.throw();
             expect(() => mapper.add({'/b': TestRoute}, parentData)).to.throw(Error, 'MountMapper#add() can only be called once.');
         });
+
+        it('returns the metadata for all mounts', () => {
+            parentData.outlets = {
+                first: new Outlet(document.createElement('div')),
+                second: new Outlet(document.createElement('div')),
+                third: new Outlet(document.createElement('div')),
+            };
+            class FirstRoute extends TestRoute {
+                expectedAddresses() { return ['first']; }
+                addressesHandlers() { return [function(){}]; }
+                expectedOutlets() { return ['first']; }
+            }
+            class SecondRoute extends TestRoute {
+                expectedAddresses() { return ['second']; }
+                addressesHandlers() { return [function(){}]; }
+                expectedOutlets() { return ['second']; }
+            }
+            let metadata = mapper.add({
+                '/first': FirstRoute.addresses('first').outlets('first'),
+                '/second': SecondRoute.addresses('second').outlets('second'),
+            }, parentData);
+            expect(metadata).to.deep.equal({
+                addresses: {
+                    first: true,
+                    second: true,
+                },
+                outlets: {
+                    first: true,
+                    second: true,
+                },
+            });
+        });
     });
 
     describe('Info Retrieval', () => {

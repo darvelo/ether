@@ -121,13 +121,13 @@ class ConditionalMountMapper extends BaseMountMapper {
         }
     }
 
-    _instantiateMountInstance(mount, logic, parentData) {
+    _instantiateMountInstance(mount, logic, passedOutlets, parentData) {
         this._checkMountInheritance(mount, logic, parentData.parentApp);
 
         let opts = {
             rootApp: parentData.rootApp,
             addresses: this._compileMountAddresses(mount),
-            outlets: this._compileMountOutlets(mount, logic, parentData, true),
+            outlets: this._compileMountOutlets(mount, logic, passedOutlets, parentData, true),
             setup: this._compileMountSetupFns(mount),
             params: this._compileMountParams(mount, parentData),
         };
@@ -181,7 +181,7 @@ class ConditionalMountMapper extends BaseMountMapper {
         this._mounts[logic] = {
             regex: parseResult.regex,
             mounts: mounts.map(mount => {
-                return this._instantiateMountInstance(mount, logic, parentData);
+                return this._instantiateMountInstance(mount, logic, this._outlets, parentData);
             }),
         };
     }

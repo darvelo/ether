@@ -16,7 +16,7 @@ class BaseMountMapper {
         return addresses;
     }
 
-    _compileMountOutlets(mount, crumb, parentData, isConditionalMapper=false) {
+    _compileMountOutlets(mount, crumb, passedOutlets, parentData, isConditionalMapper=false) {
         let missingOutlets = [];
         let outlets = {};
         let conditionalStr = isConditionalMapper ? 'conditional ' : '';
@@ -42,7 +42,7 @@ class BaseMountMapper {
 
         // add outlet names we are passing to our list of already-passed outlets.
         // throw if any other mount/cMount was already passed any of them.
-        this._addToPassedOutletsList(outlets, parentData.parentApp);
+        this._addToPassedOutletsList(outlets, passedOutlets, parentData.parentApp);
 
         return outlets;
     }
@@ -61,14 +61,13 @@ class BaseMountMapper {
         return setupFns;
     }
 
-    _addToPassedOutletsList(outletsToPass, parentApp) {
+    _addToPassedOutletsList(outletsToPass, passedOutlets, parentApp) {
         let alreadyPassedOutlets = [];
-        let outlets = this._outlets;
         for (let name in outletsToPass) {
-            if (outlets.hasOwnProperty(name) && outlets[name]) {
+            if (passedOutlets.hasOwnProperty(name)) {
                 alreadyPassedOutlets.push(name);
             } else {
-                outlets[name] = true;
+                passedOutlets[name] = true;
             }
         }
         if (alreadyPassedOutlets.length) {

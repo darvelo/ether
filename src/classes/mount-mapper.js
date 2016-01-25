@@ -205,13 +205,13 @@ class MountMapper extends BaseMountMapper {
         }
     }
 
-    _instantiateMountInstance(mount, crumb, mountParams, parentData) {
+    _instantiateMountInstance(mount, crumb, mountParams, passedOutlets, parentData) {
         this._checkMountInheritance(mount, crumb, parentData.parentApp);
 
         let opts = {
             rootApp: parentData.rootApp,
             addresses: this._compileMountAddresses(mount),
-            outlets: this._compileMountOutlets(mount, crumb, parentData),
+            outlets: this._compileMountOutlets(mount, crumb, passedOutlets, parentData),
             setup: this._compileMountSetupFns(mount),
             params: this._compileMountParams(mount, crumb, mountParams, parentData),
         };
@@ -248,6 +248,9 @@ class MountMapper extends BaseMountMapper {
             this._mountsAdded = true;
         }
 
+        let passedOutlets = {};
+        let allAddresses = {};
+
         for (let crumb in mounts) {
             if (!mounts.hasOwnProperty(crumb)) {
                 continue;
@@ -255,7 +258,7 @@ class MountMapper extends BaseMountMapper {
             let mount = mounts[crumb];
             let parseResult = this.parse(crumb);
             let paramNames = parseResult.paramNames || [];
-            let instantiationResult = this._instantiateMountInstance(mount, crumb, paramNames, parentData);
+            let instantiationResult = this._instantiateMountInstance(mount, crumb, paramNames, passedOutlets, parentData);
             let crumbData = {
                 mount: instantiationResult.instance,
                 addresses: instantiationResult.addresses,
@@ -263,10 +266,17 @@ class MountMapper extends BaseMountMapper {
                 paramNames: parseResult.paramNames,
                 slashes: parseResult.slashes,
             };
+            for (let addr of crumbData.addresses) {
+                allAddresses[addr] = true;
+            }
             this._sortedCrumbs.push(crumbData);
             this._crumbMap[crumb] = crumbData;
         }
         mergesort(this._sortedCrumbs, this._sortFn);
+        return {
+            addresses: allAddresses,
+            outlets: passedOutlets,
+        };
     }
 
     match(path) {
