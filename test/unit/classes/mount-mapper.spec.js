@@ -191,6 +191,12 @@ describe('MountMapper', () => {
     });
 
     describe('Info Retrieval', () => {
+        it('returns whether mounts have been added', () => {
+            expect(mapper.mountsAdded()).to.equal(false);
+            mapper.add({'/': TestRoute}, parentData);
+            expect(mapper.mountsAdded()).to.equal(true);
+        });
+
         describe('Getting Regex', () => {
             it('returns undefined for a non-existent crumb', () => {
                 let crumb = '/path/{id=\\d+}/somewhere';

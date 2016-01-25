@@ -16,11 +16,16 @@ class MountMapper extends BaseMountMapper {
         this._crumbMap = {};
         this._sortedCrumbs = [];
         this._outlets = {};
+        this._mountsAdded = false;
     }
 
     _sortFn(a, b) {
         // crumbs with more slashes are are placed at the beginning
         return b.slashes - a.slashes;
+    }
+
+    mountsAdded() {
+        return this._mountsAdded;
     }
 
     parse(crumb) {
