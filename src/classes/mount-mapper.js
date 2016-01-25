@@ -15,7 +15,6 @@ class MountMapper extends BaseMountMapper {
         super(...args);
         this._crumbMap = {};
         this._sortedCrumbs = [];
-        this._outlets = {};
         this._mountsAdded = false;
     }
 

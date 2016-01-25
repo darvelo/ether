@@ -8,35 +8,9 @@ import ctorName from '../utils/ctor-name';
 class ConditionalMountMapper extends BaseMountMapper {
     constructor(...args) {
         super(...args);
-        this._addresses = null;
-        this._outlets = null;
         this._acceptedOperators = ['*', '+', '!'];
         this._mounts = {};
         this._mountsAdded = false;
-    }
-
-    setAddresses(addresses) {
-        if (isnt(this._addresses, 'Null')) {
-            throw new Error(ctorName(this) + ' only allows setting addresses once.');
-        }
-
-        if (isnt(addresses, 'Object')) {
-            throw new TypeError(ctorName(this) + '#setAddresses() expects an object.');
-        }
-
-        this._addresses = addresses;
-    }
-
-    setOutlets(outlets) {
-        if (isnt(this._outlets, 'Null')) {
-            throw new Error(ctorName(this) + ' only allows setting outlets once.');
-        }
-
-        if (isnt(outlets, 'Object')) {
-            throw new TypeError(ctorName(this) + '#setOutlets() expects an object.');
-        }
-
-        this._outlets = outlets;
     }
 
     parse(logic) {
@@ -137,16 +111,19 @@ class ConditionalMountMapper extends BaseMountMapper {
             this._mountsAdded = true;
         }
         if (isnt(mounts, 'Object')) {
-            throw new Error(ctorName(this) + '#add() expected an object of mounts.');
+            throw new TypeError(ctorName(this) + '#add() expected an object of mounts.');
         }
         if (isnt(parentData, 'Object')) {
-            throw new Error(ctorName(this) + '#add() expected an object containing the mount\'s parent data.');
+            throw new TypeError(ctorName(this) + '#add() expected an object containing the mount\'s parent data.');
         }
-        if (is(this._addresses, 'Null')) {
-            throw new Error(ctorName(this) + '#add() was called but #setAddresses() needed to have been called first.');
+        if (isnt(parentData.mountsMetadata, 'Object')) {
+            throw new TypeError(ctorName(this) + '#add() did not receive an object for parentData.mountsMetadata.');
         }
-        if (is(this._outlets, 'Null')) {
-            throw new Error(ctorName(this) + '#add() was called but #setOutlets() needed to have been called first.');
+        if (isnt(parentData.mountsMetadata.addresses, 'Object')) {
+            throw new TypeError(ctorName(this) + '#add() did not receive an object for parentData.mountsMetadata.addresses.');
+        }
+        if (isnt(parentData.mountsMetadata.outlets, 'Object')) {
+            throw new TypeError(ctorName(this) + '#add() did not receive an object for parentData.mountsMetadata.outlets.');
         }
         if (!(parentData.rootApp instanceof App)) {
             throw new TypeError(ctorName(this) + '#add() did not receive an App instance for parentData.rootApp.');
@@ -162,7 +139,19 @@ class ConditionalMountMapper extends BaseMountMapper {
         }
 
         let self = this;
-        let passedOutlets = this._outlets;
+        // a hash with keys representing addresses created
+        // locally on the App owning this ConditionalMountMapper.
+        // a whitelist of addresses a conditional mount can reference.
+        let availableAddresses = parentData.mountsMetadata.addresses;
+        // a hash with keys representing names of outlets already claimed by
+        // mounts created locally on the App owning this ConditionalMountMapper.
+        // a blacklist of outlets a conditional mount cannot be passed
+        // because they've already been attached to a mount.
+        let passedOutlets = parentData.mountsMetadata.outlets;
+
+        function filterUnknownAddresses(addy) {
+            return !availableAddresses[addy];
+        }
 
         function mapMountInstance(logic) {
             return function(mount) {
@@ -182,7 +171,7 @@ class ConditionalMountMapper extends BaseMountMapper {
                 throw new Error(ctorName(this) + '#add() received an empty array for a mount.');
             }
             let parseResult = this.parse(logic);
-            let unknownAddresses = parseResult.addresses.filter(addy => !this._addresses[addy]).sort();
+            let unknownAddresses = parseResult.addresses.filter(filterUnknownAddresses).sort();
             if (unknownAddresses.length) {
                 let ctorname = ctorName(parentData.parentApp);
                 throw new Error([

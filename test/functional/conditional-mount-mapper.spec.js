@@ -32,8 +32,6 @@ describe('ConditionalMountMapper', () => {
             'second': true,
             'third': true,
         };
-        mapper.setAddresses(addresses);
-        mapper.setOutlets(outlets);
     });
 
     describe('Add', () => {
@@ -86,6 +84,10 @@ describe('ConditionalMountMapper', () => {
                     unused: new Outlet(document.createElement('div')),
                 },
                 params: ['id', 'action'],
+                mountsMetadata: {
+                    addresses: {},
+                    outlets: {},
+                },
             };
 
             let rootApp = parentData.rootApp = parentData.parentApp = createRootApp();
