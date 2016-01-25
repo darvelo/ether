@@ -334,10 +334,6 @@ class MountMapper extends BaseMountMapper {
         return;
     }
 
-    allOutlets() {
-        return Object.keys(this._outlets).sort();
-    }
-
     regexFor(crumb) {
         let mapped = this._crumbMap[crumb];
         return mapped && mapped.regex;

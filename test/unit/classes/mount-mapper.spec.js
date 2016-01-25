@@ -325,32 +325,6 @@ describe('MountMapper', () => {
                 expect(mapper.allAddresses()).to.deep.equal(['addressApp', 'addressApp2', 'myApp', 'myApp2']);
             });
         });
-
-        describe('Getting Outlets', () => {
-            it('gets a list of all outlets ever registered', () => {
-                parentData.outlets = {
-                    first:   new Outlet(document.createElement('div')),
-                    second:  new Outlet(document.createElement('div')),
-                    third:   new Outlet(document.createElement('div')),
-                    fourth:  new Outlet(document.createElement('div')),
-                };
-                class OutletApp extends TestApp {
-                    expectedOutlets() {
-                        return ['first', 'second'];
-                    }
-                }
-                class OutletApp2 extends TestRoute {
-                    expectedOutlets() {
-                        return ['third', 'fourth'];
-                    }
-                }
-                mapper.add({
-                    '/path/somewhere': OutletApp.outlets('first', 'second'),
-                    '/path/somewhere/else': OutletApp2.outlets('third', 'fourth'),
-                }, parentData);
-                expect(mapper.allOutlets()).to.deep.equal(['first', 'fourth', 'second', 'third']);
-            });
-        });
     });
 
     describe('Matching', () => {
