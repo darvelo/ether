@@ -237,6 +237,12 @@ class MountMapper extends BaseMountMapper {
             throw new TypeError(ctorName(this) + '#add() did not receive an array for parentData.params.');
         }
 
+        if (this._mountsAdded) {
+            throw new Error(ctorName(this) + '#add() can only be called once.');
+        } else {
+            this._mountsAdded = true;
+        }
+
         for (let crumb in mounts) {
             if (!mounts.hasOwnProperty(crumb)) {
                 continue;

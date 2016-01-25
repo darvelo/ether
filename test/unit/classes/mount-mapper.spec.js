@@ -183,6 +183,11 @@ describe('MountMapper', () => {
             parentData.params = null;
             expect(() => mapper.add({'/': TestRoute}, parentData)).to.throw(TypeError, 'MountMapper#add() did not receive an array for parentData.params.');
         });
+
+        it('only allows adding mounts once', () => {
+            expect(() => mapper.add({'/a': TestRoute}, parentData)).to.not.throw();
+            expect(() => mapper.add({'/b': TestRoute}, parentData)).to.throw(Error, 'MountMapper#add() can only be called once.');
+        });
     });
 
     describe('Info Retrieval', () => {
