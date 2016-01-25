@@ -13,7 +13,7 @@ function mergesort(array, comparator) {
         }
         tmp = a;
         a = b;
-        b = a;
+        b = tmp;
     }
 
     if (array !== a) {
