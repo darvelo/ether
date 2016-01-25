@@ -2,7 +2,13 @@ import MountMapper from '../../src/classes/mount-mapper';
 import Route from '../../src/classes/route';
 import Outlet from '../../src/classes/outlet';
 import RootApp from '../../src/classes/root-app';
+import App from '../../src/classes/app';
 
+class TestApp extends App {
+    expectedOutlets() {
+        return [];
+    }
+}
 class TestRoute extends Route {
     expectedOutlets() {
         return [];
@@ -25,6 +31,51 @@ describe('MountMapper', () => {
     });
 
     describe('Add', () => {
+        it('accumulates params and passes them forward', () => {
+            class MyRoute extends TestRoute {
+                expectedParams() {
+                    // this will be passed ['id', 'action'] but here
+                    // we're just saying 'action' needs to be there.
+                    // we can include 'id' and receive it on navigation
+                    // without any other changes in the code.
+                    return ['action'];
+                }
+            }
+            class MyApp extends TestApp {
+                expectedParams() {
+                    return [];
+                }
+                mount() {
+                    return {
+                        '/{action=\\w+}/': MyRoute,
+                    };
+                }
+            }
+            class MyRootApp extends RootApp {
+                expectedOutlets() {
+                    return [];
+                }
+                mount() {
+                    return {
+                        '/{id=\\d+}/': MyApp,
+                    };
+                }
+            }
+
+            let appSpy   = sinon.spy(MyApp, 'create');
+            let routeSpy = sinon.spy(MyRoute, 'create');
+            let rootApp  = new MyRootApp({});
+            let opts;
+
+            appSpy.should.have.been.calledOnce;
+            opts = appSpy.getCall(0).args[0];
+            opts.params.sort().should.deep.equal(['id']);
+
+            routeSpy.should.have.been.calledOnce;
+            opts = routeSpy.getCall(0).args[0];
+            opts.params.sort().should.deep.equal(['action', 'id']);
+        });
+
         it('calls create() on each mount instance with the proper options', () => {
             class OneParamRoute extends TestRoute {
                 expectedParams() {
@@ -103,11 +154,12 @@ describe('MountMapper', () => {
             // what it needs from parent's data
             expect(opts.outlets).to.not.equal(parentData.outlets);
             expect(opts.params).to.not.equal(parentData.params);
+            opts.params.sort();
             opts.should.deep.equal({
                 rootApp,
                 addresses: [],
                 outlets: {},
-                params: ['action'],
+                params: ['action', 'id'],
                 setup: undefined,
             });
 
@@ -120,6 +172,7 @@ describe('MountMapper', () => {
             // what it needs from parent's data
             expect(opts.outlets).to.not.equal(parentData.outlets);
             expect(opts.params).to.not.equal(parentData.params);
+            opts.params.sort();
             opts.should.deep.equal({
                 rootApp,
                 addresses: [],
@@ -137,6 +190,7 @@ describe('MountMapper', () => {
             // what it needs from parent's data
             expect(opts.outlets).to.not.equal(parentData.outlets);
             expect(opts.params).to.not.equal(parentData.params);
+            opts.params.sort();
             opts.should.deep.equal({
                 rootApp,
                 addresses: ['addressRoute'],
@@ -154,6 +208,7 @@ describe('MountMapper', () => {
             // what it needs from parent's data
             expect(opts.outlets).to.not.equal(parentData.outlets);
             expect(opts.params).to.not.equal(parentData.params);
+            opts.params.sort();
             opts.should.deep.equal({
                 rootApp,
                 addresses: [],
@@ -174,6 +229,7 @@ describe('MountMapper', () => {
             // what it needs from parent's data
             expect(opts.outlets).to.not.equal(parentData.outlets);
             expect(opts.params).to.not.equal(parentData.params);
+            opts.params.sort();
             opts.should.deep.equal({
                 rootApp,
                 addresses: [],

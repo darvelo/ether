@@ -150,7 +150,7 @@ class MountMapper extends BaseMountMapper {
     _compileMountParams(mount, crumb, mountParams, parentData) {
         let conflictingParams = [];
         let parentParams = parentData.params.reduce((memo, p) => memo[p] = true && memo, {});
-        let totalParams = mountParams.slice();
+        let totalParams = parentData.params.slice();
         let expectedParams;
 
         if (mount instanceof Modified) {
@@ -162,6 +162,16 @@ class MountMapper extends BaseMountMapper {
         for (let mountParam of mountParams) {
             if (parentParams[mountParam]) {
                 conflictingParams.push(mountParam);
+            } else {
+                // accumulate params and pass them forward.
+                // the idea behind this is that params will accumulate and be
+                // passed forward throughout the routing tree so that leaf nodes
+                // can specify a subset of expected params without the
+                // user having to explicitly "expect" these params for nodes
+                // that don't need them on the way to the leaf.
+                // if parentParams doesn't have one of the params we expect,
+                // we'll know when an error is raised in the mount's constructor
+                totalParams.push(mountParam);
             }
         }
 
@@ -175,12 +185,6 @@ class MountMapper extends BaseMountMapper {
                 JSON.stringify(conflictingParams),
                 '.',
             ].join(''));
-        }
-
-        for (let expectedParam of expectedParams) {
-            if (parentParams[expectedParam]) {
-                totalParams.push(expectedParam);
-            }
         }
 
         return totalParams;

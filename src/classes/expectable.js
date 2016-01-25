@@ -4,8 +4,9 @@ import { is, isnt } from '../utils/is';
 
 const RECEIVED_NOT_ARRAY = 1;
 const EXPECTED_NOT_ARRAY = 2;
-const ARRAYS_NOT_EQUAL = 3;
-const EXPECTED_ANY = 4;
+const ARRAYS_NOT_EQUAL   = 3;
+const EXPECTED_ANY       = 4;
+const EXPECTED_NOT_MET   = 5;
 
 class Expectable {
     constructor(opts) {
@@ -39,7 +40,7 @@ class Expectable {
         throw new Error(ctorName(this) + ' did not implement expectedSetup().');
     }
 
-    _areArraysEqual(array, expected) {
+    _compareArrays(array, expected, needExact=true) {
         if (!Array.isArray(array)) {
             return RECEIVED_NOT_ARRAY;
         }
@@ -48,10 +49,21 @@ class Expectable {
             return EXPECTED_NOT_ARRAY;
         }
 
-        if (array.length !== expected.length ||
-            array.slice().sort().join('') !== expected.slice().sort().join(''))
-        {
-            return ARRAYS_NOT_EQUAL;
+        if (needExact) {
+            if (array.length !== expected.length ||
+                array.slice().sort().join('') !== expected.slice().sort().join(''))
+            {
+                return ARRAYS_NOT_EQUAL;
+            }
+        } else {
+            // @TODO: replace with sorting smaller array + binary search,
+            //        which is O(n*m*log(m)) where m is the smaller array
+            let given = array.reduce((memo, val) => (memo[val] = true) && memo, {});
+            for (let val of expected) {
+                if (!given[val]) {
+                    return EXPECTED_NOT_MET;
+                }
+            }
         }
 
         return true;
@@ -59,7 +71,7 @@ class Expectable {
 
     _checkAddresses(addresses) {
         let expected = this.expectedAddresses();
-        let result = this._areArraysEqual(addresses, expected);
+        let result = this._compareArrays(addresses, expected);
         switch (result) {
             case RECEIVED_NOT_ARRAY:
                 throw new TypeError(ctorName(this) + ' constructor\'s options.addresses property was not an Array.');
@@ -125,7 +137,7 @@ class Expectable {
 
         let outletsKeys = Object.keys(outlets).sort();
         let expected = this.expectedOutlets();
-        let result = this._areArraysEqual(outletsKeys, expected);
+        let result = this._compareArrays(outletsKeys, expected);
         switch (result) {
             case EXPECTED_NOT_ARRAY:
                 throw new TypeError(ctorName(this) + '#expectedOutlets() did not return an Array.');
@@ -165,7 +177,8 @@ class Expectable {
         if (expected === '*' && Array.isArray(params)) {
             result = EXPECTED_ANY;
         } else {
-            result = this._areArraysEqual(params, expected);
+            let needExact = false;
+            result = this._compareArrays(params, expected, needExact);
         }
 
         switch (result) {
@@ -173,17 +186,19 @@ class Expectable {
                 throw new TypeError(ctorName(this) + ' constructor\'s options.params property was not an Array.');
             case EXPECTED_NOT_ARRAY:
                 throw new TypeError(ctorName(this) + '#expectedParams() did not return an Array.');
-            case ARRAYS_NOT_EQUAL:
+            case EXPECTED_NOT_MET:
                 throw new Error([
                     ctorName(this),
                     '\'s received params ',
                         JSON.stringify(params),
-                    ' did not match its expected params ',
+                    ' did not fulfill its expected params ',
                         JSON.stringify(expected),
                     '.'
                 ].join(''));
             case EXPECTED_ANY:
                 return;
+            case ARRAYS_NOT_EQUAL:
+                throw new Error('Params given were not strictly equal to expected params. This error should never occur and is a bug. Please report this to the library developers.');
             default:
                 break;
         }

@@ -216,7 +216,7 @@ describe('Expectable', function() {
             expect(() => new TestExpectable(defaultOpts)).to.throw(Error, [
                 'TestExpectable\'s received params ',
                     JSON.stringify(defaultOpts.params),
-                ' did not match its expected params ',
+                ' did not fulfill its expected params ',
                     JSON.stringify(TestExpectable.prototype.expectedParams()),
                 '.'
             ].join(''));
@@ -225,10 +225,20 @@ describe('Expectable', function() {
             expect(() => new TestExpectable(defaultOpts)).to.throw(Error, [
                 'TestExpectable\'s received params ',
                     JSON.stringify(defaultOpts.params),
-                ' did not match its expected params ',
+                ' did not fulfill its expected params ',
                     JSON.stringify(TestExpectable.prototype.expectedParams()),
                 '.'
             ].join(''));
+        });
+
+        it('does not throw if more params are offered but all expected are there', () => {
+            // the idea behind this is that params will accumulate and be
+            // passed forward throughout the routing tree so that leaf nodes
+            // can specify a subset of expected params without the
+            // user having to explicitly "expect" these params for nodes
+            // that don't need them on the way to the leaf.
+            defaultOpts.params = ['more'].concat(TestExpectable.prototype.expectedParams());
+            expect(() => new TestExpectable(defaultOpts)).to.not.throw();
         });
 
         it('does not throw if any and all params are allowed', () => {
