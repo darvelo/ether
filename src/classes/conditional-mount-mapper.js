@@ -19,14 +19,11 @@ class ConditionalMountMapper extends BaseMountMapper {
             throw new Error(ctorName(this) + ' only allows setting addresses once.');
         }
 
-        if (isnt(addresses, 'Array')) {
-            throw new TypeError(ctorName(this) + '#setAddresses() expects an array.');
+        if (isnt(addresses, 'Object')) {
+            throw new TypeError(ctorName(this) + '#setAddresses() expects an object.');
         }
 
-        this._addresses = {};
-        for (let name of addresses) {
-            this._addresses[name] = true;
-        }
+        this._addresses = addresses;
     }
 
     setOutlets(outlets) {
@@ -34,14 +31,11 @@ class ConditionalMountMapper extends BaseMountMapper {
             throw new Error(ctorName(this) + ' only allows setting outlets once.');
         }
 
-        if (isnt(outlets, 'Array')) {
-            throw new TypeError(ctorName(this) + '#setOutlets() expects an array.');
+        if (isnt(outlets, 'Object')) {
+            throw new TypeError(ctorName(this) + '#setOutlets() expects an object.');
         }
 
-        this._outlets = {};
-        for (let name of outlets) {
-            this._outlets[name] = true;
-        }
+        this._outlets = outlets;
     }
 
     parse(logic) {

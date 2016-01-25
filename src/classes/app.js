@@ -31,8 +31,8 @@ class App extends Modifiable {
         this.outlets = this.createOutlets(opts.outlets);
         this._mountMapper = new MountMapper();
         this._conditionalMountMapper = new ConditionalMountMapper();
-        this._instantiateMounts(opts.params);
-        this._instantiateConditionalMounts(opts.params);
+        let mountsMetadata = this._instantiateMounts(opts.params);
+        this._instantiateConditionalMounts(opts.params, mountsMetadata);
         this.init(opts.setup);
     }
 
@@ -78,10 +78,10 @@ class App extends Modifiable {
         };
 
         // create mount instances
-        this._mountMapper.add(mounts, data);
+        return this._mountMapper.add(mounts, data);
     }
 
-    _instantiateConditionalMounts(params) {
+    _instantiateConditionalMounts(params, mountsMetadata) {
         let cMounts = this.mountConditionals();
 
         if (isnt(cMounts, 'Object')) {
@@ -99,10 +99,11 @@ class App extends Modifiable {
 
         // an immutable list of addresses created locally on this App;
         // a whitelist of addresses a conditional mount can reference
-        this._conditionalMountMapper.setAddresses(this._mountMapper.allAddresses());
+        this._conditionalMountMapper.setAddresses(mountsMetadata.addresses);
         // an immutable list of outlets created locally on this App;
         // a blacklist of outlets a conditional mount cannot be passed
-        this._conditionalMountMapper.setOutlets(this._mountMapper.allOutlets());
+        // because they've already been attached to a mount
+        this._conditionalMountMapper.setOutlets(mountsMetadata.outlets);
 
         // create conditional mount instances
         for (let logic in cMounts) {

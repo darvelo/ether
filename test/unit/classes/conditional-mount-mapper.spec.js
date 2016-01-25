@@ -21,8 +21,16 @@ describe('ConditionalMountMapper', () => {
     beforeEach(() => {
         let rootApp = new TestRootApp({});
         mapper = new ConditionalMountMapper();
-        addresses = ['first', 'second', 'third'];
-        outlets = ['first', 'second', 'third'];
+        addresses = {
+            'first': true,
+            'second': true,
+            'third': true,
+        };
+        outlets = {
+            'first': true,
+            'second': true,
+            'third': true,
+        };
         parentData = {
             rootApp,
             parentApp: rootApp,
@@ -36,8 +44,8 @@ describe('ConditionalMountMapper', () => {
             mapper.setAddresses(addresses);
         });
 
-        it('list of addresses needs to be an array', () => {
-            expect(() => mapper.setAddresses({})).to.throw(TypeError, 'ConditionalMountMapper#setAddresses() expects an array.');
+        it('list of addresses needs to be an object', () => {
+            expect(() => mapper.setAddresses([])).to.throw(TypeError, 'ConditionalMountMapper#setAddresses() expects an object.');
         });
 
         it('can only set addresses once', () => {
@@ -51,8 +59,8 @@ describe('ConditionalMountMapper', () => {
             mapper.setOutlets(outlets);
         });
 
-        it('list of outlets needs to be an array', () => {
-            expect(() => mapper.setOutlets({})).to.throw(TypeError, 'ConditionalMountMapper#setOutlets() expects an array.');
+        it('list of outlets needs to be an object', () => {
+            expect(() => mapper.setOutlets([])).to.throw(TypeError, 'ConditionalMountMapper#setOutlets() expects an object.');
         });
 
         it('can only set outlets once', () => {

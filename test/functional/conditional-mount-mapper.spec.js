@@ -22,8 +22,16 @@ describe('ConditionalMountMapper', () => {
 
     beforeEach(() => {
         mapper = new ConditionalMountMapper();
-        addresses = ['first', 'second', 'third'];
-        outlets = ['first', 'second', 'third'];
+        addresses = {
+            'first': true,
+            'second': true,
+            'third': true,
+        };
+        outlets = {
+            'first': true,
+            'second': true,
+            'third': true,
+        };
         mapper.setAddresses(addresses);
         mapper.setOutlets(outlets);
     });
