@@ -89,7 +89,7 @@ describe('ConditionalMountMapper', () => {
             };
 
             let rootApp = parentData.rootApp = parentData.parentApp = createRootApp();
-            mapper.add('*', mounts, parentData);
+            mapper.add({'*': mounts}, parentData);
 
             let opts;
 

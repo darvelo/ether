@@ -129,12 +129,9 @@ class ConditionalMountMapper extends BaseMountMapper {
         return mount.create(opts);
     }
 
-    add(logic, mounts, parentData) {
-        if (isnt(mounts, 'Array')) {
-            throw new Error(ctorName(this) + '#add() expected an array of mounts.');
-        }
-        if (mounts.length === 0) {
-            throw new Error(ctorName(this) + '#add() received an empty array.');
+    add(mounts, parentData) {
+        if (isnt(mounts, 'Object')) {
+            throw new Error(ctorName(this) + '#add() expected an object of mounts.');
         }
         if (isnt(parentData, 'Object')) {
             throw new Error(ctorName(this) + '#add() expected an object containing the mount\'s parent data.');
@@ -158,26 +155,44 @@ class ConditionalMountMapper extends BaseMountMapper {
             throw new TypeError(ctorName(this) + '#add() did not receive an array for parentData.params.');
         }
 
-        let parseResult = this.parse(logic);
-        let unknownAddresses = parseResult.addresses.filter(addy => !this._addresses[addy]).sort();
-        if (unknownAddresses.length) {
-            let ctorname = ctorName(parentData.parentApp);
-            throw new Error([
-                ctorname,
-                '#mountConditionals() requires addresses that are not created in ',
-                ctorname,
-                '#mount(): ',
-                JSON.stringify(unknownAddresses),
-                '.',
-            ].join(''));
+        let self = this;
+        let passedOutlets = this._outlets;
+
+        function mapMountInstance(logic) {
+            return function(mount) {
+                return self._instantiateMountInstance(mount, logic, passedOutlets, parentData);
+            };
         }
 
-        this._mounts[logic] = {
-            regex: parseResult.regex,
-            mounts: mounts.map(mount => {
-                return this._instantiateMountInstance(mount, logic, this._outlets, parentData);
-            }),
-        };
+        for (let logic in mounts) {
+            if (!mounts.hasOwnProperty(logic)) {
+                continue;
+            }
+            let mountsList = mounts[logic];
+            if (!Array.isArray(mountsList)) {
+                mountsList = [mountsList];
+            }
+            if (mountsList.length === 0 || mountsList.length === 1 && is(mountsList[0], 'Undefined')) {
+                throw new Error(ctorName(this) + '#add() received an empty array for a mount.');
+            }
+            let parseResult = this.parse(logic);
+            let unknownAddresses = parseResult.addresses.filter(addy => !this._addresses[addy]).sort();
+            if (unknownAddresses.length) {
+                let ctorname = ctorName(parentData.parentApp);
+                throw new Error([
+                    ctorname,
+                    '#mountConditionals() requires addresses that are not created in ',
+                    ctorname,
+                    '#mount(): ',
+                    JSON.stringify(unknownAddresses),
+                    '.',
+                ].join(''));
+            }
+            this._mounts[logic] = {
+                regex: parseResult.regex,
+                mounts: mountsList.map(mapMountInstance(logic)),
+            };
+        }
     }
 }
 

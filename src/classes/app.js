@@ -106,15 +106,7 @@ class App extends Modifiable {
         this._conditionalMountMapper.setOutlets(mountsMetadata.outlets);
 
         // create conditional mount instances
-        for (let logic in cMounts) {
-            if (cMounts.hasOwnProperty(logic)) {
-                let mounts = cMounts[logic];
-                if (!Array.isArray(mounts)) {
-                    mounts = [mounts];
-                }
-                this._conditionalMountMapper.add(logic, mounts, data);
-            }
-        }
+        this._conditionalMountMapper.add(cMounts, data);
     }
 
     mount() {
