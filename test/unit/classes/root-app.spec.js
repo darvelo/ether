@@ -138,6 +138,14 @@ describe('RootApp', () => {
             expect(rootApp._atAddress('hello')).to.equal(route);
         });
 
+        it('throws if an address contains a comma', () => {
+            let rootApp = new RootApp(defaultOpts);
+            childOpts.rootApp = rootApp;
+            expect(() => rootApp._registerAddress('hello,', new TestApp(childOpts))).to.throw(Error, 'Addresses cannot contain a comma: "hello,".');
+            expect(() => rootApp._registerAddress(',hello', new TestApp(childOpts))).to.throw(Error, 'Addresses cannot contain a comma: ",hello".');
+            expect(() => rootApp._registerAddress('he,llo', new TestApp(childOpts))).to.throw(Error, 'Addresses cannot contain a comma: "he,llo".');
+        });
+
         it('throws on registering an address that is already taken', () => {
             let rootApp = new RootApp(defaultOpts);
             childOpts.rootApp = rootApp;

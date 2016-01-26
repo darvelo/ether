@@ -17,6 +17,10 @@ class RootApp extends App {
     _registerAddress(name, dest) {
         this._addresses = this._addresses || (this._addresses = {});
 
+        if (/,/.test(name)) {
+            throw new Error(`Addresses cannot contain a comma: "${name}".`);
+        }
+
         if (!(dest instanceof App) && !(dest instanceof Route)) {
             throw new TypeError([
                 ctorName(this),
