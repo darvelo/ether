@@ -130,7 +130,7 @@ describe('MountMapper', () => {
             expect(result).to.deep.equal({
                 regex: expectedRegex,
                 paramNames: ['id'],
-                slashes: 2,
+                slashes: 1,
             });
         });
 
@@ -144,7 +144,7 @@ describe('MountMapper', () => {
             expect(resultHasSlash).to.deep.equal({
                 regex: expectedRegex,
                 paramNames: ['id'],
-                slashes: 2,
+                slashes: 1,
             });
             expect(regexEqual(expectedRegex, resultNoSlash.regex)).to.be.ok;
             expect(resultNoSlash).to.deep.equal({
@@ -152,6 +152,12 @@ describe('MountMapper', () => {
                 paramNames: ['id'],
                 slashes: 1,
             });
+        });
+
+        it('does not count a leading slash in the slashes count', () => {
+            let crumb = '/user/{id=\\d+}';
+            let result = mapper.parse(crumb);
+            expect(result.slashes).to.equal(1);
         });
     });
 
@@ -306,7 +312,7 @@ describe('MountMapper', () => {
             it('gets slash character count for a crumb', () => {
                 let crumb = '/path/to/somewhere';
                 mapper.add({[crumb]: TestRoute}, parentData);
-                expect(mapper.slashesFor(crumb)).to.equal(3);
+                expect(mapper.slashesFor(crumb)).to.equal(2);
             });
         });
 

@@ -65,7 +65,8 @@ class MountMapper extends BaseMountMapper {
         // implicitly requires REST resource trailing-slash style to be explicit
         finalRegex.push('^\\/?');
         if (len && crumb[0] === '/') {
-            cursor = leftBound = slashesCount = 1;
+            // Note: a beginning slash doesn't increase the slashes count
+            cursor = leftBound = 1;
         }
 
         for (; cursor < len; ++cursor) {
