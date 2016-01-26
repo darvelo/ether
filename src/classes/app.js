@@ -94,6 +94,7 @@ class App extends Modifiable {
             rootApp: this._rootApp,
             parentApp: this,
             outlets: this.outlets,
+            mountMapper: this._mountMapper,
             params,
             mountsMetadata,
         };

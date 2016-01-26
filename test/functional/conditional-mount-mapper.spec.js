@@ -1,4 +1,5 @@
 import ConditionalMountMapper from '../../src/classes/conditional-mount-mapper';
+import MountMapper from '../../src/classes/mount-mapper';
 import Route from '../../src/classes/route';
 import Outlet from '../../src/classes/outlet';
 import RootApp from '../../src/classes/root-app';
@@ -88,6 +89,7 @@ describe('ConditionalMountMapper', () => {
                     addresses: {},
                     outlets: {},
                 },
+                mountMapper: new MountMapper(),
             };
 
             let rootApp = parentData.rootApp = parentData.parentApp = createRootApp();

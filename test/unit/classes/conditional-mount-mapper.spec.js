@@ -1,4 +1,5 @@
 import ConditionalMountMapper from '../../../src/classes/conditional-mount-mapper';
+import MountMapper from '../../../src/classes/mount-mapper';
 import RootApp from '../../../src/classes/root-app';
 import Route from '../../../src/classes/route';
 import regexEqual from '../../utils/regex-equal';
@@ -40,6 +41,7 @@ describe('ConditionalMountMapper', () => {
                 addresses: {},
                 outlets: {},
             },
+            mountMapper: new MountMapper(),
         };
     });
 
@@ -120,6 +122,11 @@ describe('ConditionalMountMapper', () => {
         it('throws if parentData.mountsMetadata.outlets is not an Object', () => {
             parentData.mountsMetadata.outlets = null;
             expect(() => mapper.add({'*': [TestRoute]}, parentData)).to.throw(TypeError, 'ConditionalMountMapper#add() did not receive an object for parentData.mountsMetadata.outlets.');
+        });
+
+        it('throws if parentData.mountMapper is not an instance of MountMapper', () => {
+            parentData.mountMapper = null;
+            expect(() => mapper.add({'*': [TestRoute]}, parentData)).to.throw(TypeError, 'ConditionalMountMapper#add() did not receive an instance of MountMapper for parentData.mountMapper.');
         });
 
         it('throws if a mount is an empty array', () => {
