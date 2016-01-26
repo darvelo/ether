@@ -260,13 +260,15 @@ class MountMapper extends BaseMountMapper {
             let instantiationResult = this._instantiateMountInstance(mount, crumb, paramNames, passedOutlets, parentData);
             let crumbData = {
                 mount: instantiationResult.instance,
-                addresses: instantiationResult.addresses,
+                addresses: instantiationResult.addresses.length ? instantiationResult.addresses : null,
                 regex: parseResult.regex,
                 paramNames: parseResult.paramNames,
                 slashes: parseResult.slashes,
             };
-            for (let addr of crumbData.addresses) {
-                allAddresses[addr] = true;
+            if (crumbData.addresses) {
+                for (let addr of crumbData.addresses) {
+                    allAddresses[addr] = true;
+                }
             }
             this._sortedCrumbs.push(crumbData);
             this._crumbMap[crumb] = crumbData;
@@ -315,6 +317,10 @@ class MountMapper extends BaseMountMapper {
         // turn the empty string into null
         ret.rest = theMatch[len-1] || null;
         return ret;
+    }
+
+    allMounts() {
+        return this._sortedCrumbs;
     }
 
     allAddresses() {

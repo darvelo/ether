@@ -229,6 +229,41 @@ describe('MountMapper', () => {
             expect(mapper.mountsAdded()).to.equal(true);
         });
 
+        describe('Getting Mounts Metadata', () => {
+            it('gets all metadata for all mounts added', () => {
+                class AddressRoute extends TestRoute {
+                    expectedAddresses() { return ['first', 'second']; }
+                    addressesHandlers() { return [function(){},function(){}]; }
+                }
+                expect(mapper.allMounts()).to.deep.equal([]);
+                mapper.add({
+                    '': TestRoute,
+                    '{id=\\d+}/profile': AddressRoute.addresses('first', 'second'),
+                }, parentData);
+                let mounts = mapper.allMounts();
+                expect(mounts).to.have.length(2);
+                expect(mounts[0].mount).to.be.an.instanceof(TestRoute);
+                expect(mounts[1].mount).to.be.an.instanceof(TestRoute);
+                // delete mounts so we avoid doing a deep equal comparison on them
+                delete mounts[0].mount;
+                delete mounts[1].mount;
+                expect(mounts).to.deep.equal([
+                    {
+                        addresses: ['first', 'second'],
+                        regex: /^\/?(\d+)\/profile(.*)/,
+                        paramNames: ['id'],
+                        slashes: 1,
+                    },
+                    {
+                        addresses: null,
+                        regex: /^\/?(.*)/,
+                        paramNames: null,
+                        slashes: 0,
+                    },
+                ]);
+            });
+        });
+
         describe('Getting Regex', () => {
             it('returns undefined for a non-existent crumb', () => {
                 let crumb = '/path/{id=\\d+}/somewhere';
