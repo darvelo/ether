@@ -55,6 +55,7 @@ class ConditionalMountMapper extends BaseMountMapper {
 
         return {
             operator,
+            logic,
             addresses,
             regex,
         };

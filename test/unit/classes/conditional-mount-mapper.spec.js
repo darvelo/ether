@@ -53,6 +53,7 @@ describe('ConditionalMountMapper', () => {
         it('parses *', () => {
             let expectedRegex = /.*/;
             let result = mapper.parse('*');
+            result.logic.should.equal('*');
             expect(regexEqual(expectedRegex, result.regex)).to.be.ok;
             result.operator.should.equal('*');
             result.addresses.should.deep.equal([]);
@@ -61,6 +62,7 @@ describe('ConditionalMountMapper', () => {
         it('parses +', () => {
             let expectedRegex = /^(?:first|second|third)$/;
             let result = mapper.parse('+first,second,third');
+            result.logic.should.equal('+first,second,third');
             expect(regexEqual(expectedRegex, result.regex)).to.be.ok;
             result.operator.should.equal('+');
             result.addresses.should.deep.equal(['first', 'second', 'third']);
@@ -69,6 +71,7 @@ describe('ConditionalMountMapper', () => {
         it('parses !', () => {
             let expectedRegex = /^(?!first$|second$|third$).*/;
             let result = mapper.parse('!first,second,third');
+            result.logic.should.equal('!first,second,third');
             expect(regexEqual(expectedRegex, result.regex)).to.be.ok;
             result.operator.should.equal('!');
             result.addresses.should.deep.equal(['first', 'second', 'third']);
