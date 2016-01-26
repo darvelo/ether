@@ -153,7 +153,7 @@ class MountMapper extends BaseMountMapper {
 
     _compileMountParams(mount, crumb, mountParams, parentData) {
         let conflictingParams = [];
-        let parentParams = parentData.params.reduce((memo, p) => memo[p] = true && memo, {});
+        let parentParams = Object.freeze(parentData.params.reduce((memo, p) => memo[p] = true && memo, {}));
         let totalParams = parentData.params.slice();
         let expectedParams;
 
