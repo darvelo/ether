@@ -1,8 +1,9 @@
 import BaseMountMapper from './base-mount-mapper';
+import MountMapper from './mount-mapper';
 import Modified from './modified';
 import App from './app';
 import Route from './route';
-import { is, isnt } from '../utils/is';
+import { isnt } from '../utils/is';
 import ctorName from '../utils/ctor-name';
 
 class ConditionalMountMapper extends BaseMountMapper {
@@ -61,8 +62,29 @@ class ConditionalMountMapper extends BaseMountMapper {
         };
     }
 
-    _compileMountParams(mount, parentData) {
-        let parentParams = parentData.params.reduce((memo, p) => memo[p] = true && memo, {});
+    _testParamByOperator(parseResult, addressesParams, expectedParam) {
+        let operator = parseResult.operator;
+        let regex = parseResult.regex;
+        let addresses = parseResult.addresses;
+        switch (operator) {
+            // + operator requires expected param to be in every mount
+            // listed on the `+` list (if not already in parentApp params)
+            case '+':
+                for (let addr of addresses) {
+                    if (!addressesParams[addr][expectedParam]) {
+                        return false;
+                    }
+                }
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    _compileMountParams(mount, parseResult, parentData) {
+        let parentParams = parentData.params;
+        let addressesParams = parentData.addressesParams;
+        let missingParams = [];
         let totalParams = [];
         let expectedParams;
 
@@ -75,7 +97,17 @@ class ConditionalMountMapper extends BaseMountMapper {
         for (let expectedParam of expectedParams) {
             if (parentParams[expectedParam]) {
                 totalParams.push(expectedParam);
+            // search for the param in all relevant routes depending on the operator
+            } else if (this._testParamByOperator(parseResult, addressesParams, expectedParam)) {
+                totalParams.push(expectedParam);
+            } else {
+                missingParams.push(expectedParam);
             }
+        }
+
+        if (missingParams.length) {
+            missingParams.sort();
+            throw new Error(`MyApp#mountConditionals(): Not every mount referenced in "${parseResult.logic}" had these params available: ${JSON.stringify(missingParams)}.`);
         }
 
         return totalParams;
@@ -91,15 +123,18 @@ class ConditionalMountMapper extends BaseMountMapper {
         }
     }
 
-    _instantiateMountInstance(mount, logic, passedOutlets, parentData) {
+    _instantiateMountInstance(mount, parseResult, passedOutlets, parentData) {
+        let logic = parseResult.logic;
+        let isConditionalMapper = true;
+
         this._checkMountInheritance(mount, logic, parentData.parentApp);
 
         let opts = {
             rootApp: parentData.rootApp,
             addresses: this._compileMountAddresses(mount),
-            outlets: this._compileMountOutlets(mount, logic, passedOutlets, parentData, true),
+            outlets: this._compileMountOutlets(mount, logic, passedOutlets, parentData, isConditionalMapper),
             setup: this._compileMountSetupFns(mount),
-            params: this._compileMountParams(mount, parentData),
+            params: this._compileMountParams(mount, parseResult, parentData),
         };
 
         return mount.create(opts);
@@ -153,13 +188,29 @@ class ConditionalMountMapper extends BaseMountMapper {
         // because they've already been attached to a mount.
         let passedOutlets = parentData.mountsMetadata.outlets;
 
+        // make parent's params an easily searchable object
+        parentData.params = Object.freeze(parentData.params.reduce((memo, p) => memo[p] = true && memo, {}));
+        // create a map from each address in parentApp's mounts to all the params in their crumbs
+        parentData.addressesParams = parentData.mountMapper.allMounts().reduce((memo, crumbData) => {
+            let params = {};
+            if (crumbData.paramNames) {
+                crumbData.paramNames.forEach(paramName => params[paramName] = true);
+            }
+            if (crumbData.addresses) {
+                for (let addr of crumbData.addresses) {
+                    memo[addr] = params;
+                }
+            }
+            return memo;
+        }, {});
+
         function filterUnknownAddresses(addy) {
             return !availableAddresses[addy];
         }
 
-        function mapMountInstance(logic) {
+        function mapMountInstance(parseResult) {
             return function(mount) {
-                return self._instantiateMountInstance(mount, logic, passedOutlets, parentData);
+                return self._instantiateMountInstance(mount, parseResult, passedOutlets, parentData);
             };
         }
 
@@ -171,7 +222,7 @@ class ConditionalMountMapper extends BaseMountMapper {
             if (!Array.isArray(mountsList)) {
                 mountsList = [mountsList];
             }
-            if (mountsList.length === 0 || mountsList.length === 1 && is(mountsList[0], 'Undefined')) {
+            if (mountsList.length === 0) {
                 throw new Error(ctorName(this) + '#add() received an empty array for a mount.');
             }
             let parseResult = this.parse(logic);
@@ -189,7 +240,7 @@ class ConditionalMountMapper extends BaseMountMapper {
             }
             this._mounts[logic] = {
                 regex: parseResult.regex,
-                mounts: mountsList.map(mapMountInstance(logic)),
+                mounts: mountsList.map(mapMountInstance(parseResult)),
             };
         }
     }

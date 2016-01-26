@@ -3,6 +3,13 @@ import MountMapper from '../../src/classes/mount-mapper';
 import Route from '../../src/classes/route';
 import Outlet from '../../src/classes/outlet';
 import RootApp from '../../src/classes/root-app';
+import App from '../../src/classes/app';
+
+class TestApp extends App {
+    expectedOutlets() {
+        return [];
+    }
+}
 
 class TestRoute extends Route {
     expectedOutlets() {
@@ -190,6 +197,79 @@ describe('ConditionalMountMapper', () => {
             addressSpy.restore();
             outletSpy.restore();
             setupSpy.restore();
+        });
+
+        describe('Checking Accumulated Params Against Expected Params', () => {
+            class FirstRoute extends TestRoute {
+                expectedAddresses() { return ['first']; }
+                expectedParams()    { return ['first', 'action']; }
+                addressesHandlers() { return [function(){}]; }
+            }
+            class SecondRoute extends TestRoute {
+                expectedAddresses() { return ['second']; }
+                expectedParams()    { return ['second', 'action']; }
+                addressesHandlers() { return [function(){}]; }
+            }
+            class ThirdRoute extends TestRoute {
+                expectedAddresses() { return ['third']; }
+                expectedParams()    { return ['third']; }
+                addressesHandlers() { return [function(){}]; }
+            }
+
+            class MyApp extends TestApp {
+                mount() {
+                    return {
+                        '{action=\\w+}/{first=\\w+}':  FirstRoute.addresses('first'),
+                        '{action=\\w+}/{second=\\w+}': SecondRoute.addresses('second'),
+                        '{third=\\w+}':  ThirdRoute.addresses('third'),
+                    };
+                }
+            }
+            class MyRootApp extends RootApp {
+                expectedOutlets() { return []; }
+                mount() {
+                    return {
+                        '{id=\\d+}': MyApp,
+                    };
+                }
+            }
+
+            class IdRoute extends TestRoute {
+                expectedParams() { return ['id']; }
+            }
+            class IdActionRoute extends TestRoute {
+                expectedParams() { return ['id', 'action']; }
+            }
+            class IdActionFirstRoute extends TestRoute {
+                expectedParams() { return ['id', 'action', 'first']; }
+            }
+
+            it('+ operator: throws if expected params are missing from any mount listed on the `+` list', () => {
+                MyApp.prototype.mountConditionals = function() {
+                    return {
+                        '+first,second': IdActionFirstRoute,
+                    };
+                };
+                expect(() => new MyRootApp({})).to.throw(Error, 'MyApp#mountConditionals(): Not every mount referenced in "+first,second" had these params available: ["first"].');
+                MyApp.prototype.mountConditionals = function() {
+                    return {
+                        '+first,second,third': IdActionFirstRoute,
+                    };
+                };
+                expect(() => new MyRootApp({})).to.throw(Error, 'MyApp#mountConditionals(): Not every mount referenced in "+first,second,third" had these params available: ["action","first"]');
+                MyApp.prototype.mountConditionals = function() {
+                    return {
+                        '+first,second,third': [IdRoute, IdRoute, IdActionRoute],
+                    };
+                };
+                expect(() => new MyRootApp({})).to.throw(Error, 'MyApp#mountConditionals(): Not every mount referenced in "+first,second,third" had these params available: ["action"].');
+            });
+
+            it.skip('! operator: throws if expected params are missing from any mount not listed on the `!` list', () => {
+            });
+
+            it.skip('* operator: throws if expected params are missing from any mount in the parent App', () => {
+            });
         });
     });
 });
