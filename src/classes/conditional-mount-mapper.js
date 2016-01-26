@@ -126,6 +126,9 @@ class ConditionalMountMapper extends BaseMountMapper {
         if (isnt(parentData.mountsMetadata.outlets, 'Object')) {
             throw new TypeError(ctorName(this) + '#add() did not receive an object for parentData.mountsMetadata.outlets.');
         }
+        if (!(parentData.mountMapper instanceof MountMapper)) {
+            throw new TypeError(ctorName(this) + '#add() did not receive an instance of MountMapper for parentData.mountMapper.');
+        }
         if (!(parentData.rootApp instanceof App)) {
             throw new TypeError(ctorName(this) + '#add() did not receive an App instance for parentData.rootApp.');
         }
