@@ -243,6 +243,24 @@ describe('ConditionalMountMapper', () => {
             class IdActionFirstRoute extends TestRoute {
                 expectedParams() { return ['id', 'action', 'first']; }
             }
+            class IdActionFirstSecondRoute extends TestRoute {
+                expectedParams() { return ['id', 'action', 'first', 'second']; }
+            }
+
+            it('* operator: throws if expected params are missing from any mount in the parent App', () => {
+                MyApp.prototype.mountConditionals = function() {
+                    return {
+                        '*': IdActionFirstSecondRoute,
+                    };
+                };
+                expect(() => new MyRootApp({})).to.throw(Error, 'MyApp#mountConditionals(): Not every mount referenced in "*" had these params available: ["action","first","second"].');
+                MyApp.prototype.mountConditionals = function() {
+                    return {
+                        '*': [IdRoute, IdRoute, IdActionFirstSecondRoute],
+                    };
+                };
+                expect(() => new MyRootApp({})).to.throw(Error, 'MyApp#mountConditionals(): Not every mount referenced in "*" had these params available: ["action","first","second"].');
+            });
 
             it('+ operator: throws if expected params are missing from any mount listed on the `+` list', () => {
                 MyApp.prototype.mountConditionals = function() {
@@ -265,10 +283,25 @@ describe('ConditionalMountMapper', () => {
                 expect(() => new MyRootApp({})).to.throw(Error, 'MyApp#mountConditionals(): Not every mount referenced in "+first,second,third" had these params available: ["action"].');
             });
 
-            it.skip('! operator: throws if expected params are missing from any mount not listed on the `!` list', () => {
-            });
-
-            it.skip('* operator: throws if expected params are missing from any mount in the parent App', () => {
+            it('! operator: throws if expected params are missing from any mount not listed on the `!` list', () => {
+                MyApp.prototype.mountConditionals = function() {
+                    return {
+                        '!first,second': IdActionRoute,
+                    };
+                };
+                expect(() => new MyRootApp({})).to.throw(Error, 'MyApp#mountConditionals(): Not every mount referenced in "!first,second" had these params available: ["action"].');
+                MyApp.prototype.mountConditionals = function() {
+                    return {
+                        '!third': IdActionFirstSecondRoute,
+                    };
+                };
+                expect(() => new MyRootApp({})).to.throw(Error, 'MyApp#mountConditionals(): Not every mount referenced in "!third" had these params available: ["first","second"]');
+                MyApp.prototype.mountConditionals = function() {
+                    return {
+                        '!third': [IdRoute, IdRoute, IdActionFirstSecondRoute],
+                    };
+                };
+                expect(() => new MyRootApp({})).to.throw(Error, 'MyApp#mountConditionals(): Not every mount referenced in "!third" had these params available: ["first","second"].');
             });
         });
     });

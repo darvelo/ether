@@ -76,6 +76,24 @@ class ConditionalMountMapper extends BaseMountMapper {
                     }
                 }
                 return true;
+            // * operator requires expected param to be in every mount
+            // (if not already in parentApp params)
+            case '*':
+                for (let addr in addressesParams) {
+                    if (addressesParams.hasOwnProperty(addr) && !addressesParams[addr][expectedParam]) {
+                        return false;
+                    }
+                }
+                return true;
+            // ! operator requires expected param to be in every mount
+            // _not_ listed on the `!` list (if not already in parentApp params)
+            case '!':
+                for (let addr in addressesParams) {
+                    if (addressesParams.hasOwnProperty(addr) && regex.test(addr) && !addressesParams[addr][expectedParam]) {
+                        return false;
+                    }
+                }
+                return true;
             default:
                 return false;
         }
@@ -95,6 +113,7 @@ class ConditionalMountMapper extends BaseMountMapper {
         }
 
         for (let expectedParam of expectedParams) {
+            // search for the param in the parent App's (inherited) params
             if (parentParams[expectedParam]) {
                 totalParams.push(expectedParam);
             // search for the param in all relevant routes depending on the operator
