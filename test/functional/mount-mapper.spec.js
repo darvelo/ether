@@ -76,6 +76,30 @@ describe('MountMapper', () => {
             opts.params.sort().should.deep.equal(['action', 'id']);
         });
 
+        it('throws if expected params are not in accumulated params', () => {
+            class MyRoute extends TestRoute {
+                expectedParams()    { return ['id', 'action', 'type', 'user']; }
+            }
+
+            class MyApp extends TestApp {
+                mount() {
+                    return {
+                        'profile/{action=\\w+}':  MyRoute,
+                    };
+                }
+            }
+            class MyRootApp extends RootApp {
+                expectedOutlets() { return []; }
+                mount() {
+                    return {
+                        '{id=\\d+}': MyApp,
+                    };
+                }
+            }
+
+            expect(() => new MyRootApp({})).to.throw(Error, 'MyApp#mount(): The following params were not available to "profile/{action=\\w+}": ["type","user"].');
+        });
+
         it('calls create() on each mount instance with the proper options', () => {
             class OneParamRoute extends TestRoute {
                 expectedParams() {

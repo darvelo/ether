@@ -153,9 +153,11 @@ class MountMapper extends BaseMountMapper {
     }
 
     _compileMountParams(mount, crumb, mountParams, parentData) {
+        let parentParams = parentData.params;
+        let mountParamsObj = {};
+        let totalParams = Object.keys(parentParams);
+        let missingParams = [];
         let conflictingParams = [];
-        let parentParams = Object.freeze(parentData.params.reduce((memo, p) => memo[p] = true && memo, {}));
-        let totalParams = parentData.params.slice();
         let expectedParams;
 
         if (mount instanceof Modified) {
@@ -167,17 +169,17 @@ class MountMapper extends BaseMountMapper {
         for (let mountParam of mountParams) {
             if (parentParams[mountParam]) {
                 conflictingParams.push(mountParam);
-            } else {
-                // accumulate params and pass them forward.
-                // the idea behind this is that params will accumulate and be
-                // passed forward throughout the routing tree so that leaf nodes
-                // can specify a subset of expected params without the
-                // user having to explicitly "expect" these params for nodes
-                // that don't need them on the way to the leaf.
-                // if parentParams doesn't have one of the params we expect,
-                // we'll know when an error is raised in the mount's constructor
-                totalParams.push(mountParam);
             }
+            mountParamsObj[mountParam] = true;
+            // accumulate params and pass them forward.
+            // the idea behind this is that params will accumulate and be
+            // passed forward throughout the routing tree so that leaf nodes
+            // can specify a subset of expected params without the
+            // user having to explicitly "expect" these params for nodes
+            // that don't need them on the way to the leaf.
+            // if parentParams doesn't have one of the params we expect,
+            // we'll know when an error is raised in the mount's constructor
+            totalParams.push(mountParam);
         }
 
         // throw if mount's params overlap given params
@@ -190,6 +192,19 @@ class MountMapper extends BaseMountMapper {
                 JSON.stringify(conflictingParams),
                 '.',
             ].join(''));
+        }
+
+        for (let expectedParam of expectedParams) {
+            // search for the param in the parent App's
+            // (inherited) params and the mount's own params
+            if (!parentParams[expectedParam] && !mountParamsObj[expectedParam]) {
+                missingParams.push(expectedParam);
+            }
+        }
+
+        if (missingParams.length) {
+            missingParams.sort();
+            throw new Error(`MyApp#mount(): The following params were not available to "${crumb}": ${JSON.stringify(missingParams)}.`);
         }
 
         return totalParams;
@@ -223,6 +238,11 @@ class MountMapper extends BaseMountMapper {
     }
 
     add(mounts, parentData) {
+        if (this._mountsAdded) {
+            throw new Error(ctorName(this) + '#add() can only be called once.');
+        } else {
+            this._mountsAdded = true;
+        }
         if (isnt(mounts, 'Object')) {
             throw new Error(ctorName(this) + '#add() expected an object containing the mounts.');
         }
@@ -242,14 +262,11 @@ class MountMapper extends BaseMountMapper {
             throw new TypeError(ctorName(this) + '#add() did not receive an array for parentData.params.');
         }
 
-        if (this._mountsAdded) {
-            throw new Error(ctorName(this) + '#add() can only be called once.');
-        } else {
-            this._mountsAdded = true;
-        }
-
         let passedOutlets = {};
         let allAddresses = {};
+
+        // make parentApp's params an easily searchable object
+        parentData.params = Object.freeze(parentData.params.reduce((memo, p) => memo[p] = true && memo, {}));
 
         for (let crumb in mounts) {
             if (!mounts.hasOwnProperty(crumb)) {
