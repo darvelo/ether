@@ -189,5 +189,12 @@ describe('RootApp', () => {
                 z: '<hello> there',
             });
         });
+
+        it('does not coerce whitespace to the number 0', () => {
+            let rootApp = new RootApp(defaultOpts);
+            expect(rootApp.parseQueryString('x=%20%09%0D%0A')).to.deep.equal({
+                x: ' \t\r\n',
+            });
+        });
     });
 });

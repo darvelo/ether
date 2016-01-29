@@ -2,6 +2,7 @@ import App from './app';
 import Route from './route';
 import ctorName from '../utils/ctor-name';
 import is from '../utils/is';
+import isNumeric from '../utils/is-numeric';
 
 class RootApp extends App {
     constructor(opts) {
@@ -101,7 +102,7 @@ class RootApp extends App {
             val = decodeURIComponent(val);
             // isNaN will coerce empty string or all spaces to 0
             // so we need to guard against that case with regex
-            if (!isNaN(val) && !/^\s*$/.test(val)) {
+            if (isNumeric(val)) {
                 val = Number(val);
             }
             memo[key] = val;

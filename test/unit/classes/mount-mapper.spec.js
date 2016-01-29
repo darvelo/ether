@@ -468,5 +468,31 @@ describe('MountMapper', () => {
             let result = mapper.match('/user/25abcdefghijklmnopqrstuvwxyz');
             expect(result.rest).to.equal('abcdefghijklmnopqrstuvwxyz');
         });
+
+        it('decodes URI components', () => {
+            let crumb = '/user/{id=.*}';
+            let result;
+
+            mapper.add({[crumb]: IdParamRoute}, parentData);
+
+            result = mapper.match('/user/%3Chello%3E%20there');
+            expect(result).to.deep.equal({
+                rest: null,
+                params: {id: '<hello> there'},
+            });
+        });
+
+        it('does not coerce whitespace to the number 0', () => {
+            let crumb = '/user/{id=.*}';
+            let result;
+
+            mapper.add({[crumb]: IdParamRoute}, parentData);
+
+            result = mapper.match('/user/%20%09%0D%0A');
+            expect(result).to.deep.equal({
+                rest: null,
+                params: {id: ' \t\r\n'},
+            });
+        });
     });
 });

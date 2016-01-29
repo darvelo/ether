@@ -5,10 +5,7 @@ import Modified from './modified';
 import mergesort from '../utils/mergesort';
 import ctorName from '../utils/ctor-name';
 import { isnt } from '../utils/is';
-
-function isNumeric(str) {
-    return !isNaN(str);
-}
+import isNumeric from '../utils/is-numeric';
 
 class MountMapper extends BaseMountMapper {
     constructor(...args) {
@@ -327,6 +324,7 @@ class MountMapper extends BaseMountMapper {
         let ret = {params:{}};
         for (let i = 0; i < namesLen; ++i) {
             let group = theMatch[i+1];
+            group = decodeURIComponent(group);
             if (isNumeric(group)) {
                 group = +group;
             }
