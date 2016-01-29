@@ -242,9 +242,11 @@ describe('MountMapper', () => {
                     addressesHandlers() { return [function(){},function(){}]; }
                 }
                 expect(mapper.allMounts()).to.deep.equal([]);
+                let crumb1 = '';
+                let crumb2 = '{id=\\d+}/profile';
                 mapper.add({
-                    '': TestRoute,
-                    '{id=\\d+}/profile': AddressRoute.addresses('first', 'second'),
+                    [crumb1]: TestRoute,
+                    [crumb2]: AddressRoute.addresses('first', 'second'),
                 }, parentData);
                 let mounts = mapper.allMounts();
                 expect(mounts).to.have.length(2);
@@ -255,12 +257,14 @@ describe('MountMapper', () => {
                 delete mounts[1].mount;
                 expect(mounts).to.deep.equal([
                     {
+                        crumb: crumb2,
                         addresses: ['first', 'second'],
                         regex: /^\/?(\d+)\/profile(.*)/,
                         paramNames: ['id'],
                         slashes: 1,
                     },
                     {
+                        crumb: crumb1,
                         addresses: null,
                         regex: /^\/?(.*)/,
                         paramNames: null,
@@ -377,24 +381,29 @@ describe('MountMapper', () => {
 
             result = mapper.match('/user/25/profile');
             expect(result).to.deep.equal({
+                crumb,
                 rest: '/profile',
                 params: {id: 25},
             });
 
             result = mapper.match('/user/1xyz/profile');
             expect(result).to.deep.equal({
+                crumb,
                 rest: 'xyz/profile',
                 params: {id: 1},
             });
         });
 
         it('matches within a path resource', () => {
-            mapper.add({'/user/{id=\\d+}red_': IdParamRoute}, parentData);
+            let crumb = '/user/{id=\\d+}red_';
+            mapper.add({[crumb]: IdParamRoute}, parentData);
             expect(mapper.match('/user/1red_block')).to.deep.equal({
+                crumb,
                 rest: 'block',
                 params: {id: 1},
             });
             expect(mapper.match('/user/1red_sphere')).to.deep.equal({
+                crumb,
                 rest: 'sphere',
                 params: {id: 1},
             });
@@ -477,6 +486,7 @@ describe('MountMapper', () => {
 
             result = mapper.match('/user/%3Chello%3E%20there');
             expect(result).to.deep.equal({
+                crumb,
                 rest: null,
                 params: {id: '<hello> there'},
             });
@@ -490,6 +500,7 @@ describe('MountMapper', () => {
 
             result = mapper.match('/user/%20%09%0D%0A');
             expect(result).to.deep.equal({
+                crumb,
                 rest: null,
                 params: {id: ' \t\r\n'},
             });

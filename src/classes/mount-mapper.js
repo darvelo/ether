@@ -274,6 +274,7 @@ class MountMapper extends BaseMountMapper {
             let paramNames = parseResult.paramNames || [];
             let instantiationResult = this._instantiateMountInstance(mount, crumb, paramNames, passedOutlets, parentData);
             let crumbData = {
+                crumb,
                 mount: instantiationResult.instance,
                 addresses: instantiationResult.addresses.length ? instantiationResult.addresses : null,
                 regex: parseResult.regex,
