@@ -366,6 +366,11 @@ class MountMapper extends BaseMountMapper {
         return;
     }
 
+    mountFor(crumb) {
+        let mapped = this._crumbMap[crumb];
+        return mapped && mapped.mount;
+    }
+
     regexFor(crumb) {
         let mapped = this._crumbMap[crumb];
         return mapped && mapped.regex;

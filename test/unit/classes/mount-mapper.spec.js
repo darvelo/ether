@@ -241,6 +241,19 @@ describe('MountMapper', () => {
             expect(mapper.mountsAdded()).to.equal(true);
         });
 
+        describe('Getting Mounts', () => {
+            it('returns undefined for a non-existent crumb', () => {
+                let crumb = '/path/{id=\\d+}/somewhere';
+                expect(mapper.mountFor(crumb)).to.equal(undefined);
+            });
+
+            it('returns the mount for a crumb', () => {
+                let crumb = '/path/{id=\\d+}/somewhere';
+                mapper.add({[crumb]: TestRoute}, parentData);
+                expect(mapper.mountFor(crumb)).to.be.an.instanceof(TestRoute);
+            });
+        });
+
         describe('Getting Mounts Metadata', () => {
             it('gets all metadata for all mounts added', () => {
                 class AddressRoute extends TestRoute {
