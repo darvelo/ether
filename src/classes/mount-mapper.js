@@ -13,6 +13,12 @@ class MountMapper extends BaseMountMapper {
         this._crumbMap = {};
         this._sortedCrumbs = [];
         this._mountsAdded = false;
+        // a string holding the crumb representing
+        // the current active mount on the App
+        this._currentMount = undefined;
+        // every mount activated by the App has its last params
+        // stored here for diffing on its next activation
+        this._lastParams = {};
     }
 
     _sortFn(a, b) {
@@ -346,6 +352,45 @@ class MountMapper extends BaseMountMapper {
         return ret;
     }
 
+    setCurrentMount(crumb, params) {
+        if (isnt(crumb, 'String')) {
+            throw new TypeError(`MountMapper#setCurrentMount(): The first argument given was not a string: ${JSON.stringify(crumb)}.`);
+        }
+        if (isnt(params, 'Object')) {
+            throw new TypeError(`MountMapper#setCurrentMount(): The second argument given was not an object: ${JSON.stringify(params)}.`);
+        }
+
+        let crumbData = this._crumbMap[crumb];
+
+        if (!crumbData) {
+            throw new Error(`MountMapper#setCurrentMount(): The breadcrumb "${crumb}" was not added to this MountMapper.`);
+        }
+
+        let expectedParams = crumbData.mount.expectedParams();
+        for (let expectedParam of expectedParams) {
+            if (!params.hasOwnProperty(expectedParam)) {
+                throw new Error(`MountMapper#setCurrentMount(): The params given for breadcrumb "${crumb}" did not match its expected params.`);
+            }
+        }
+        if (expectedParams.length !== Object.keys(params).length) {
+            throw new Error(`MountMapper#setCurrentMount(): The params given for breadcrumb "${crumb}" exceeded its expected params.`);
+        }
+
+        this._currentMount = crumb;
+
+        let lastParams = {};
+        for (let param in params) {
+            if (params.hasOwnProperty(param)) {
+                lastParams[param] = params[param];
+            }
+        }
+        this._lastParams[crumb] = lastParams;
+    }
+
+    getCurrentMount() {
+        return this._currentMount;
+    }
+
     allMounts() {
         return this._sortedCrumbs;
     }
@@ -375,6 +420,10 @@ class MountMapper extends BaseMountMapper {
     paramNamesFor(crumb) {
         let mapped = this._crumbMap[crumb];
         return mapped && (mapped.paramNames || []);
+    }
+
+    lastParamsFor(crumb) {
+        return this._lastParams[crumb];
     }
 
     slashesFor(crumb) {

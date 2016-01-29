@@ -293,6 +293,68 @@ describe('MountMapper', () => {
             });
         });
 
+        describe('Getting the Current Mount', () => {
+            it('returns undefined if no current mount is set', () => {
+                let crumb = '/user/{id=\\d+}';
+                mapper.add({[crumb]: IdParamRoute}, parentData);
+                expect(mapper.getCurrentMount()).to.equal(undefined);
+            });
+
+            it('throws on setting current mount if first arg is not a string', () => {
+                let crumb = '/user/{id=\\d+}';
+                mapper.add({[crumb]: IdParamRoute}, parentData);
+                expect(() => mapper.setCurrentMount([], {id: 20})).to.throw(TypeError, 'MountMapper#setCurrentMount(): The first argument given was not a string: [].');
+            });
+
+            it('throws on setting current mount if second arg is not an object', () => {
+                let crumb = '/user/{id=\\d+}';
+                mapper.add({[crumb]: IdParamRoute}, parentData);
+                expect(() => mapper.setCurrentMount('xyz', [])).to.throw(TypeError, 'MountMapper#setCurrentMount(): The second argument given was not an object: [].');
+            });
+
+            it('throws on setting current mount if first arg is not a previously-added crumb', () => {
+                let crumb = '/user/{id=\\d+}';
+                mapper.add({[crumb]: IdParamRoute}, parentData);
+                expect(() => mapper.setCurrentMount('xyz', {id: 20})).to.throw(Error, 'MountMapper#setCurrentMount(): The breadcrumb "xyz" was not added to this MountMapper.');
+            });
+
+            it('throws on setting current mount if second arg does not match the mount\'s expected params', () => {
+                let crumb = '/user/{id=\\d+}';
+                mapper.add({[crumb]: IdParamRoute}, parentData);
+                expect(() => mapper.setCurrentMount(crumb, {})).to.throw(Error, `MountMapper#setCurrentMount(): The params given for breadcrumb "${crumb}" did not match its expected params.`);
+            });
+
+            it('throws on setting current mount if the params given have more params than just the expected params for the mount', () => {
+                let crumb = '/user/{id=\\d+}';
+                mapper.add({[crumb]: IdParamRoute}, parentData);
+                expect(() => mapper.setCurrentMount(crumb, {id: 20, xyz: 30})).to.throw(Error, `MountMapper#setCurrentMount(): The params given for breadcrumb "${crumb}" exceeded its expected params.`);
+            });
+
+            it('sets the current mount with a crumb and a params object', () => {
+                let crumb = '/user/{id=\\d+}';
+                mapper.add({[crumb]: IdParamRoute}, parentData);
+                mapper.setCurrentMount(crumb, {id: 20});
+                expect(mapper.getCurrentMount()).to.equal(crumb);
+            });
+        });
+
+        describe('Getting the last params of a mount', () => {
+            it('returns undefined if the mount has never been set as the current mount', () => {
+                let crumb = '/user/{id=\\d+}';
+                mapper.add({[crumb]: IdParamRoute}, parentData);
+                expect(mapper.lastParamsFor(crumb)).to.equal(undefined);
+            });
+
+            it('sets the last params for a mount when setCurrentMount() is called', () => {
+                let crumb = '/user/{id=\\d+}';
+                let params = {id: 20};
+                mapper.add({[crumb]: IdParamRoute}, parentData);
+                mapper.setCurrentMount(crumb, params);
+                expect(mapper.lastParamsFor(crumb)).to.not.equal(params);
+                expect(mapper.lastParamsFor(crumb)).to.deep.equal(params);
+            });
+        });
+
         describe('Getting Regex', () => {
             it('returns undefined for a non-existent crumb', () => {
                 let crumb = '/path/{id=\\d+}/somewhere';
