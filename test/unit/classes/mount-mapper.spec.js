@@ -17,6 +17,12 @@ class TestApp extends App {
     }
 }
 
+class IdParamApp extends TestApp {
+    expectedParams() {
+        return ['id'];
+    }
+}
+
 class TestRoute extends Route {
     expectedOutlets() {
         return [];
@@ -377,7 +383,7 @@ describe('MountMapper', () => {
             let crumb = '/user/{id=\\d+}';
             let result;
 
-            mapper.add({[crumb]: IdParamRoute}, parentData);
+            mapper.add({[crumb]: IdParamApp}, parentData);
 
             result = mapper.match('/user/25/profile');
             expect(result).to.deep.equal({
@@ -396,7 +402,7 @@ describe('MountMapper', () => {
 
         it('matches within a path resource', () => {
             let crumb = '/user/{id=\\d+}red_';
-            mapper.add({[crumb]: IdParamRoute}, parentData);
+            mapper.add({[crumb]: IdParamApp}, parentData);
             expect(mapper.match('/user/1red_block')).to.deep.equal({
                 crumb,
                 rest: 'block',
@@ -459,20 +465,20 @@ describe('MountMapper', () => {
             //        where quicksort is used over insertionsort.
             //        see: https://github.com/v8/v8/blob/master/src/js/array.js#L964
             mapper.add({
-                '/user/{id=\\d+}': IdParamRoute,
-                '/user/{id=\\d+}a': IdParamRoute,
-                '/user/{id=\\d+}ab': IdParamRoute,
-                '/user/{id=\\d+}abc': IdParamRoute,
-                '/user/{id=\\d+}abcd': IdParamRoute,
-                '/user/{id=\\d+}abcde': IdParamRoute,
-                '/user/{id=\\d+}abcdef': IdParamRoute,
-                '/user/{id=\\d+}abcdefg': IdParamRoute,
-                '/user/{id=\\d+}abcdefgh': IdParamRoute,
-                '/user/{id=\\d+}abcdefghi': IdParamRoute,
-                '/user/{id=\\d+}abcdefghij': IdParamRoute,
-                '/user/{id=\\d+}abcdefghijk': IdParamRoute,
-                '/user/{id=\\d+}abcdefghijkl': IdParamRoute,
-                '/user/{id=\\d+}abcdefghijklm': IdParamRoute,
+                '/user/{id=\\d+}': IdParamApp,
+                '/user/{id=\\d+}a': IdParamApp,
+                '/user/{id=\\d+}ab': IdParamApp,
+                '/user/{id=\\d+}abc': IdParamApp,
+                '/user/{id=\\d+}abcd': IdParamApp,
+                '/user/{id=\\d+}abcde': IdParamApp,
+                '/user/{id=\\d+}abcdef': IdParamApp,
+                '/user/{id=\\d+}abcdefg': IdParamApp,
+                '/user/{id=\\d+}abcdefgh': IdParamApp,
+                '/user/{id=\\d+}abcdefghi': IdParamApp,
+                '/user/{id=\\d+}abcdefghij': IdParamApp,
+                '/user/{id=\\d+}abcdefghijk': IdParamApp,
+                '/user/{id=\\d+}abcdefghijkl': IdParamApp,
+                '/user/{id=\\d+}abcdefghijklm': IdParamApp,
             }, parentData);
             let result = mapper.match('/user/25abcdefghijklmnopqrstuvwxyz');
             expect(result.rest).to.equal('abcdefghijklmnopqrstuvwxyz');
@@ -504,6 +510,26 @@ describe('MountMapper', () => {
                 rest: null,
                 params: {id: ' \t\r\n'},
             });
+        });
+
+        it('bypasses Routes where matching gives extra URL chars', () => {
+            let routeCrumb = 'user/{id=\\d+}';
+            let appCrumb   = 'user';
+            let result;
+
+            mapper.add({
+                [routeCrumb]: IdParamRoute,
+                [appCrumb]: TestApp,
+            }, parentData);
+
+            result = mapper.match('/user/20');
+            expect(result).to.be.an('object');
+            expect(result.crumb).to.equal(routeCrumb);
+            // MountMapper will test routeCrumb first, since it has more slashes
+            // but will pass because the match string will give `rest`(===`abc`)
+            // and so the App instance is chosen as the better candidate
+            result = mapper.match('/user/20abc');
+            expect(result.crumb).to.equal(appCrumb);
         });
     });
 });

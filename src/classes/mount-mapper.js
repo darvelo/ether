@@ -297,42 +297,52 @@ class MountMapper extends BaseMountMapper {
     }
 
     match(path) {
-        let crumb;
-        let theMatch;
+        let crumbData, regexMatch, rest, len;
 
-        for (crumb of this._sortedCrumbs) {
-            theMatch = crumb.regex.exec(path);
-            if (theMatch) {
-                break;
+        for (crumbData of this._sortedCrumbs) {
+            regexMatch = crumbData.regex.exec(path);
+            if (regexMatch) {
+                len = regexMatch.length;
+                // turn the empty string into null
+                rest = regexMatch[len-1] || null;
+                // only Apps can have non-null `rest`
+                // (extra chars to match sub-mounts in the tree)
+                if (rest && (crumbData.mount instanceof Route)) {
+                    regexMatch = null;
+                } else {
+                    break;
+                }
             }
         }
 
-        if (!theMatch) {
+        if (!regexMatch) {
             return null;
         }
 
-        let len = theMatch.length;
-        let paramNames = crumb.paramNames;
+        let paramNames = crumbData.paramNames;
         let namesLen = paramNames ? paramNames.length : 0;
+        let crumb = crumbData.crumb;
 
         if (len-namesLen > 2) {
             // somehow we have more params than expected,
             // even though we took match's first array val
             // and the captured value of the "rest of path" into account
-            throw new Error('Ether MountMapper: The number of parameters in the given path exceeded the amount given in the breadcrumb. This is likely a bug. Path was "' + path + '" and regex was ' + crumb.regex.source);
+            throw new Error('Ether MountMapper: The number of parameters in the given path exceeded the amount given in the breadcrumb. This is likely a bug. Path was "' + path + '" and regex was ' + crumbData.regex.source);
         }
 
-        let ret = {params:{}};
+        let ret = {
+            crumb,
+            rest,
+            params: {},
+        };
         for (let i = 0; i < namesLen; ++i) {
-            let group = theMatch[i+1];
+            let group = regexMatch[i+1];
             group = decodeURIComponent(group);
             if (isNumeric(group)) {
                 group = +group;
             }
             ret.params[paramNames[i]] = group;
         }
-        // turn the empty string into null
-        ret.rest = theMatch[len-1] || null;
         return ret;
     }
 
