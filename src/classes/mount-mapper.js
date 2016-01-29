@@ -359,11 +359,7 @@ class MountMapper extends BaseMountMapper {
 
     addressesFor(crumb) {
         let mapped = this._crumbMap[crumb];
-        if (mapped) {
-            return mapped.addresses || [];
-        }
-        // return undefined if crumb didn't exist
-        return;
+        return mapped && (mapped.addresses || []);
     }
 
     mountFor(crumb) {
@@ -378,11 +374,7 @@ class MountMapper extends BaseMountMapper {
 
     paramNamesFor(crumb) {
         let mapped = this._crumbMap[crumb];
-        if (mapped) {
-            return mapped.paramNames || [];
-        }
-        // return undefined if crumb didn't exist
-        return;
+        return mapped && (mapped.paramNames || []);
     }
 
     slashesFor(crumb) {

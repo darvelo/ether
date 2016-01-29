@@ -543,6 +543,9 @@ describe('MountMapper', () => {
             // and so the App instance is chosen as the better candidate
             result = mapper.match('/user/20abc');
             expect(result.crumb).to.equal(appCrumb);
+            // no match
+            result = mapper.match('/use');
+            expect(result).to.equal(null);
         });
     });
 });
