@@ -14,7 +14,7 @@ class MountMapper extends BaseMountMapper {
         this._sortedCrumbs = [];
         this._mountsAdded = false;
         // a string holding the crumb representing
-        // the current active mount on the App
+        // the currently-active mount on the App
         this._currentMount = undefined;
         // every mount activated by the App has its last params
         // stored here for diffing on its next activation

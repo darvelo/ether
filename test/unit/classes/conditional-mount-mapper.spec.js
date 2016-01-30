@@ -141,4 +141,125 @@ describe('ConditionalMountMapper', () => {
             expect(() => mapper.add({'*': TestRoute}, parentData)).to.throw(Error, 'ConditionalMountMapper#add() can only be called once.');
         });
     });
+
+    describe('Matching', () => {
+        class OneAddressRoute extends TestRoute {
+            addressesHandlers() { return [function(){}]; }
+        }
+        class TwoAddressRoute extends TestRoute {
+            addressesHandlers() { return [function(){},function(){}]; }
+        }
+        class FirstSecondRoute extends TwoAddressRoute {
+            expectedAddresses() { return ['first', 'second']; }
+        }
+        class ThirdFourthRoute extends TwoAddressRoute {
+            expectedAddresses() { return ['third', 'fourth']; }
+        }
+        class FifthRoute extends OneAddressRoute {
+            expectedAddresses() { return ['fifth']; }
+        }
+        class MatchingRootApp extends TestRootApp {
+            mount() {
+                return {
+                    '{id=\\d+}': FirstSecondRoute.addresses('first', 'second'),
+                    '{id=\\d+}/{action=\\w+}': ThirdFourthRoute.addresses('third', 'fourth'),
+                    '{user=\\w+}': FifthRoute.addresses('fifth'),
+                };
+            }
+        }
+
+        beforeEach(() => {
+            let mountsMetadata, mountMapper;
+            MatchingRootApp.prototype._instantiateConditionalMounts = function(params, mountsMeta) {
+                mountsMetadata = mountsMeta;
+                mountMapper= this._mountMapper;
+            };
+            let rootApp = new MatchingRootApp({});
+            mapper = new ConditionalMountMapper();
+            parentData = {
+                rootApp,
+                parentApp: rootApp,
+                outlets: {},
+                params: [],
+                mountsMetadata,
+                mountMapper,
+            };
+        });
+
+        describe('* Operator', () => {
+            it('returns all cMount crumbs regardless of the addresses given', () => {
+                mapper.add({
+                    '*': [TestRoute],
+                }, parentData);
+                expect(mapper.match(['first'] )).to.deep.equal(['*']);
+                expect(mapper.match(['second'])).to.deep.equal(['*']);
+                expect(mapper.match(['third'] )).to.deep.equal(['*']);
+                expect(mapper.match(['fourth'])).to.deep.equal(['*']);
+                expect(mapper.match(['fifth'] )).to.deep.equal(['*']);
+                expect(mapper.match(['first','second','third','fourth','fifth'])).to.deep.equal(['*']);
+            });
+        });
+
+        describe('+ Operator', () => {
+            it('returns all cMount crumbs that match the given addresses', () => {
+                mapper.add({
+                    '+first': [TestRoute],
+                    '+first,second': [TestRoute],
+                    '+second': [TestRoute],
+                }, parentData);
+                expect(mapper.match(['first'])).to.deep.equal(['+first', '+first,second']);
+                expect(mapper.match(['second'])).to.deep.equal(['+first,second', '+second']);
+                expect(mapper.match(['first', 'second'])).to.deep.equal(['+first', '+first,second', '+second']);
+            });
+        });
+
+        describe('! Operator', () => {
+            it('returns all cMount crumbs that do not match the given addresses', () => {
+                mapper.add({
+                    '!first': [TestRoute],
+                    '!first,second': [TestRoute],
+                    '!second': [TestRoute],
+                    '!third': [TestRoute],
+                }, parentData);
+                expect(mapper.match(['first'])).to.deep.equal(['!second', '!third']);
+                expect(mapper.match(['second'])).to.deep.equal(['!first', '!third']);
+                expect(mapper.match(['third'])).to.deep.equal(['!first', '!first,second', '!second']);
+                expect(mapper.match(['fourth'])).to.deep.equal(['!first', '!first,second', '!second', '!third']);
+                // note in the following how passing multiple addresses compounds the exclusion.
+                // think of passing multiple addresses as an AND operation, not OR
+                expect(mapper.match(['first', 'second'])).to.deep.equal(['!third']);
+                expect(mapper.match(['second', 'third'])).to.deep.equal(['!first']);
+            });
+        });
+
+        describe('All Operators', () => {
+            it('returns null if a match is not found', () => {
+                mapper.add({
+                    '+first': [TestRoute],
+                    '+first,second': [TestRoute],
+                    '!fifth': TestRoute,
+                }, parentData);
+                expect(mapper.match(['fifth'])).to.equal(null);
+            });
+
+            it('returns all cMount crumbs matching each operator\'s logic', () => {
+                mapper.add({
+                    '+first': [TestRoute],
+                    '+first,second': [TestRoute],
+                    '!third,fourth': TestRoute,
+                    '!fifth': TestRoute,
+                    '*': [TestRoute],
+                }, parentData);
+                expect(mapper.match(['first'])).to.deep.equal(['+first', '+first,second', '!third,fourth', '!fifth', '*']);
+                expect(mapper.match(['second'])).to.deep.equal(['+first,second', '!third,fourth', '!fifth', '*']);
+                expect(mapper.match(['fifth'])).to.deep.equal(['!third,fourth', '*']);
+                // note in the following how passing multiple addresses compounds the exclusion.
+                // think of passing multiple addresses as an AND operation, not OR
+                expect(mapper.match(['first', 'second'])).to.deep.equal(['+first', '+first,second', '!third,fourth', '!fifth', '*']);
+                expect(mapper.match(['second', 'third'])).to.deep.equal(['+first,second', '!fifth', '*']);
+                expect(mapper.match(['second', 'third', 'fifth'])).to.deep.equal(['+first,second', '*']);
+                expect(mapper.match(['first', 'third', 'fifth'])).to.deep.equal(['+first', '+first,second', '*']);
+            });
+        });
+    });
 });

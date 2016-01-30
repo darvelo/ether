@@ -258,10 +258,61 @@ class ConditionalMountMapper extends BaseMountMapper {
                 ].join(''));
             }
             this._mounts[logic] = {
+                operator: parseResult.operator,
                 regex: parseResult.regex,
                 mounts: mountsList.map(mapMountInstance(parseResult)),
             };
         }
+    }
+
+    match(addresses) {
+        let matched = {};
+        for (let logic in this._mounts) {
+            if (!this._mounts.hasOwnProperty(logic)) {
+                continue;
+            }
+            let mountData = this._mounts[logic];
+            let { operator, regex } = mountData;
+            for (let address of addresses) {
+                switch (operator) {
+                    // * is always added to the list
+                    case '*':
+                        matched[logic] = true;
+                        break;
+                    // + acts as an OR operation, adding any logic crumb
+                    // that matches any of the listed addresses
+                    case '+':
+                        if (regex.test(address)) {
+                            matched[logic] = true;
+                        }
+                        break;
+                    // ! acts as an AND operation
+                    // (NOT this address AND NOT this address)
+                    // so we need to blacklist this logic crumb from being
+                    // re-added if one address failed the regex test but a
+                    // subsequent address passed it
+                    case '!':
+                        if (matched[logic] !== false) {
+                            if (regex.test(address)) {
+                                matched[logic] = true;
+                            } else {
+                                matched[logic] = false;
+                            }
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+        // remove those that were marked for removal by `!`
+        for (let logic in matched) {
+            if (matched.hasOwnProperty(logic) && matched[logic] === false) {
+                delete matched[logic];
+            }
+        }
+        matched = Object.keys(matched);
+        return matched.length ? matched : null;
     }
 }
 
