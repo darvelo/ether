@@ -4,6 +4,18 @@ import RootApp from '../../../src/classes/root-app';
 import Route from '../../../src/classes/route';
 import regexEqual from '../../utils/regex-equal';
 
+function onlyHasProperties(obj, props) {
+    let copy = Object.assign({}, obj);
+    for (let prop of props) {
+        expect(obj).to.have.ownProperty(prop);
+        delete copy[prop];
+    }
+    let keys = Object.keys(copy);
+    if (keys.length) {
+        throw new Error(`Object had more properties than expected: ${obj} => ${keys}`);
+    }
+}
+
 class TestRootApp extends RootApp {
     expectedOutlets() {
         return [];
@@ -191,12 +203,12 @@ describe('ConditionalMountMapper', () => {
                 mapper.add({
                     '*': [TestRoute],
                 }, parentData);
-                expect(mapper.match(['first'] )).to.deep.equal(['*']);
-                expect(mapper.match(['second'])).to.deep.equal(['*']);
-                expect(mapper.match(['third'] )).to.deep.equal(['*']);
-                expect(mapper.match(['fourth'])).to.deep.equal(['*']);
-                expect(mapper.match(['fifth'] )).to.deep.equal(['*']);
-                expect(mapper.match(['first','second','third','fourth','fifth'])).to.deep.equal(['*']);
+                onlyHasProperties(mapper.match(['first']),  ['*']);
+                onlyHasProperties(mapper.match(['second']), ['*']);
+                onlyHasProperties(mapper.match(['third']),  ['*']);
+                onlyHasProperties(mapper.match(['fourth']), ['*']);
+                onlyHasProperties(mapper.match(['fifth']),  ['*']);
+                onlyHasProperties(mapper.match(['first','second','third','fourth','fifth']), ['*']);
             });
         });
 
@@ -207,9 +219,9 @@ describe('ConditionalMountMapper', () => {
                     '+first,second': [TestRoute],
                     '+second': [TestRoute],
                 }, parentData);
-                expect(mapper.match(['first'])).to.deep.equal(['+first', '+first,second']);
-                expect(mapper.match(['second'])).to.deep.equal(['+first,second', '+second']);
-                expect(mapper.match(['first', 'second'])).to.deep.equal(['+first', '+first,second', '+second']);
+                onlyHasProperties(mapper.match(['first']), ['+first', '+first,second']);
+                onlyHasProperties(mapper.match(['second']), ['+first,second', '+second']);
+                onlyHasProperties(mapper.match(['first', 'second']), ['+first', '+first,second', '+second']);
             });
         });
 
@@ -221,14 +233,14 @@ describe('ConditionalMountMapper', () => {
                     '!second': [TestRoute],
                     '!third': [TestRoute],
                 }, parentData);
-                expect(mapper.match(['first'])).to.deep.equal(['!second', '!third']);
-                expect(mapper.match(['second'])).to.deep.equal(['!first', '!third']);
-                expect(mapper.match(['third'])).to.deep.equal(['!first', '!first,second', '!second']);
-                expect(mapper.match(['fourth'])).to.deep.equal(['!first', '!first,second', '!second', '!third']);
+                onlyHasProperties(mapper.match(['first']), ['!second', '!third']);
+                onlyHasProperties(mapper.match(['second']), ['!first', '!third']);
+                onlyHasProperties(mapper.match(['third']), ['!first', '!first,second', '!second']);
+                onlyHasProperties(mapper.match(['fourth']), ['!first', '!first,second', '!second', '!third']);
                 // note in the following how passing multiple addresses compounds the exclusion.
                 // think of passing multiple addresses as an AND operation, not OR
-                expect(mapper.match(['first', 'second'])).to.deep.equal(['!third']);
-                expect(mapper.match(['second', 'third'])).to.deep.equal(['!first']);
+                onlyHasProperties(mapper.match(['first', 'second']), ['!third']);
+                onlyHasProperties(mapper.match(['second', 'third']), ['!first']);
             });
         });
 
@@ -250,15 +262,15 @@ describe('ConditionalMountMapper', () => {
                     '!fifth': TestRoute,
                     '*': [TestRoute],
                 }, parentData);
-                expect(mapper.match(['first'])).to.deep.equal(['+first', '+first,second', '!third,fourth', '!fifth', '*']);
-                expect(mapper.match(['second'])).to.deep.equal(['+first,second', '!third,fourth', '!fifth', '*']);
-                expect(mapper.match(['fifth'])).to.deep.equal(['!third,fourth', '*']);
+                onlyHasProperties(mapper.match(['first']), ['+first', '+first,second', '!third,fourth', '!fifth', '*']);
+                onlyHasProperties(mapper.match(['second']), ['+first,second', '!third,fourth', '!fifth', '*']);
+                onlyHasProperties(mapper.match(['fifth']), ['!third,fourth', '*']);
                 // note in the following how passing multiple addresses compounds the exclusion.
                 // think of passing multiple addresses as an AND operation, not OR
-                expect(mapper.match(['first', 'second'])).to.deep.equal(['+first', '+first,second', '!third,fourth', '!fifth', '*']);
-                expect(mapper.match(['second', 'third'])).to.deep.equal(['+first,second', '!fifth', '*']);
-                expect(mapper.match(['second', 'third', 'fifth'])).to.deep.equal(['+first,second', '*']);
-                expect(mapper.match(['first', 'third', 'fifth'])).to.deep.equal(['+first', '+first,second', '*']);
+                onlyHasProperties(mapper.match(['first', 'second']), ['+first', '+first,second', '!third,fourth', '!fifth', '*']);
+                onlyHasProperties(mapper.match(['second', 'third']), ['+first,second', '!fifth', '*']);
+                onlyHasProperties(mapper.match(['second', 'third', 'fifth']), ['+first,second', '*']);
+                onlyHasProperties(mapper.match(['first', 'third', 'fifth']), ['+first', '+first,second', '*']);
             });
         });
     });

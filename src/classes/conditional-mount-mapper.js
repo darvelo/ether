@@ -311,8 +311,14 @@ class ConditionalMountMapper extends BaseMountMapper {
                 delete matched[logic];
             }
         }
-        matched = Object.keys(matched);
-        return matched.length ? matched : null;
+        let empty = true;
+        for (let logic in matched) {
+            if (matched.hasOwnProperty(logic)) {
+                empty = false;
+                break;
+            }
+        }
+        return empty ? null : matched;
     }
 }
 
