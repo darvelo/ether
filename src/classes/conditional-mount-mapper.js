@@ -12,6 +12,35 @@ class ConditionalMountMapper extends BaseMountMapper {
         this._acceptedOperators = ['*', '+', '!'];
         this._mounts = {};
         this._mountsAdded = false;
+        // an array holding the logic crumbs representing
+        // the currently-active cMounts on the App
+        this._currentMounts = undefined;
+        /**
+         * @namespace
+         * @desc Stores last params for every cMount activated by the App.
+         * @example
+         * // with App#mount() returning object {
+         * //     '{id=\\w+}': Route.addresses('first')
+         * //     '{id=\\w+}/{action=\\w+}': Route.addresses('second')
+         * //     '{id=\\w+}/profile/{action=\\w+}': Route.addresses('third')
+         * // }
+         * // with App#mountConditionals() returning object {
+         * //     '+first': IdRoute,
+         * //     '!first': [ActionRoute, IdActionRoute],
+         * //     '+second': [ActionRoute],
+         * // }
+         * // where expected params are:
+         * //     IdRoute => ['id']
+         * //     ActionRoute => ['action']
+         * //     IdActionRoute => ['id', 'action']
+         * // _lastParams could look something like:
+         * {
+         *     '+first':  [{id: 10}],
+         *     '!first': [{action: 'go'}, {id: 10, action: 'go'}],
+         *     '+second':  [{action: 'go'}],
+         * }
+         */
+        this._lastParams = {};
     }
 
     parse(logic) {
@@ -319,6 +348,84 @@ class ConditionalMountMapper extends BaseMountMapper {
             }
         }
         return empty ? null : matched;
+    }
+
+    /**
+     * Stores the names and params of the currently-active cMounts.
+     * @param {object} mountsToParams An object where the keys are the logic crumbs of the active cMounts and the values are arrays of objects holding each cMount's routes' current params.
+     * @example
+     * // with App#mount() returning object {
+     * //     '{id=\\w+}': Route.addresses('first')
+     * //     '{id=\\w+}/{action=\\w+}': Route.addresses('second')
+     * //     '{id=\\w+}/profile/{action=\\w+}': Route.addresses('third')
+     * // }
+     * // with App#mountConditionals() returning object {
+     * //     '+first': IdRoute,
+     * //     '!first': [ActionRoute, IdActionRoute],
+     * //     '+second': [ActionRoute],
+     * // }
+     * // where expected params are:
+     * //     IdRoute => ['id']
+     * //     ActionRoute => ['action']
+     * //     IdActionRoute => ['id', 'action']
+     * // with the user navigating to the Route addressed as 'second',
+     * // an invocation of setCurrentMounts could look something like:
+     * cMountMapper.setCurrentMounts({
+     *     '!first':  [{action: 'go'}, {id: 10, action: 'go'}],
+     *     '+second': [{action: 'go'}],
+     * });
+     * @return
+     */
+    setCurrentMounts(mountsToParams) {
+        if (isnt(mountsToParams, 'Object')) {
+            throw new TypeError(`ConditionalMountMapper#setCurrentMounts(): The first argument given was not an object: ${JSON.stringify(mountsToParams)}.`);
+        }
+
+        let unknownLogics = [];
+        let mounts = [];
+
+        // filter given mounts that are not actually in this mapper and throw
+        for (let logic in mountsToParams) {
+            if (mountsToParams.hasOwnProperty(logic)) {
+                if (!this._mounts.hasOwnProperty(logic)) {
+                    unknownLogics.push(logic);
+                } else {
+                    mounts.push(logic);
+                }
+            }
+        }
+        if (unknownLogics.length) {
+            throw new Error(`ConditionalMountMapper#setCurrentMounts(): The following conditional mounts given were not added to this ConditionalMountMapper: ${JSON.stringify(unknownLogics.sort())}.`);
+        }
+
+        // test that params given are exactly what was expected for each mount's routes
+        mounts.forEach(logic => {
+            let routes = this._mounts[logic].mounts;
+            routes.forEach((route, idx) => {
+                let givenParams = mountsToParams[logic][idx];
+                let expectedParams = route.expectedParams();
+                for (let expectedParam of expectedParams) {
+                    if (!givenParams.hasOwnProperty(expectedParam)) {
+                        throw new Error(`ConditionalMountMapper#setCurrentMounts(): The params given for ${ctorName(route)} (${JSON.stringify(givenParams)}) did not match its expected params: ${JSON.stringify(expectedParams.sort())}.`);
+                    }
+                }
+                if (expectedParams.length !== Object.keys(givenParams).length) {
+                    throw new Error(`ConditionalMountMapper#setCurrentMounts(): The params given for ${ctorName(route)} (${JSON.stringify(givenParams)}) exceeded its expected params: ${JSON.stringify(expectedParams.sort())}.`);
+                }
+            });
+        });
+
+        this._currentMounts = Object.keys(mountsToParams).sort();
+        // deep copy, while retaining last params for mounts not in mountsToParams
+        this._lastParams = Object.assign(this._lastParams, JSON.parse(JSON.stringify(mountsToParams)));
+    }
+
+    getCurrentMounts() {
+        return this._currentMounts;
+    }
+
+    lastParamsFor(logic) {
+        return this._lastParams[logic];
     }
 }
 

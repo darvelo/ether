@@ -1,5 +1,4 @@
 import ConditionalMountMapper from '../../../src/classes/conditional-mount-mapper';
-import MountMapper from '../../../src/classes/mount-mapper';
 import RootApp from '../../../src/classes/root-app';
 import Route from '../../../src/classes/route';
 import regexEqual from '../../utils/regex-equal';
@@ -28,32 +27,59 @@ class TestRoute extends Route {
     }
 }
 
+class IdRoute extends TestRoute {
+    expectedParams() { return ['id']; }
+}
+class IdActionRoute extends TestRoute {
+    expectedParams() { return ['id', 'action']; }
+}
+class UserRoute extends TestRoute {
+    expectedParams() { return ['user']; }
+}
+
+class OneAddressRoute extends TestRoute {
+    addressesHandlers() { return [function(){}]; }
+}
+class TwoAddressRoute extends TestRoute {
+    addressesHandlers() { return [function(){},function(){}]; }
+}
+
+class FirstSecondRoute extends TwoAddressRoute {
+    expectedAddresses() { return ['first', 'second']; }
+}
+class ThirdFourthRoute extends TwoAddressRoute {
+    expectedAddresses() { return ['third', 'fourth']; }
+}
+class FifthRoute extends OneAddressRoute {
+    expectedAddresses() { return ['fifth']; }
+}
+class MyRootApp extends TestRootApp {
+    mount() {
+        return {
+            '{id=\\d+}': FirstSecondRoute.addresses('first', 'second'),
+            '{id=\\d+}/{action=\\w+}': ThirdFourthRoute.addresses('third', 'fourth'),
+            '{user=\\w+}': FifthRoute.addresses('fifth'),
+        };
+    }
+}
+
 describe('ConditionalMountMapper', () => {
-    let mapper, addresses, outlets, parentData;
+    let mapper, mountMapper, mountsMetadata, parentData;
 
     beforeEach(() => {
-        let rootApp = new TestRootApp({});
+        MyRootApp.prototype._instantiateConditionalMounts = function(params, mountsMeta) {
+            mountMapper = this._mountMapper;
+            mountsMetadata = mountsMeta;
+        };
+        let rootApp = new MyRootApp({});
         mapper = new ConditionalMountMapper();
-        addresses = {
-            'first': true,
-            'second': true,
-            'third': true,
-        };
-        outlets = {
-            'first': true,
-            'second': true,
-            'third': true,
-        };
         parentData = {
             rootApp,
             parentApp: rootApp,
             outlets: {},
             params: [],
-            mountsMetadata: {
-                addresses: {},
-                outlets: {},
-            },
-            mountMapper: new MountMapper(),
+            mountsMetadata,
+            mountMapper,
         };
     });
 
@@ -155,49 +181,6 @@ describe('ConditionalMountMapper', () => {
     });
 
     describe('Matching', () => {
-        class OneAddressRoute extends TestRoute {
-            addressesHandlers() { return [function(){}]; }
-        }
-        class TwoAddressRoute extends TestRoute {
-            addressesHandlers() { return [function(){},function(){}]; }
-        }
-        class FirstSecondRoute extends TwoAddressRoute {
-            expectedAddresses() { return ['first', 'second']; }
-        }
-        class ThirdFourthRoute extends TwoAddressRoute {
-            expectedAddresses() { return ['third', 'fourth']; }
-        }
-        class FifthRoute extends OneAddressRoute {
-            expectedAddresses() { return ['fifth']; }
-        }
-        class MatchingRootApp extends TestRootApp {
-            mount() {
-                return {
-                    '{id=\\d+}': FirstSecondRoute.addresses('first', 'second'),
-                    '{id=\\d+}/{action=\\w+}': ThirdFourthRoute.addresses('third', 'fourth'),
-                    '{user=\\w+}': FifthRoute.addresses('fifth'),
-                };
-            }
-        }
-
-        beforeEach(() => {
-            let mountsMetadata, mountMapper;
-            MatchingRootApp.prototype._instantiateConditionalMounts = function(params, mountsMeta) {
-                mountsMetadata = mountsMeta;
-                mountMapper= this._mountMapper;
-            };
-            let rootApp = new MatchingRootApp({});
-            mapper = new ConditionalMountMapper();
-            parentData = {
-                rootApp,
-                parentApp: rootApp,
-                outlets: {},
-                params: [],
-                mountsMetadata,
-                mountMapper,
-            };
-        });
-
         describe('* Operator', () => {
             it('returns all cMount crumbs regardless of the addresses given', () => {
                 mapper.add({
@@ -271,6 +254,147 @@ describe('ConditionalMountMapper', () => {
                 onlyHasProperties(mapper.match(['second', 'third']), ['+first,second', '!fifth', '*']);
                 onlyHasProperties(mapper.match(['second', 'third', 'fifth']), ['+first,second', '*']);
                 onlyHasProperties(mapper.match(['first', 'third', 'fifth']), ['+first', '+first,second', '*']);
+            });
+        });
+    });
+
+    describe('Info Retrieval', () => {
+        describe('Getting the Current Mounts', () => {
+            it('returns undefined if no current mounts are set', () => {
+                let crumb = '+first';
+                mapper.add({[crumb]: TestRoute}, parentData);
+                expect(mapper.getCurrentMounts()).to.equal(undefined);
+            });
+
+            it('throws on setting current mounts if first arg is not an object', () => {
+                let crumb = '+first';
+                mapper.add({[crumb]: IdRoute}, parentData);
+                expect(() => mapper.setCurrentMounts(['xyz'])).to.throw(TypeError, 'ConditionalMountMapper#setCurrentMounts(): The first argument given was not an object: ["xyz"].');
+            });
+
+            it('throws on setting current mounts if any key in the passed obj is not a previously-added logic crumb', () => {
+                let crumb = '+first';
+                mapper.add({[crumb]: IdRoute}, parentData);
+                expect(() => mapper.setCurrentMounts({
+                    '+second': [{id: 20}],
+                    '!third':  [{id: 10}],
+                    '*':       [{id: 10}],
+                })).to.throw(Error, 'ConditionalMountMapper#setCurrentMounts(): The following conditional mounts given were not added to this ConditionalMountMapper: ["!third","*","+second"].');
+            });
+
+            it('throws on setting current mounts if any params do not match the matching Route\'s expected params', () => {
+                let crumb = '+third';
+                mapper.add({
+                    [crumb]: [IdRoute, IdActionRoute]
+                }, parentData);
+                expect(() => mapper.setCurrentMounts({
+                    [crumb]: [{id: 10}, {id: 10}]
+                })).to.throw(Error, 'ConditionalMountMapper#setCurrentMounts(): The params given for IdActionRoute ({"id":10}) did not match its expected params: ["action","id"].');
+            });
+
+            it('throws on setting current mounts if the params given have more params than just the expected params for the mount', () => {
+                let crumb = '+third';
+                mapper.add({
+                    [crumb]: [IdRoute, IdActionRoute]
+                }, parentData);
+                expect(() => mapper.setCurrentMounts({
+                    [crumb]: [{id: 10}, {id: 10, action: 'go', user: 'JimBob'}]
+                })).to.throw(Error, 'ConditionalMountMapper#setCurrentMounts(): The params given for IdActionRoute ({"id":10,"action":"go","user":"JimBob"}) exceeded its expected params: ["action","id"].');
+            });
+
+            it('sets the current mounts with a mounts-to-params object', () => {
+                let crumb1 = '+fourth';
+                let crumb2 = '!first,second,fifth';
+                let crumb3 = '+fifth';
+                let crumb4 = '+first,third';
+                let crumb5 = '+third';
+                mapper.add({
+                    [crumb1]: [IdRoute, IdActionRoute],
+                    [crumb2]: [IdActionRoute, IdRoute],
+                    [crumb3]: [UserRoute, UserRoute],
+                    [crumb4]: [IdRoute, IdRoute],
+                    [crumb5]: [IdRoute, IdRoute],
+                }, parentData);
+                mapper.setCurrentMounts({
+                    [crumb1]: [{id: 10}, {id: 10, action: 'go'}],
+                    [crumb2]: [{id: 10, action: 'go'}, {id: 10}],
+                });
+                expect(mapper.getCurrentMounts()).to.deep.equal([crumb2, crumb1]);
+
+                mapper.setCurrentMounts({
+                    [crumb3]: [{user: 'JimBob'}, {user: 'JimBob'}],
+                });
+                expect(mapper.getCurrentMounts()).to.deep.equal([crumb3]);
+
+                mapper.setCurrentMounts({
+                    [crumb4]: [{id: 10}, {id: 10}],
+                    [crumb5]: [{id: 10}, {id: 10}],
+                });
+                expect(mapper.getCurrentMounts()).to.deep.equal([crumb4, crumb5]);
+            });
+        });
+
+        describe('Getting the last params of a mount', () => {
+            it('returns undefined if the mount has never been set as the current mount', () => {
+                let crumb = '+first';
+                mapper.add({[crumb]: IdRoute}, parentData);
+                expect(mapper.lastParamsFor(crumb)).to.equal(undefined);
+            });
+
+            it('sets the last params for a mount when setCurrentMount() is called', () => {
+                let crumb1 = '+fourth';
+                let crumb2 = '!first,second,fifth';
+                let crumb3 = '+fifth';
+                let crumb4 = '+first,third';
+                let crumb5 = '+third';
+                mapper.add({
+                    [crumb1]: [IdRoute, IdActionRoute],
+                    [crumb2]: [IdActionRoute, IdRoute],
+                    [crumb3]: [UserRoute, UserRoute],
+                    [crumb4]: [IdRoute, IdRoute],
+                    [crumb5]: [IdRoute, IdRoute],
+                }, parentData);
+
+                let params1 = [{id: 10}, {id: 10, action: 'go'}];
+                let params2 = [{id: 10, action: 'go'}, {id: 10}];
+                expect(mapper.lastParamsFor(crumb1)).to.equal(undefined);
+                expect(mapper.lastParamsFor(crumb2)).to.equal(undefined);
+                mapper.setCurrentMounts({
+                    [crumb1]: params1,
+                    [crumb2]: params2,
+                });
+                expect(mapper.lastParamsFor(crumb1)).to.not.equal(params1);
+                expect(mapper.lastParamsFor(crumb1)).to.deep.equal(params1);
+                expect(mapper.lastParamsFor(crumb2)).to.not.equal(params2);
+                expect(mapper.lastParamsFor(crumb2)).to.deep.equal(params2);
+
+
+                let params3 = [{user: 'JimBob'}, {user: 'JimBob'}];
+                expect(mapper.lastParamsFor(crumb3)).to.equal(undefined);
+                mapper.setCurrentMounts({
+                    [crumb3]: params3,
+                });
+                expect(mapper.lastParamsFor(crumb3)).to.not.equal(params3);
+                expect(mapper.lastParamsFor(crumb3)).to.deep.equal(params3);
+                // last params for other mounts stay intact
+                expect(mapper.lastParamsFor(crumb1)).to.deep.equal(params1);
+                expect(mapper.lastParamsFor(crumb2)).to.deep.equal(params2);
+
+
+                let params4 = [{id: 10}, {id: 10}];
+                let params5 = [{id: 10}, {id: 10}];
+                expect(mapper.lastParamsFor(crumb4)).to.equal(undefined);
+                expect(mapper.lastParamsFor(crumb5)).to.equal(undefined);
+                mapper.setCurrentMounts({
+                    [crumb4]: params4,
+                    [crumb5]: params5,
+                });
+                expect(mapper.lastParamsFor(crumb4)).to.deep.equal(params4);
+                expect(mapper.lastParamsFor(crumb5)).to.deep.equal(params5);
+                // last params for other mounts stay intact
+                expect(mapper.lastParamsFor(crumb1)).to.deep.equal(params1);
+                expect(mapper.lastParamsFor(crumb2)).to.deep.equal(params2);
+                expect(mapper.lastParamsFor(crumb3)).to.deep.equal(params3);
             });
         });
     });

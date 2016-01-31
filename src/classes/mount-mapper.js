@@ -377,14 +377,7 @@ class MountMapper extends BaseMountMapper {
         }
 
         this._currentMount = crumb;
-
-        let lastParams = {};
-        for (let param in params) {
-            if (params.hasOwnProperty(param)) {
-                lastParams[param] = params[param];
-            }
-        }
-        this._lastParams[crumb] = lastParams;
+        this._lastParams[crumb] = Object.assign({}, params);
     }
 
     getCurrentMount() {
