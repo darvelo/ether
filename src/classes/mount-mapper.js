@@ -346,6 +346,10 @@ class MountMapper extends BaseMountMapper {
             group = decodeURIComponent(group);
             if (isNumeric(group)) {
                 group = +group;
+            } else if (group === 'true') {
+                group = true;
+            } else if (group === 'false') {
+                group = false;
             }
             ret.params[paramNames[i]] = group;
         }

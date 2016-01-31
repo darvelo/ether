@@ -104,6 +104,10 @@ class RootApp extends App {
             // so we need to guard against that case with regex
             if (isNumeric(val)) {
                 val = Number(val);
+            } else if (val === 'true') {
+                val = true;
+            } else if (val === 'false') {
+                val = false;
             }
             memo[key] = val;
             return memo;

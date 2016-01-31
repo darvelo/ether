@@ -35,6 +35,12 @@ class IdParamRoute extends TestRoute {
     }
 }
 
+class IdActionParamRoute extends TestRoute {
+    expectedParams() {
+        return ['id', 'action'];
+    }
+}
+
 describe('MountMapper', () => {
     let mapper, parentData;
 
@@ -584,6 +590,23 @@ describe('MountMapper', () => {
                 crumb,
                 rest: null,
                 params: {id: ' \t\r\n'},
+            });
+        });
+
+        it('turns strings `true` and `false` into boolean true and false', () => {
+            let crumb = '/user/{id=.*}/{action=.*}';
+            let result;
+
+            mapper.add({[crumb]: IdActionParamRoute}, parentData);
+
+            result = mapper.match('/user/true/false');
+            expect(result).to.deep.equal({
+                crumb,
+                rest: null,
+                params: {
+                    id: true,
+                    action: false,
+                },
             });
         });
 

@@ -196,5 +196,13 @@ describe('RootApp', () => {
                 x: ' \t\r\n',
             });
         });
+
+        it('turns strings `true` and `false` into boolean true and false', () => {
+            let rootApp = new RootApp(defaultOpts);
+            expect(rootApp.parseQueryString('x=true&y=false')).to.deep.equal({
+                x: true,
+                y: false,
+            });
+        });
     });
 });
