@@ -244,7 +244,7 @@ describe('Expectable', function() {
         it('does not throw if any and all params are allowed', () => {
             class ExpectsAnyParams extends TestExpectable {
                 expectedParams() {
-                    return '*';
+                    return [];
                 }
             }
             expect(() => new ExpectsAnyParams(defaultOpts)).to.not.throw();

@@ -5,8 +5,7 @@ import { is, isnt } from '../utils/is';
 const RECEIVED_NOT_ARRAY = 1;
 const EXPECTED_NOT_ARRAY = 2;
 const ARRAYS_NOT_EQUAL   = 3;
-const EXPECTED_ANY       = 4;
-const EXPECTED_NOT_MET   = 5;
+const EXPECTED_NOT_MET   = 4;
 
 class Expectable {
     constructor(opts) {
@@ -172,15 +171,8 @@ class Expectable {
 
     _checkParams(params) {
         let expected = this.expectedParams();
-        let result;
-
-        if (expected === '*' && Array.isArray(params)) {
-            result = EXPECTED_ANY;
-        } else {
-            let needExact = false;
-            result = this._compareArrays(params, expected, needExact);
-        }
-
+        let needExact = false;
+        let result = this._compareArrays(params, expected, needExact);
         switch (result) {
             case RECEIVED_NOT_ARRAY:
                 throw new TypeError(ctorName(this) + ' constructor\'s options.params property was not an Array.');
@@ -195,8 +187,6 @@ class Expectable {
                         JSON.stringify(expected),
                     '.'
                 ].join(''));
-            case EXPECTED_ANY:
-                return;
             case ARRAYS_NOT_EQUAL:
                 throw new Error('Params given were not strictly equal to expected params. This error should never occur and is a bug. Please report this to the library developers.');
             default:
