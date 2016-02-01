@@ -98,6 +98,7 @@ class Route extends Modifiable {
     }
 
     expectedParams() {
+        // default: don't pass any params to prerender/render on navigation
         return [];
     }
 
@@ -130,7 +131,6 @@ class Route extends Modifiable {
 
     /**
      * A user-defined function that's called when the URL has changed and another, different route is to be rendered instead. This is a good opportunity to use CSS to hide all outlets or views in use by this route, as outlets are exclusive to a single route.
-     * @return {Promise} A promise signifying when any actions relevant to deactivation (cleanup, hiding views or UI components, etc.) have all finished.
      * @return {Promise} A promise that, when resolved, means all deactivate actions (e.g. sending data to the server, data cleanup for GC, hiding outlets, views, or UI components, etc.) have finished and navigation can continue toward rendering the new route destination. If the promise is rejected, the Ether app will be in an undefined state.
      */
     deactivate() { }

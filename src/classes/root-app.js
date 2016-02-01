@@ -67,7 +67,7 @@ class RootApp extends App {
     }
 
     expectedSetup(setup) {
-        // user can throw if `setup` is not as expected
+        // user/3rd-party library author can throw if `setup` is not as expected
         return;
     }
 
@@ -83,7 +83,7 @@ class RootApp extends App {
     }
 
     interceptLinks(event) {
-        // delegate to all links that have same origin
+        // delegate to all links that have same origin (and basePath?)
         // and descend from this.rootURL, then preventDefault()
         // also should pushState()
     }
@@ -124,63 +124,105 @@ class RootApp extends App {
      */
 
     /**
-     * Navigates to a new URL path on the Ether application using either a URL string or a special `NavigationRequest`
-     * Is called on popstate if configured to, page landing if configured to, intercepted links if configured to, or manually.
-     * @param {string|NavigationRequest} destination The destination `Route` to navigate to. Can be a URL string with or without a querystring, or a `NavigationRequest`.
+     * Navigates to a new URL path on the Ether application. Called manually or, if configured to, on: popstate, page landing, or intercepted links.
+     * @param {string|NavigationRequest} destination The navigation destination. Can be a URL string with or without a querystring, or a `NavigationRequest`.
+     * @return
      */
     navigate(destination) {
-        // make sure to compound and forward params in any case below
-        // push params onto the stack (now just a recent-params map)
-        // if we've got * routes, do those first
-        // if urlpath => app
-        //     call app to make it use its mountmapper and route method
-        // if urlpath => route
-        //     call render with params or show if params equal
-        //     pushState() if this isn't page load
-        //
         // @TODO: write a test that makes sure passed params match expectedParams() during navigation
         // @TODO: parse queryParams
-        //
-        // if no param diffs do nothing: link was clicked twice
-        //
-        // if during a push, the paths and params are exactly the same as on all stacks, do nothing. we're navigating to a page we're already on.
-        // we could actually just store the current path on the root app after a successful route and save ourselves the recursive search by checking against it.
-        // we can't store the path on the root until the routing succeeds because we have to be careful the routing won't end in a 404.
-        //
-        // find mount point of divergence
 
+        // parse queryParams, make diff
 
-        // fullURL can be from popstate event, window.load event, link interception, or manual
-        //
         // if (this.fullUrl is the same or URL pathname is same and query params are same but in a diff order (qP diff returns null)) {
         //     // same link was clicked twice
         //     return;
         // }
-        // let routingTrace = this._buildPath();
-        // if (routingTrace.is404) {
-        //     // notify user of 404 and let them handle it their way
+        // let routingTrace = this._buildPath(queryParams);
+        // if (routingTrace.result === '404') {
+        //     // notify user of 404 and pass routingTrace; let them handle the 404 their way
         // } else {
-        //     this._constructState(routingTrace).catch(err => {;
+        //     this._constructState(routingTrace).catch(err => {
         //         // notify user how this happened
         //     });
         // }
     }
 
     /**
+     * @typedef DivergenceRecord
+     * @type {object}
+     * @property {App} app The App where the divergence is taking place.
+     * @property {string} from The crumb on the `app` of the to-be-deactivated mount that is currently activated based on the current URL.
+     * @property {string} to   The crumb on the `app` of the to-be-activated mount (based on the destination passed to `navigate()`) that is currently deactivated.
+     */
+
+    /**
      * @typedef NavigationStep
      * @type {object}
-     * @property {string} breadcrumb The string representing a mount that's mounted on a particular app.
-     * @property {object} params The params required by the mount.
+     * @property {string} crumb The string representing a mount that's mounted on a particular App.
+     * @property {object} params The params in the URL passed to `navigate()` as matched to the params the mount crumb should explicitly parse for, if any.
+     * @example
+     * {
+     *     crumb: 'first/{id=\\d+}/',
+     *     params: {id: 1},
+     * }
+     * @example
+     * {
+     *     crumb: 'second/{name=\\w+}/',
+     *     params: {name: 'Jeff'},
+     * }
+     * @example
+     * {
+     *     crumb: 'edit',
+     *     params: {},
+     * }
      */
 
     /**
      * @typedef RoutingTrace
      * @type {object}
      * @property {string} result `success` or `404`.
-     * @property {object|undefined} diverge An object that describes where the path in the URL diverged when tracing the new navigation destination from the URL as compared to the previous URL. `undefined` if the URL path was the same and only params or query params changed.
-     * @property {App} diverge.app The app where the path diverged.
-     * @property {object} diverge.params The new params from the URL at the point where the path diverged.
-     * @property {Array.<NavigationStep>} steps The mounts, in order from the root to the leaf route, that we can follow to the navigation route destination.
+     * @property {DivergenceRecord|undefined} diverge An object that describes where the path in the URL diverged when tracing the new navigation path from the URL passed to `navigate()` as compared to the navigation path of current URL. `undefined` if the path was the same as before and only params or query params changed.
+     * @property {Array.<NavigationStep>} steps The crumbs, in order from the RootApp to the leaf Route, that we can follow to the navigation destination.
+     * @property {object} queryParams The query params parsed from the URL passed to `navigate()`.
+     * @example
+     * // when navigating from '/info' to `/user/1/profile/edit?sort=true&sort_type=asc&page=1`:
+     * {
+     *     result: 'success',
+     *     diverge: {
+     *         // the `app` in this example is the RootApp instance that
+     *         // the user constructed, but may be any App instance
+     *         // along the path to the destination
+     *         app: rootApp,
+     *         from: 'info',
+     *         to:   'user/{id=\\d+}',
+     *     },
+     *     steps: [
+     *         // params will accumulate on each step and be passed to
+     *         // prerender/render on activated conditional mounts
+     *         // along the way, and finally to the activated leaf mount
+     *         {
+     *             crumb: 'user/{id=\\d+}',
+     *             params: {id: 1},
+     *         },
+     *         {
+     *             crumb: '{menu=\\w+}',
+     *             params: {menu: 'profile'},
+     *         },
+     *         {
+     *             crumb: 'edit',
+     *             params: {},
+     *         }
+     *     ],
+     *     // query params will be passed to prerender/render on
+     *     // all activated conditional mounts in each navigation step,
+     *     // and finally to the activated leaf mount
+     *     queryParams: {
+     *         sort: true,
+     *         sort_type: 'asc',
+     *         page: 1,
+     *     },
+     * }
      */
 
     /**
@@ -209,60 +251,38 @@ class RootApp extends App {
 
 export default RootApp;
 
-//  hide when paths diverge
-//  destroy when params diverge
-//  render occurs at the same point as divergence.
-//
-//  show when all lastState params on the stack for each app/route recursively were the same as what's being navigated to after a pop or during a push (EXCEPTION BELOW)
-//  if during a push, the paths and params are exactly the same as on all stacks, do nothing. we're navigating to a page we're already on. (we could actually just store the current path on the root app after a successful route and save ourselves the recursive search by checking against it. we can't store the path on the root until the routing succeeds because we have to be careful the routing won't end in a 404).
+// Steps:
+// 1. nav checks against stored fullUrl in rootApp.
+//    if it's the same, do nothing (prerender is safe since in step 1 we make sure at least one param/qP has changed)
+//        * need to diff queryParams to make sure the order in URL isn't just switched around
+//    else nav calls _buildPath
+// 2. build path into steps in an array, building a single object with all params accumulated up to the leaf. note divergence point if any (MM#getCurrentMount())
+//        * 404 if routing ends in an App, or if no match was found by any MountMapper
+// 3. if buildPath returns 404, do something, not sure what yet. 404 rules are in notes.md #5
+//    compound params on each step with Object.assign(NavigationStep.params)
+//    check expectedParams() and only send what is expected to prerender/render for that step/node as follows:
+//    call prerender always, whether or not deactivated or active, and whether or not params/qP have changed, on:
+//        all cMounts along the path down to leaf, in order (promise.then())
+//        the mount at the leaf
+//        Promise.all() for cMounts and mount simultaneously. if it fails, don't continue and send an error of some sort to user with previous URL and failed URL
+//            * 2 promises for Promise.all(): one for mount, one for cMounts in order
+//        set 'prerender' CSS class on all outlets of activating Routes/Apps on mounts/cMounts
+//    if new path diverges from the old path:
+//        call deactivate on mount at leaf
+//        call deactivate on all cMounts from leaf to divergence point making sure cMounts at divergence point are actually to deactivate (not also active on new path)
+//            * in order (promise.then())
+//        Promise.all() for cMounts and mount simultaneously. if it fails, don't continue and send an error of some sort to user with previous URL and failed URL
+//            * 2 promises for Promise.all(): one for mount, one for cMounts in order
+//        set 'deactivated' CSS class on all outlets of deactivated Routes/Apps
+//        unset 'render' CSS class
+//    call render always, whether or not deactivated or active, and whether or not params/qP have changed, on:
+//        the mount at the leaf
+//        all cMounts along the path down to leaf, in order (promise.then())
+//        Promise.all() for cMounts and mount simultaneously. if it fails, don't continue and send an error of some sort to user with previous URL and failed URL
+//            * 2 promises for Promise.all(): one for mount, one for cMounts in order
+//        set 'render' CSS class on all outlets of deactivated Routes/Apps
+//        unset 'prerender' CSS class on all outlets of activating Routes/Apps on mounts/cMounts
+//    on success:
+//        set fullUrl in rootApp
+//        pushState
 
-var routingRecord =  {
-    fullUrl: 'full URL from popstate event or window.load event',
-    // if found, proceed with routing after hiding/destroying as necessary.
-    // if 404, push 404 onto the stack and pass it this object or a subset,
-    // just enough of a consistent interface for the user to do something
-    // useful with it.
-    //
-    // with history.state, this property will actually be out of sync if
-    // the route mappings are updated, so history.state should not have
-    // this property.
-    type: 'found or 404',
-    // holds the point where the path diverged, so that recursive hide/destroy
-    // can take place before a recursive render does.
-    // if false, both path and params are exactly the same, so do nothing.
-    diverge: {
-        // route: AppInstance,
-        // path = destroy, params = hide
-        type: 'params or path',
-        url: 'not needed, should be on top of stack already (?)'
-    },
-    // if a link is clicked, we need to do a pushState on success (or 404)
-    doPushState: true,
-    // all routes potentially need querystring params
-    //     ?sortAsc=true&column=3&title=Count
-    queryParams: {
-        sortAsc: true,
-        column: 3,
-        title: 'Count',
-    },
-    // the Route path to be followed to render a url completely
-    // the params will be compounded on each step, so the third route
-    // will receive: {
-    //    id: 1,
-    //    name: 'Jeff',
-    // }
-    steps: [
-        {
-            urlpath: 'first/{id}/',
-            params: {id: 1},
-        },
-        {
-            urlpath: 'second/{name}/',
-            params: {name: 'Jeff'},
-        },
-        {
-            urlpath: 'edit',
-            params: {},
-        }
-    ]
-};
