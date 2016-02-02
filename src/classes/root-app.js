@@ -145,8 +145,11 @@ class RootApp extends App {
         let [ path, queryString ] = destination.split('?');
         let routingTrace = this._buildPath(path);
         if (routingTrace.result === '404') {
-            // @TODO: notify user of 404 and pass routingTrace; let them handle the 404 their way
-            return Promise.reject();
+            // notify user of 404 and pass routingTrace;
+            // let them handle the 404 the way they find best
+            let err = new Error(`404 for path: "${destination}".`);
+            err.routingTrace = routingTrace;
+            return Promise.reject(err);
         } else if (routingTrace.result === 'success'){
             return this._constructState(routingTrace, queryParams, queryParamsDiff).then(() => {
                 // @TODO: make sure this to put the URL string here if navigating by address/params/queryParams
@@ -338,12 +341,9 @@ class RootApp extends App {
             let { app, crumb } = step;
             let mount = app._mountMapper.mountFor(crumb);
             let addresses = app._mountMapper.addressesFor(crumb);
-            let cMountsToActivate = app._conditionalMountMapper.match(addresses);
-            if (!cMountsToActivate) {
-                cMountsToActivate = {};
-            }
-            let cMountsToDeactivate =
-                (app._conditionalMountMapper.getCurrentMounts() || []).filter(logic => !cMountsToActivate[logic]);
+            let currentConditionalMounts = app._conditionalMountMapper.getCurrentMounts() || [];
+            let cMountsToActivate = app._conditionalMountMapper.match(addresses) || {};
+            let cMountsToDeactivate = currentConditionalMounts.filter(logic => !cMountsToActivate[logic]);
             cMountsToActivate = Object.keys(cMountsToActivate);
             return {
                 app,

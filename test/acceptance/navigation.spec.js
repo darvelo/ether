@@ -42,7 +42,7 @@ describe('Acceptance Tests', () => {
             });
         });
 
-        it('rejects a Promise on failed navigation', done => {
+        it('Promise rejects on 404', done => {
             class MyRootApp extends RootApp {
                 mount() {
                     return {
@@ -51,10 +51,16 @@ describe('Acceptance Tests', () => {
                 }
             }
 
+            let path = '/nope';
             let rootApp = new MyRootApp(defaultOpts);
-            rootApp.navigate('/nope').then(null, () => {
-                // @TODO: check for 404
+            rootApp.navigate(path).then(null, err => {
+                expect(err).to.be.instanceof(Error);
+                err.message.should.equal(`404 for path: "${path}".`);
+                expect(err.routingTrace).to.be.an('object');
                 done();
+            }).catch(err => {
+                // if test fails, pass error to Mocha
+                done(err);
             });
         });
 
@@ -87,6 +93,7 @@ describe('Acceptance Tests', () => {
                 prerenderSpy.should.have.been.calledBefore(renderSpy);
                 done();
             }).catch(err => {
+                // if test fails, pass error to Mocha
                 done(err);
             });
         });
