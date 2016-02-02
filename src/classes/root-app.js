@@ -3,6 +3,7 @@ import Route from './route';
 import ctorName from '../utils/ctor-name';
 import is from '../utils/is';
 import isNumeric from '../utils/is-numeric';
+import diffObjects from '../utils/diff-objects';
 
 class RootApp extends App {
     constructor(opts) {
@@ -13,6 +14,8 @@ class RootApp extends App {
             opts.params = [];
         }
         super(opts);
+        // the last URL that was navigated to successfully
+        this._fullUrl = null;
     }
 
     _registerAddress(name, dest) {
@@ -126,26 +129,35 @@ class RootApp extends App {
     /**
      * Navigates to a new URL path on the Ether application. Called manually or, if configured to, on: popstate, page landing, or intercepted links.
      * @param {string|NavigationRequest} destination The navigation destination. Can be a URL string with or without a querystring, or a `NavigationRequest`.
-     * @return
+     * @return {Promise} A promise that resolves if navigation succeeded, and rejects if it failed, with the details of the failure (404 or navigation error).
      */
     navigate(destination) {
-        // @TODO: write a test that makes sure passed params match expectedParams() during navigation
-        // @TODO: parse queryParams
-
         // parse queryParams, make diff
-
         // if (this.fullUrl is the same or URL pathname is same and query params are same but in a diff order (qP diff returns null)) {
         //     // same link was clicked twice
         //     return;
         // }
-        // let routingTrace = this._buildPath(queryParams);
-        // if (routingTrace.result === '404') {
-        //     // notify user of 404 and pass routingTrace; let them handle the 404 their way
-        // } else {
-        //     this._constructState(routingTrace).catch(err => {
-        //         // notify user how this happened
-        //     });
-        // }
+
+        // dummy values until implemented
+        let queryParams = {};
+        let queryParamsDiff = null;
+
+        let [ path, queryString ] = destination.split('?');
+        let routingTrace = this._buildPath(path);
+        if (routingTrace.result === '404') {
+            // @TODO: notify user of 404 and pass routingTrace; let them handle the 404 their way
+            return Promise.reject();
+        } else if (routingTrace.result === 'success'){
+            return this._constructState(routingTrace, queryParams, queryParamsDiff).then(() => {
+                // @TODO: make sure this to put the URL string here if navigating by address/params/queryParams
+                this._fullUrl = destination;
+            }, err => {
+                // @TODO: notify user how this error occurred
+                return Promise.reject();
+            });
+        } else {
+            throw new Error('??????????');
+        }
     }
 
     /**
@@ -160,6 +172,7 @@ class RootApp extends App {
      * @typedef NavigationStep
      * @type {object}
      * @property {string} crumb The string representing a mount that's mounted on a particular App.
+     * @property {App} app The App that holds the mount pointed to by `crumb`.
      * @property {object} params The params in the URL passed to `navigate()` as matched to the params the mount crumb should explicitly parse for, if any.
      * @example
      * {
@@ -184,9 +197,8 @@ class RootApp extends App {
      * @property {string} result `success` or `404`.
      * @property {DivergenceRecord|undefined} diverge An object that describes where the path in the URL diverged when tracing the new navigation path from the URL passed to `navigate()` as compared to the navigation path of current URL. `undefined` if the path was the same as before and only params or query params changed.
      * @property {Array.<NavigationStep>} steps The crumbs, in order from the RootApp to the leaf Route, that we can follow to the navigation destination.
-     * @property {object} queryParams The query params parsed from the URL passed to `navigate()`.
      * @example
-     * // when navigating from '/info' to `/user/1/profile/edit?sort=true&sort_type=asc&page=1`:
+     * // when navigating from '/info' to `/user/1/profile/edit`:
      * {
      *     result: 'success',
      *     diverge: {
@@ -214,38 +226,157 @@ class RootApp extends App {
      *             params: {},
      *         }
      *     ],
-     *     // query params will be passed to prerender/render on
-     *     // all activated conditional mounts in each navigation step,
-     *     // and finally to the activated leaf mount
-     *     queryParams: {
-     *         sort: true,
-     *         sort_type: 'asc',
-     *         page: 1,
-     *     },
      * }
      */
 
     /**
      * Builds an object representing a trace through the app hierarchy down to the target route found by parsing the URL (querystring included).
      * @private
-     * @param {string} url The URL to parse with querystring, if any, included.
+     * @param {string} path The URL to parse, minus the querystring.
      * @return {RoutingTrace} A routing trace object that can be used to construct app state: successful navigation or 404.
      */
-    _buildPath(url) {
-        // test this fn by stubbing out _constructState()
+    _buildPath(path) {
+        // @TODO: test this fn by stubbing out _constructState()
+
+        let app = this;
+        let steps = [];
+        let matchResult, result, diverge;
+
+        // traverse the App tree, picking up mounts and parsing for
+        // params along the way. detect any divergence from current
+        // navigation path.
+        //
+        // intentional assignment
+        while (matchResult = app._mountMapper.match(path)) {
+            let { crumb, params } = matchResult;
+            let currentMountCrumb = app._mountMapper.getCurrentMount();
+
+            // get divergence, if any.
+            // we don't mark divergence when currentMountCrumb is
+            // `undefined`, because there's no mount nor cMounts that
+            // need to be deactivated in that case
+            if (!diverge && crumb && currentMountCrumb && crumb !== currentMountCrumb) {
+                diverge = {
+                    app,
+                    from: currentMountCrumb,
+                    to: crumb,
+                };
+            }
+
+            steps.push({app, crumb, params});
+
+            if (is(matchResult.rest, 'Null')) {
+                // pathing terminated at a Route (success).
+                // we know this because if matchResult.rest !== null,
+                // and matchResult.crumb points to a Route,
+                // MountMapper#match() disregards the match and continues
+                // trying to match against the other crumbs it holds.
+                // if all crumbs are exhausted for match testing,
+                // MountMapper#match() returns null for matchResult.
+                // So if matchResult !== null and `matchResult.rest` is null,
+                // we know we terminated at a Route during the traversal successfully.
+                break;
+            } else {
+                // assign the next mount/node to continue tree traversal
+                app = app._mountMapper.mountFor(crumb);
+                path = matchResult.rest;
+            }
+        }
+
+        if (matchResult === null) {
+            // 404, last step was an App or some part of the path
+            // couldn't be matched to a mount somewhere along the way
+            result = '404';
+        } else {
+            // last step ended in a Route and the URL path was completely matched
+            result = 'success';
+        }
+
+        let routingTrace = {
+            result,
+            diverge,
+            steps,
+        };
+        return routingTrace;
     }
 
     /**
      * Constructs app state by using the routing trace object to prerender, render, and deactivate routes as needed.
      * @private
      * @param {RoutingTrace} routingTrace The routing trace object used to construct the app state.
+     * @property {object} queryParams The query params parsed from the URL passed to `navigate()`.
+     * @property {object|null} queryParamsDiff The change in query params since the last call to `navigate()`. Null if no change.
      * @return {Promise} A promise that, if rejected, means a user-defined prerender/render/deactivate promise rejected and the Ether app is now in an undefined state.
+     * @example
+     * // when navigating from '/info?page=2' to `/user/1/profile/edit?sort=true&sort_type=asc&page=1`:
+     * // query params will be passed to prerender/render on
+     * // all activated conditional mounts in each navigation step,
+     * // and finally to the activated leaf mount
+     * // queryParams:
+     * {
+     *     sort: true,
+     *     sort_type: 'asc',
+     *     page: 1,
+     * }
+     * // queryParamsDiff:
+     * // note the array layout:
+     * // [
+     * //     previously-parsed value (undefined if non-existent),
+     * //     current value parsed from URL,
+     * // ]
+     * {
+     *     sort: [undefined, true],
+     *     sort_type: [undefined, 'asc'],
+     *     page: [2, 1],
+     * }
      */
-    _constructState(routingTrace) {
-        // perform recursive prerender/deactivate/render for mounts and cMounts.
-        // has handles to all apps/routes in path, uses them to send the approp. signals from leaf to divergence point w/ diff in params for that node & expectedParams.
-        // sends queryParams diff to every route on the navigation path.
-        // promise-based stuff happens here.
+    _constructState(routingTrace, queryParams, queryParamsDiff) {
+        let accumulatedParams = {};
+        let steps = routingTrace.steps.map(step => {
+            Object.assign(accumulatedParams, step.params);
+            let paramsAtStep = Object.assign({}, accumulatedParams);
+            let { app, crumb } = step;
+            let mount = app._mountMapper.mountFor(crumb);
+            let addresses = app._mountMapper.addressesFor(crumb);
+            let cMountsToActivate = app._conditionalMountMapper.match(addresses);
+            if (!cMountsToActivate) {
+                cMountsToActivate = {};
+            }
+            let cMountsToDeactivate =
+                (app._conditionalMountMapper.getCurrentMounts() || []).filter(logic => !cMountsToActivate[logic]);
+            cMountsToActivate = Object.keys(cMountsToActivate);
+            return {
+                app,
+                crumb,
+                mount,
+                cMountsToActivate,
+                cMountsToDeactivate,
+                params: paramsAtStep,
+            };
+        });
+
+        // shim until cMounts are accounted for
+        // @TODO: each step needs:
+        //     mounts  => accumulated params for the mount up to that point, a single object, filtered by expectedParams
+        //     cMounts => accumulated params up to that point, array of objs for each Route filtered by expectedParams for each
+        let { app, crumb, mount } = steps[steps.length-1];
+        let lastParams = app._mountMapper.lastParamsFor(crumb) || {};
+        let expectedParams = mount.expectedParams();
+        let params = expectedParams.reduce((memo, param) => (memo[param] = accumulatedParams[param]) && memo, {});
+        let paramsDiff = diffObjects(lastParams, params);
+        let diff;
+
+        if (paramsDiff === null && queryParamsDiff === null) {
+            diff = null;
+        } else {
+            diff = {
+                params: paramsDiff,
+                queryParams: queryParamsDiff,
+            };
+        }
+
+        return Promise.resolve().then(() => mount.prerender(params, queryParams, diff))
+                                .then(() => mount.render(params, queryParams, diff));
     }
 }
 
@@ -257,7 +388,7 @@ export default RootApp;
 //        * need to diff queryParams to make sure the order in URL isn't just switched around
 //    else nav calls _buildPath
 // 2. build path into steps in an array, building a single object with all params accumulated up to the leaf. note divergence point if any (MM#getCurrentMount())
-//        * 404 if routing ends in an App, or if no match was found by any MountMapper
+//        * 404 (no error) if routing ends in an App, or if no match was found by any MountMapper
 // 3. if buildPath returns 404, do something, not sure what yet. 404 rules are in notes.md #5
 //    compound params on each step with Object.assign(NavigationStep.params)
 //    check expectedParams() and only send what is expected to prerender/render for that step/node as follows:
@@ -273,6 +404,7 @@ export default RootApp;
 //            * in order (promise.then())
 //        Promise.all() for cMounts and mount simultaneously. if it fails, don't continue and send an error of some sort to user with previous URL and failed URL
 //            * 2 promises for Promise.all(): one for mount, one for cMounts in order
+//        set _active to false on mount/cMounts (for their Route#isActive())
 //        set 'deactivated' CSS class on all outlets of deactivated Routes/Apps
 //        unset 'render' CSS class
 //    call render always, whether or not deactivated or active, and whether or not params/qP have changed, on:
@@ -280,6 +412,7 @@ export default RootApp;
 //        all cMounts along the path down to leaf, in order (promise.then())
 //        Promise.all() for cMounts and mount simultaneously. if it fails, don't continue and send an error of some sort to user with previous URL and failed URL
 //            * 2 promises for Promise.all(): one for mount, one for cMounts in order
+//        set _active to true on mount/cMounts (for their Route#isActive())
 //        set 'render' CSS class on all outlets of deactivated Routes/Apps
 //        unset 'prerender' CSS class on all outlets of activating Routes/Apps on mounts/cMounts
 //    on success:
