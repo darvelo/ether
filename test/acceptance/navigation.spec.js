@@ -3,6 +3,8 @@ import MutableOutlet from '../../src/classes/mutable-outlet';
 import App from '../../src/classes/app';
 import Route from '../../src/classes/route';
 
+import { navTest } from '../utils/acceptance-test-generator';
+
 class TestApp extends App {
     expectedOutlets() {
         return [];
@@ -27,7 +29,9 @@ describe('Acceptance Tests', () => {
     });
 
     describe('Navigation', () => {
-        it('resolves a Promise on successful navigation', done => {
+        navTest('resolves a Promise on successful navigation', [
+            '/',
+        ], (done, destination) => {
             class MyRootApp extends RootApp {
                 mount() {
                     return {
@@ -37,12 +41,14 @@ describe('Acceptance Tests', () => {
             }
 
             let rootApp = new MyRootApp(defaultOpts);
-            rootApp.navigate('/').then(() => {
+            rootApp.navigate(destination).then(() => {
                 done();
             });
         });
 
-        it('Promise rejects on 404', done => {
+        navTest('Promise rejects on 404', [
+            '/nope',
+        ], (done, destination) => {
             class MyRootApp extends RootApp {
                 mount() {
                     return {
@@ -51,11 +57,10 @@ describe('Acceptance Tests', () => {
                 }
             }
 
-            let path = '/nope';
             let rootApp = new MyRootApp(defaultOpts);
-            rootApp.navigate(path).then(null, err => {
+            rootApp.navigate(destination).then(null, err => {
                 expect(err).to.be.instanceof(Error);
-                err.message.should.equal(`404 for path: "${path}".`);
+                err.message.should.equal(`404 for path: "${destination}".`);
                 expect(err.routingTrace).to.be.an('object');
                 done();
             }).catch(err => {
@@ -64,7 +69,9 @@ describe('Acceptance Tests', () => {
             });
         });
 
-        it('and calls prerender/render on a navigated-to Route', done => {
+        navTest('and calls prerender/render on a navigated-to Route', [
+            '/',
+        ], (done, destination) => {
             let prerenderSpy = sinon.spy();
             let renderSpy = sinon.spy();
 
@@ -87,7 +94,7 @@ describe('Acceptance Tests', () => {
             let rootApp = new MyRootApp(defaultOpts);
             prerenderSpy.should.not.have.been.called;
             renderSpy.should.not.have.been.called;
-            rootApp.navigate('/').then(() => {
+            rootApp.navigate(destination).then(() => {
                 prerenderSpy.should.have.been.calledOnce;
                 renderSpy.should.have.been.calledOnce;
                 prerenderSpy.should.have.been.calledBefore(renderSpy);
@@ -107,6 +114,7 @@ describe('Acceptance Tests', () => {
         it.skip('throws if `routingTrace.result` is neither `success` nor `404`');
 
         // gotta be careful with this one.. don't wanna duplicate tests because they may eventually become out of sync
-        it.skip('navigates using an address passed with params and queryParams');
+        // @TODO: use navTest() for this instead of writing individual tests
+        // it.skip('navigates using an address passed with params and queryParams');
     });
 });
