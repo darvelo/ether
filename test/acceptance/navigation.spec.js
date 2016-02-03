@@ -147,10 +147,11 @@ describe.only('Acceptance Tests', () => {
                 done();
             });
 
-            navTest.skip('sets return val of fullUrl() on the RootApp', [
+            navTest('sets return val of fullUrl() on the RootApp', [
                 '/',
             ], (done, dest) => {
                 let rootApp = new MyRootApp(defaultOpts);
+                expect(rootApp.fullUrl()).to.equal(undefined);
                 rootApp.navigate(dest).then(() => {
                     expect(rootApp.fullUrl()).to.equal('/');
                     done();

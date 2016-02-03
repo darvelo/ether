@@ -15,7 +15,11 @@ class RootApp extends App {
         }
         super(opts);
         // the last URL that was navigated to successfully
-        this._fullUrl = null;
+        this._fullUrl = undefined;
+    }
+
+    fullUrl() {
+        return this._fullUrl;
     }
 
     _registerAddress(name, dest) {
