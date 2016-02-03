@@ -1,7 +1,7 @@
 import App from './app';
 import Route from './route';
 import ctorName from '../utils/ctor-name';
-import is from '../utils/is';
+import { is, isnt } from '../utils/is';
 import isNumeric from '../utils/is-numeric';
 import diffObjects from '../utils/diff-objects';
 
@@ -274,26 +274,22 @@ class RootApp extends App {
             }
 
             steps.push({app, crumb, params});
+            // assign the next mount/node to continue tree traversal
+            app = app._mountMapper.mountFor(crumb);
+            path = matchResult.rest;
 
+            // if there is no more URL string data to match against,
+            // we have reached the end of the navigation path
             if (is(matchResult.rest, 'Null')) {
-                // pathing terminated at a Route (success).
-                // we know this because if matchResult.rest !== null,
-                // and matchResult.crumb points to a Route,
-                // MountMapper#match() disregards the match and continues
-                // trying to match against the other crumbs it holds.
-                // if all crumbs are exhausted for match testing,
-                // MountMapper#match() returns null for matchResult.
-                // So if matchResult !== null and `matchResult.rest` is null,
-                // we know we terminated at a Route during the traversal successfully.
+                // navigation must end on a Route
+                if (!(app instanceof Route)) {
+                    matchResult = null;
+                }
                 break;
-            } else {
-                // assign the next mount/node to continue tree traversal
-                app = app._mountMapper.mountFor(crumb);
-                path = matchResult.rest;
             }
         }
 
-        if (matchResult === null) {
+        if (is(matchResult, 'Null')) {
             // 404, last step was an App or some part of the path
             // couldn't be matched to a mount somewhere along the way
             result = '404';

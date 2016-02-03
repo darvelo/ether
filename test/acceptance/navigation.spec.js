@@ -3,6 +3,7 @@ import MutableOutlet from '../../src/classes/mutable-outlet';
 import App from '../../src/classes/app';
 import Route from '../../src/classes/route';
 import ctorName from '../../src/utils/ctor-name';
+import { is, isnt } from '../../src/utils/is';
 
 import { navTest } from '../utils/acceptance-test-generator';
 
@@ -34,7 +35,7 @@ class TestRoute extends Route {
 class SinonSpyRoute extends TestRoute {
     init(spies) {
         let ctorname = ctorName(this);
-        if (typeof spies !== 'object') {
+        if (isnt(spies, 'Object')) {
             throw new Error(`Sinon spies were not passed into ${ctorname}#init().`);
         }
         let mySpies = spies[ctorname];
@@ -237,7 +238,10 @@ describe.only('Acceptance Tests', () => {
             });
 
             navTest('Promise rejects on 404', [
+                // mount doesn't exist
                 '/nope',
+                // navigation ends on an App, not a Route
+                '/user/1',
             ], (done, dest) => {
                 let rootApp = new MyRootApp(defaultOpts);
                 rootApp.navigate(dest).then(null, err => {

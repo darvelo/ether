@@ -1,3 +1,5 @@
+import { isnt } from '../src/utils/is';
+
 export class Eventable {
     fire(evtName) {
         this._events = this._events || {};
@@ -7,7 +9,7 @@ export class Eventable {
         }
     }
     addEventListener(evtName, callback) {
-        if (typeof callback !== 'function') {
+        if (isnt(callback, 'Function')) {
             throw new Error('Element#addEventListener() was not passed a callback function.');
         }
         this._events = this._events || {};
@@ -17,7 +19,7 @@ export class Eventable {
         }
     }
     removeEventListener(evtName, callback) {
-        if (typeof callback !== 'function') {
+        if (isnt(callback, 'Function')) {
             throw new Error('Element#removeEventListener() was not passed a callback function.');
         }
         this._events = this._events || {};
