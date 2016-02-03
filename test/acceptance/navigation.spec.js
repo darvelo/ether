@@ -57,9 +57,17 @@ class SinonSpyRoute extends TestRoute {
 // normal routes
 // need to make sure to mount each exactly once,
 // to ensure spy call counts are correct
-class RootRoute extends SinonSpyRoute {
+class RootRootRoute extends SinonSpyRoute {
     expectedAddresses() {
-        return ['root'];
+        return ['rootRoot'];
+    }
+    addressesHandlers() {
+        return [function(){}];
+    }
+}
+class RootNewsRoute extends SinonSpyRoute {
+    expectedAddresses() {
+        return ['rootNews'];
     }
     addressesHandlers() {
         return [function(){}];
@@ -80,18 +88,30 @@ class UserIdMenuRoute extends SinonSpyRoute {
     expectedParams() {
         return ['id', 'menu'];
     }
-    expectedAddresses() {
-        return ['userIdMenu'];
-    }
     addressesHandlers() {
         return [function(){}];
+    }
+}
+class UserIdMenuRouteOne extends UserIdMenuRoute {
+    expectedAddresses() {
+        return ['userIdMenuOne'];
+    }
+}
+class UserIdMenuRouteTwo extends UserIdMenuRoute {
+    expectedAddresses() {
+        return ['userIdMenuTwo'];
     }
 }
 
 // conditional routes
 // need to make sure to mount each exactly once,
 // to ensure spy call counts are correct
-class RootConditionalRoute    extends SinonSpyRoute { }
+class RootAllConditionalRoute    extends SinonSpyRoute { }
+class RootNewsConditionalRoute extends SinonSpyRoute {
+    expectedParams() {
+        return ['news'];
+    }
+}
 class IdRoute extends SinonSpyRoute {
     expectedParams() {
         return ['id'];
@@ -113,6 +133,7 @@ class UserIdMenuConditionalRoute extends SinonSpyRoute {
     }
 }
 
+// the actual Ether App structure
 class UserApp extends TestApp {
     expectedAddresses() {
         return ['userApp'];
@@ -123,7 +144,8 @@ class UserApp extends TestApp {
     mount() {
         return {
             'action/{action=\\w+}': UserIdActionRoute.addresses('userIdAction').setup(() => mountSpies),
-            'menu/{menu=\\w+}': UserIdMenuRoute.addresses('userIdMenu').setup(() => mountSpies),
+            'menu/{menu=\\w+}': UserIdMenuRouteOne.addresses('userIdMenuOne').setup(() => mountSpies),
+            'menu/{menu=\\w+}/profile': UserIdMenuRouteTwo.addresses('userIdMenuTwo').setup(() => mountSpies),
         };
     }
     mountConditionals() {
@@ -131,24 +153,26 @@ class UserApp extends TestApp {
             '*': [UserIdConditionalRouteOne.setup(()  => cMountSpies)],
             '+userIdAction': [
                 UserIdConditionalRouteTwo.setup(()    => cMountSpies),
-                UserIdConditionalRouteThree.setup(()  => cMountSpies),
                 UserIdActionConditionalRoute.setup(() => cMountSpies),
             ],
+            '+userIdMenuOne,userIdMenuTwo': UserIdConditionalRouteThree.setup(()  => cMountSpies),
             '!userIdAction': UserIdMenuConditionalRoute.setup(() => cMountSpies),
+            '!userIdMenuOne,userIdMenuTwo': UserIdConditionalRouteThree.setup(()  => cMountSpies),
         };
     }
 }
-
 class MyRootApp extends RootApp {
     mount() {
         return {
-            '': RootRoute.addresses('root').setup(() => mountSpies),
+            '': RootRootRoute.addresses('rootRoot').setup(() => mountSpies),
+            'news/{news=\\w+}': RootNewsRoute.addresses('rootNews').setup(() => mountSpies),
             'user/{id=\\d+}': UserApp.addresses('userApp'),
         };
     }
     mountConditionals() {
         return {
-            '*': RootConditionalRoute.setup(() => cMountSpies),
+            '*': RootAllConditionalRoute.setup(() => cMountSpies),
+            '!userApp,rootRoot': RootNewsConditionalRoute.setup(() => cMountSpies),
             '+userApp': [
                 RootIdConditionalRouteOne.setup(() => cMountSpies),
                 RootIdConditionalRouteTwo.setup(() => cMountSpies),
@@ -162,9 +186,11 @@ describe.only('Acceptance Tests', () => {
 
     beforeEach(() => {
         mountSpies = [
+            'RootRootRoute',
+            'RootNewsRoute',
             'UserIdActionRoute',
-            'UserIdMenuRoute',
-            'RootRoute'
+            'UserIdMenuRouteOne',
+            'UserIdMenuRouteTwo',
         ].reduce((memo, key) => {
             memo[key] = {
                 prerenderSpy:  sinon.spy(),
@@ -174,7 +200,8 @@ describe.only('Acceptance Tests', () => {
             return memo;
         }, {});
         cMountSpies = [
-            'RootConditionalRoute',
+            'RootAllConditionalRoute',
+            'RootNewsConditionalRoute',
             'RootIdConditionalRouteOne',
             'RootIdConditionalRouteTwo',
             'UserIdConditionalRouteOne',
@@ -268,11 +295,13 @@ describe.only('Acceptance Tests', () => {
             ], (done, dest) => {
                 let rootApp = new MyRootApp(defaultOpts);
                 rootApp.navigate(dest).then(() => {
-                    mountSpies.RootRoute.prerenderSpy.should.have.been.calledOnce;
-                    mountSpies.RootRoute.renderSpy.should.have.been.calledOnce;
-                    mountSpies.RootRoute.prerenderSpy.should.have.been.calledBefore(mountSpies.RootRoute.renderSpy);
-                    delete mountSpies.RootRoute.prerenderSpy;
-                    delete mountSpies.RootRoute.renderSpy;
+                    let spies = mountSpies.RootRootRoute;
+                    let { prerenderSpy, renderSpy } = spies;
+                    prerenderSpy.should.have.been.calledOnce;
+                    renderSpy.should.have.been.calledOnce;
+                    prerenderSpy.should.have.been.calledBefore(renderSpy);
+                    delete spies.prerenderSpy;
+                    delete spies.renderSpy;
                     getAllSpyFns(mountSpies).forEach(spy => spy.should.not.have.been.called);
                     done();
                 }).catch(err => {
@@ -286,11 +315,13 @@ describe.only('Acceptance Tests', () => {
             ], (done, dest) => {
                 let rootApp = new MyRootApp(defaultOpts);
                 rootApp.navigate(dest).then(() => {
-                    mountSpies.UserIdActionRoute.prerenderSpy.should.have.been.calledOnce;
-                    mountSpies.UserIdActionRoute.renderSpy.should.have.been.calledOnce;
-                    mountSpies.UserIdActionRoute.prerenderSpy.should.have.been.calledBefore(mountSpies.RootRoute.renderSpy);
-                    delete mountSpies.UserIdActionRoute.prerenderSpy;
-                    delete mountSpies.UserIdActionRoute.renderSpy;
+                    let spies = mountSpies.UserIdActionRoute;
+                    let { prerenderSpy, renderSpy } = spies;
+                    prerenderSpy.should.have.been.calledOnce;
+                    renderSpy.should.have.been.calledOnce;
+                    prerenderSpy.should.have.been.calledBefore(renderSpy);
+                    delete spies.prerenderSpy;
+                    delete spies.renderSpy;
                     getAllSpyFns(mountSpies).forEach(spy => spy.should.not.have.been.called);
                     done();
                 }).catch(err => {
@@ -312,8 +343,10 @@ describe.only('Acceptance Tests', () => {
                 ];
                 let rootApp = new MyRootApp(defaultOpts);
                 rootApp.navigate(dest).then(() => {
-                    mountSpies.UserIdActionRoute.prerenderSpy.should.have.been.calledWith(...expectedArgs);
-                    mountSpies.UserIdActionRoute.renderSpy.should.have.been.calledWith(...expectedArgs);
+                    let spies = mountSpies.UserIdActionRoute;
+                    let { prerenderSpy, renderSpy } = spies;
+                    prerenderSpy.should.have.been.calledWith(...expectedArgs);
+                    renderSpy.should.have.been.calledWith(...expectedArgs);
                     done();
                 }).catch(err => {
                     // if test fails, pass error to Mocha
@@ -334,8 +367,10 @@ describe.only('Acceptance Tests', () => {
                 ];
                 let rootApp = new MyRootApp(defaultOpts);
                 rootApp.navigate(dest).then(() => {
-                    mountSpies.UserIdActionRoute.prerenderSpy.should.have.been.calledWith(...expectedArgs);
-                    mountSpies.UserIdActionRoute.renderSpy.should.have.been.calledWith(...expectedArgs);
+                    let spies = mountSpies.UserIdActionRoute;
+                    let { prerenderSpy, renderSpy } = spies;
+                    prerenderSpy.should.have.been.calledWith(...expectedArgs);
+                    renderSpy.should.have.been.calledWith(...expectedArgs);
                     done();
                 }).catch(err => {
                     // if test fails, pass error to Mocha
