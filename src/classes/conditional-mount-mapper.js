@@ -427,6 +427,11 @@ class ConditionalMountMapper extends BaseMountMapper {
     lastParamsFor(logic) {
         return this._lastParams[logic];
     }
+
+    routesFor(logic) {
+        let mountsData = this._mounts[logic];
+        return mountsData && mountsData.mounts;
+    }
 }
 
 export default ConditionalMountMapper;

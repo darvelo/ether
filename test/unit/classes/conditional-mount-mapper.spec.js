@@ -259,6 +259,23 @@ describe('ConditionalMountMapper', () => {
     });
 
     describe('Info Retrieval', () => {
+        describe('Getting the Routes for a Mount', () => {
+            it('returns undefined if the mount does not exist', () => {
+                let crumb = '+first';
+                expect(mapper.routesFor(crumb)).to.equal(undefined);
+            });
+
+            it('returns the array of Route instances for a mount', () => {
+                let crumb = '+first';
+                mapper.add({[crumb]: [TestRoute, TestRoute]}, parentData);
+                let routes = mapper.routesFor(crumb);
+                expect(routes).to.be.an('array');
+                expect(routes).to.have.length(2);
+                expect(routes[0]).to.be.an.instanceof(TestRoute);
+                expect(routes[1]).to.be.an.instanceof(TestRoute);
+            });
+        });
+
         describe('Getting the Current Mounts', () => {
             it('returns undefined if no current mounts are set', () => {
                 let crumb = '+first';
