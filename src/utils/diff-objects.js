@@ -1,7 +1,7 @@
 import { isnt } from './is';
 
 function throwTypeErr(argNum, prop, val) {
-    throw new TypeError(`diffObjects(): argument ${argNum} had a property "${prop}" that was not a number or string: ${JSON.stringify(val)}.`);
+    throw new TypeError(`diffObjects(): argument ${argNum} had a property "${prop}" that was not a number, string, or boolean: ${JSON.stringify(val)}.`);
 }
 
 export default function diffObjects(o1, o2) {
@@ -21,13 +21,13 @@ export default function diffObjects(o1, o2) {
             let p1 = o1[prop];
             // don't specifically test for undefined since
             // if it hasOwn we assume that it's an actual value
-            if (isnt(p1, 'Number') && isnt(p1, 'String')) {
+            if (isnt(p1, 'Number') && isnt(p1, 'String') && isnt(p1, 'Boolean')) {
                 throwTypeErr(1, prop, p1);
             }
             let p2 = o2[prop];
             // if `o2` doesn't hasOwn `prop` we
             // allow `undefined` as an acceptable value
-            if (o2.hasOwnProperty(prop) && isnt(p2, 'Number') && isnt(p2, 'String')) {
+            if (o2.hasOwnProperty(prop) && isnt(p2, 'Number') && isnt(p2, 'String') && isnt(p2, 'Boolean')) {
                 throwTypeErr(2, prop, p2);
             }
             if (p1 !== p2) {
@@ -41,13 +41,13 @@ export default function diffObjects(o1, o2) {
             let p2 = o2[prop];
             // don't specifically test for undefined since
             // if it hasOwn we assume that it's an actual value
-            if (isnt(p2, 'Number') && isnt(p2, 'String')) {
+            if (isnt(p2, 'Number') && isnt(p2, 'String') && isnt(p2, 'Boolean')) {
                 throwTypeErr(2, prop, p2);
             }
             let p1 = o1[prop];
             // if `o1` doesn't hasOwn `prop` we
             // allow `undefined` as an acceptable value
-            if (o1.hasOwnProperty(prop) && isnt(p1, 'Number') && isnt(p1, 'String')) {
+            if (o1.hasOwnProperty(prop) && isnt(p1, 'Number') && isnt(p1, 'String') && isnt(p1, 'Boolean')) {
                 throwTypeErr(1, prop, p1);
             }
             if (p1 !== p2) {

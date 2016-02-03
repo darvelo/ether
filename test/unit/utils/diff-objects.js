@@ -12,15 +12,18 @@ describe('Diff Objects Util', () => {
             a: 1,
             b: 'hi',
             c: 'in-o1',
+            d: true,
         };
         let o2 = {
             a: 2,
             b: 'hi',
             c: 'in-o2',
+            d: false,
         };
         expect(diffObjects(o1, o2)).to.deep.equal({
             a: [1, 2],
             c: ['in-o1', 'in-o2'],
+            d: [true, false],
         });
     });
 
@@ -38,25 +41,41 @@ describe('Diff Objects Util', () => {
             a: 1,
             b: 'hi',
             c: 'in-o1',
+            d: true,
         };
         let o2 = {
             a: 1,
             b: 'hi',
             c: 'in-o1',
+            d: true,
         };
         expect(diffObjects(o1, o2)).to.equal(null);
         expect(diffObjects({}, {})).to.equal(null);
     });
 
-    it('throws if an existing object property is not a number or string', () => {
+    it('does not throw if an existing object property is a number, string, or boolean', () => {
+        let o1 = {};
+        let o2 = {};
+        o1.a = true;
+        o1.b = false;
+        expect(() => diffObjects(o1, o2)).to.not.throw();
+        o1.a = 1;
+        o1.b = 2;
+        expect(() => diffObjects(o1, o2)).to.not.throw();
+        o1.a = 'hi';
+        o1.b = 'there';
+        expect(() => diffObjects(o1, o2)).to.not.throw();
+    });
+
+    it('throws if an existing object property is not a number, string, or boolean', () => {
         let o1 = {};
         let o2 = {};
         o1.a = ['hi'];
-        expect(() => diffObjects(o1, o2)).to.throw(TypeError, 'diffObjects(): argument 1 had a property "a" that was not a number or string: ["hi"].');
+        expect(() => diffObjects(o1, o2)).to.throw(TypeError, 'diffObjects(): argument 1 had a property "a" that was not a number, string, or boolean: ["hi"].');
         o1.a = {hi:1};
-        expect(() => diffObjects(o1, o2)).to.throw(TypeError, 'diffObjects(): argument 1 had a property "a" that was not a number or string: {"hi":1}.');
+        expect(() => diffObjects(o1, o2)).to.throw(TypeError, 'diffObjects(): argument 1 had a property "a" that was not a number, string, or boolean: {"hi":1}.');
         delete o1.a;
         o2.b = null;
-        expect(() => diffObjects(o1, o2)).to.throw(TypeError, 'diffObjects(): argument 2 had a property "b" that was not a number or string: null.');
+        expect(() => diffObjects(o1, o2)).to.throw(TypeError, 'diffObjects(): argument 2 had a property "b" that was not a number, string, or boolean: null.');
     });
 });
