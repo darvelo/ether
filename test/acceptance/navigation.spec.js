@@ -229,20 +229,20 @@ describe.only('Acceptance Tests', () => {
         describe('Basic Tests', () => {
             navTest('resolves a Promise on successful navigation', [
                 '/',
-            ], (done, destination) => {
+            ], (done, dest) => {
                 let rootApp = new MyRootApp(defaultOpts);
-                rootApp.navigate(destination).then(() => {
+                rootApp.navigate(dest).then(() => {
                     done();
                 });
             });
 
             navTest('Promise rejects on 404', [
                 '/nope',
-            ], (done, destination) => {
+            ], (done, dest) => {
                 let rootApp = new MyRootApp(defaultOpts);
-                rootApp.navigate(destination).then(null, err => {
+                rootApp.navigate(dest).then(null, err => {
                     expect(err).to.be.instanceof(Error);
-                    err.message.should.equal(`404 for path: "${destination}".`);
+                    err.message.should.equal(`404 for path: "${dest}".`);
                     expect(err.routingTrace).to.be.an('object');
                     done();
                 }).catch(err => {
@@ -287,10 +287,11 @@ describe.only('Acceptance Tests', () => {
             ], (done) => {
                 let rootApp = new MyRootApp(defaultOpts);
                 getAllSpyFns(mountSpies).forEach(spy => spy.should.not.have.been.called);
+                getAllSpyFns(cMountSpies).forEach(spy => spy.should.not.have.been.called);
                 done();
             });
 
-            navTest('calls prerender/render only on the navigated-to Route', [
+            navTest('calls prerender/render, in order, only on the navigated-to mount\'s Route', [
                 '/',
             ], (done, dest) => {
                 let rootApp = new MyRootApp(defaultOpts);
@@ -310,7 +311,7 @@ describe.only('Acceptance Tests', () => {
                 });
             });
 
-            navTest('calls prerender/render only on the navigated-to Route that is within a sub-App', [
+            navTest('calls prerender/render, in order, only on the navigated-to mount\'s Route that is within a sub-App', [
                 '/user/1/action/go',
             ], (done, dest) => {
                 let rootApp = new MyRootApp(defaultOpts);
