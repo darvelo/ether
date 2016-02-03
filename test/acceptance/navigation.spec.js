@@ -2,8 +2,18 @@ import RootApp from '../../src/classes/root-app';
 import MutableOutlet from '../../src/classes/mutable-outlet';
 import App from '../../src/classes/app';
 import Route from '../../src/classes/route';
+import ctorName from '../../src/utils/ctor-name';
 
 import { navTest } from '../utils/acceptance-test-generator';
+
+function getAllSpies(spies) {
+    let allSpies = Object.keys(spies).reduce((memo, key) => {
+        let spiesForKey = Object.keys(spies[key]).map(spyName => spies[key][spyName]);
+        memo.push(...spiesForKey);
+        return memo;
+    }, []);
+    return allSpies;
+}
 
 class TestApp extends App {
     expectedOutlets() {
@@ -17,7 +27,7 @@ class TestRoute extends Route {
     }
 }
 
-describe('Acceptance Tests', () => {
+describe.only('Acceptance Tests', () => {
     let defaultOpts;
 
     beforeEach(() => {
@@ -69,52 +79,133 @@ describe('Acceptance Tests', () => {
             });
         });
 
-        navTest('and calls prerender/render on a navigated-to Route', [
-            '/',
-        ], (done, destination) => {
-            let prerenderSpy = sinon.spy();
-            let renderSpy = sinon.spy();
+        describe('Prerender/Deactivate/Render Cycle', () => {
+            let spies;
+            let MyRootApp;
 
-            class MyRoute extends TestRoute {
-                prerender() {
-                    prerenderSpy();
+            class SinonSpyRoute extends TestRoute {
+                init() {
+                    let ctorname = ctorName(this);
+                    let mySpies = spies[ctorname];
+                    if (!mySpies) {
+                        throw new Error(`Sinon spies were not attached to ${ctorname}.`);
+                    }
+                    this.spies = mySpies;
                 }
-                render() {
-                    renderSpy();
+                prerender(params, queryParams, diff) {
+                    this.spies.prerenderSpy(params, queryParams, diff);
+                }
+                deactivate() {
+                    this.spies.deactivateSpy();
+                }
+                render(params, queryParams, diff) {
+                    this.spies.renderSpy(params, queryParams, diff);
                 }
             }
-            class MyRootApp extends RootApp {
-                mount() {
-                    return {
-                        '': MyRoute,
+
+            beforeEach(() => {
+                spies = [
+                    'UserIdActionRoute',
+                    'RootRoute'
+                ].reduce((memo, key) => {
+                    memo[key] = {
+                        prerenderSpy:  sinon.spy(),
+                        deactivateSpy: sinon.spy(),
+                        renderSpy:     sinon.spy(),
                     };
+                    return memo;
+                }, {});
+
+                class RootRoute extends SinonSpyRoute { }
+                class UserIdActionRoute extends SinonSpyRoute {
+                    expectedParams() {
+                        return ['userId', 'userAction'];
+                    }
                 }
-            }
-
-            let rootApp = new MyRootApp(defaultOpts);
-            prerenderSpy.should.not.have.been.called;
-            renderSpy.should.not.have.been.called;
-            rootApp.navigate(destination).then(() => {
-                prerenderSpy.should.have.been.calledOnce;
-                renderSpy.should.have.been.calledOnce;
-                prerenderSpy.should.have.been.calledBefore(renderSpy);
-                done();
-            }).catch(err => {
-                // if test fails, pass error to Mocha
-                done(err);
+                class MyApp extends TestApp {
+                    mount() {
+                        return {
+                            'action/{userAction=\\w+}': UserIdActionRoute,
+                        };
+                    }
+                }
+                MyRootApp = class extends RootApp {
+                    mount() {
+                        return {
+                            '': RootRoute,
+                            'user/{userId=\\d+}': MyApp,
+                        };
+                    }
+                };
             });
+
+            navTest('does not call any prerender/deactivate/render before calling navigate()', [
+                '/',
+            ], (done) => {
+                let rootApp = new MyRootApp(defaultOpts);
+                getAllSpies(spies).forEach(spy => spy.should.not.have.been.called);
+                done();
+            });
+
+            navTest.skip('sets return val of fullUrl() on the RootApp', [
+                '/',
+            ], (done, dest) => {
+                let rootApp = new MyRootApp(defaultOpts);
+                rootApp.navigate(dest).then(() => {
+                    expect(rootApp.fullUrl()).to.equal('/');
+                    done();
+                }).catch(err => {
+                    // if test fails, pass error to Mocha
+                    done(err);
+                });
+            });
+
+            navTest('calls prerender/render only on the navigated-to Route', [
+                '/',
+            ], (done, dest) => {
+                let rootApp = new MyRootApp(defaultOpts);
+                rootApp.navigate(dest).then(() => {
+                    spies.RootRoute.prerenderSpy.should.have.been.calledOnce;
+                    spies.RootRoute.renderSpy.should.have.been.calledOnce;
+                    spies.RootRoute.prerenderSpy.should.have.been.calledBefore(spies.RootRoute.renderSpy);
+                    delete spies.RootRoute.prerenderSpy;
+                    delete spies.RootRoute.renderSpy;
+                    getAllSpies(spies).forEach(spy => spy.should.not.have.been.called);
+                    done();
+                }).catch(err => {
+                    // if test fails, pass error to Mocha
+                    done(err);
+                });
+            });
+
+            navTest('calls prerender/render only on the navigated-to Route that is within a sub-App', [
+                '/user/1/action/go',
+            ], (done, dest) => {
+                let rootApp = new MyRootApp(defaultOpts);
+                rootApp.navigate(dest).then(() => {
+                    spies.UserIdActionRoute.prerenderSpy.should.have.been.calledOnce;
+                    spies.UserIdActionRoute.renderSpy.should.have.been.calledOnce;
+                    spies.UserIdActionRoute.prerenderSpy.should.have.been.calledBefore(spies.RootRoute.renderSpy);
+                    delete spies.UserIdActionRoute.prerenderSpy;
+                    delete spies.UserIdActionRoute.renderSpy;
+                    getAllSpies(spies).forEach(spy => spy.should.not.have.been.called);
+                    done();
+                }).catch(err => {
+                    // if test fails, pass error to Mocha
+                    done(err);
+                });
+            });
+
+            navTest.skip('passes to a mount\'s prerender()/render() fns params equal to its Route\'s expectedParams()');
+            navTest.skip('passes to all conditional mounts\' prerender()/render() fns params equal to each Route\'s expectedParams()');
+            navTest.skip('passes to a mount\'s prerender()/render() fns the proper query params');
+            navTest.skip('passes to all conditional mounts\' prerender()/render() fns the proper query params');
+            navTest.skip('does nothing if navigating to the same URL as the current URL');
+            navTest.skip('throws if `routingTrace.result` is neither `success` nor `404`');
+
+            // gotta be careful with this one.. don't wanna duplicate tests because they may eventually become out of sync
+            // @TODO: use navTest() for this instead of writing individual tests
+            // it.skip('navigates using an address passed with params and queryParams');
         });
-
-        it.skip('calls prerender/render on a navigated-to Route that is within a sub-App');
-        it.skip('passes to a mount\'s prerender()/render() fns params equal to its Route\'s expectedParams()');
-        it.skip('passes to all conditional mounts\' prerender()/render() fns params equal to each Route\'s expectedParams()');
-        it.skip('passes to a mount\'s prerender()/render() fns the proper query params');
-        it.skip('passes to all conditional mounts\' prerender()/render() fns the proper query params');
-        it.skip('does nothing if navigating to the same URL as the current URL');
-        it.skip('throws if `routingTrace.result` is neither `success` nor `404`');
-
-        // gotta be careful with this one.. don't wanna duplicate tests because they may eventually become out of sync
-        // @TODO: use navTest() for this instead of writing individual tests
-        // it.skip('navigates using an address passed with params and queryParams');
     });
 });
