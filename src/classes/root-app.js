@@ -98,13 +98,17 @@ class RootApp extends App {
     /**
      * Parses a query string.
      * @param {string} queryString A string analogous to window.location.search.
-     * @return {object} An object containing the query parameters as the object's keys with values.
+     * @return {object|null} An object containing the query params as the object's keys with values. Null if there were no query params.
      */
     parseQueryString(queryString) {
         if (queryString[0] === '?') {
             queryString = queryString.slice(1);
         }
-        let queryParams = queryString.split('&').reduce((memo, pairStr) => {
+        if (!queryString.length) {
+            return null;
+        }
+
+        return queryString.split('&').reduce((memo, pairStr) => {
             let [ key, val ] = pairStr.split('=');
             val = decodeURIComponent(val);
             // isNaN will coerce empty string or all spaces to 0
@@ -119,7 +123,6 @@ class RootApp extends App {
             memo[key] = val;
             return memo;
         }, {});
-        return queryParams;
     }
 
     /**
