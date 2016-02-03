@@ -330,15 +330,15 @@ describe.only('Acceptance Tests', () => {
                 });
             });
 
-            navTest('passes to a sub-App\'s mount\'s prerender()/render() fns params equal to its Route\'s expectedParams()', [
-                '/user/1/action/go',
+            navTest('passes to a sub-App\'s mount\'s prerender()/render() fns all queryParams and only the expected params for the Route', [
+                '/user/1/action/go?sort=true&sort_type=asc&idx=1',
             ], (done, dest) => {
                 let expectedArgs = [
                     {id: 1, action: 'go'},
-                    {},
+                    {sort: true, sort_type: 'asc', idx: 1},
                     {
                         params: {id: [undefined, 1], action: [undefined, 'go']},
-                        queryParams: null,
+                        queryParams: {sort: [undefined, true], sort_type: [undefined, 'asc'], idx: [undefined, 1]},
                     },
                 ];
                 let rootApp = new MyRootApp(defaultOpts);
@@ -354,15 +354,15 @@ describe.only('Acceptance Tests', () => {
                 });
             });
 
-            navTest.skip('passes to all conditional mounts\' prerender()/render() fns params equal to each Route\'s expectedParams()', [
-                '/user/1/action/go',
+            navTest.skip('passes to all conditional mounts\' prerender()/render() fns all queryParams and only the expected params for the Route', [
+                '/user/1/action/go?sort=true&sort_type=asc&idx=1',
             ], (done, dest) => {
                 let expectedArgs = [
                     {id: 1, action: 'go'},
-                    {},
+                    {sort: true, sort_type: 'asc', idx: 1},
                     {
                         params: {id: [undefined, 1], action: [undefined, 'go']},
-                        queryParams: null,
+                        queryParams: {sort: [undefined, true], sort_type: [undefined, 'asc'], idx: [undefined, 1]},
                     },
                 ];
                 let rootApp = new MyRootApp(defaultOpts);
@@ -377,6 +377,7 @@ describe.only('Acceptance Tests', () => {
                     done(err);
                 });
             });
+
             navTest.skip('passes to a mount\'s prerender()/render() fns the proper query params');
             navTest.skip('passes to all conditional mounts\' prerender()/render() fns the proper query params');
             navTest.skip('does nothing if navigating to the same URL as the current URL');

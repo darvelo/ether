@@ -142,11 +142,11 @@ class RootApp extends App {
         //     return;
         // }
 
-        // dummy values until implemented
-        let queryParams = {};
-        let queryParamsDiff = null;
+        let [ path, queryString='' ] = destination.split('?');
+        // @TODO: adjust when NavigationRequest is implemented
+        let queryParams = this.parseQueryString(queryString);
+        let queryParamsDiff = diffObjects(this._lastQueryParams, queryParams);
 
-        let [ path, queryString ] = destination.split('?');
         let routingTrace = this._buildPath(path);
         if (routingTrace.result === '404') {
             // notify user of 404 and pass routingTrace;
