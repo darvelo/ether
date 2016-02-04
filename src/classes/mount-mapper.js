@@ -4,7 +4,7 @@ import Route from './route';
 import Modified from './modified';
 import mergesort from '../utils/mergesort';
 import ctorName from '../utils/ctor-name';
-import { isnt } from '../utils/is';
+import { is, isnt } from '../utils/is';
 import isNumeric from '../utils/is-numeric';
 
 class MountMapper extends BaseMountMapper {
@@ -15,7 +15,7 @@ class MountMapper extends BaseMountMapper {
         this._mountsAdded = false;
         // a string holding the crumb representing
         // the currently-active mount on the App
-        this._currentMount = undefined;
+        this._currentMount = null;
         // every mount activated by the App has its last params
         // stored here for diffing on its next activation
         this._lastParams = {};
@@ -357,6 +357,10 @@ class MountMapper extends BaseMountMapper {
     }
 
     setCurrentMount(crumb, params) {
+        if (is(crumb, 'Null')) {
+            this._currentMount = null;
+            return;
+        }
         if (isnt(crumb, 'String')) {
             throw new TypeError(`MountMapper#setCurrentMount(): The first argument given was not a string: ${JSON.stringify(crumb)}.`);
         }

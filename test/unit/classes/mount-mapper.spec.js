@@ -303,13 +303,24 @@ describe('MountMapper', () => {
             it('returns undefined if no current mount is set', () => {
                 let crumb = '/user/{id=\\d+}';
                 mapper.add({[crumb]: IdParamRoute}, parentData);
-                expect(mapper.getCurrentMount()).to.equal(undefined);
+                expect(mapper.getCurrentMount()).to.equal(null);
             });
 
-            it('throws on setting current mount if first arg is not a string', () => {
+            it('allows setting current mount to null', () => {
+                let crumb = '/user/{id=\\d+}';
+                mapper.add({[crumb]: IdParamRoute}, parentData);
+                expect(mapper.getCurrentMount()).to.equal(null);
+                expect(() => mapper.setCurrentMount(null)).to.not.throw();
+                expect(mapper.getCurrentMount()).to.equal(null);
+            });
+
+            it('throws on setting current mount if first arg is not a string or null', () => {
                 let crumb = '/user/{id=\\d+}';
                 mapper.add({[crumb]: IdParamRoute}, parentData);
                 expect(() => mapper.setCurrentMount([], {id: 20})).to.throw(TypeError, 'MountMapper#setCurrentMount(): The first argument given was not a string: [].');
+                expect(() => mapper.setCurrentMount(1, {id: 20})).to.throw(TypeError, 'MountMapper#setCurrentMount(): The first argument given was not a string: 1.');
+                expect(() => mapper.setCurrentMount({}, {id: 20})).to.throw(TypeError, 'MountMapper#setCurrentMount(): The first argument given was not a string: {}.');
+                expect(() => mapper.setCurrentMount(undefined)).to.throw(TypeError, 'MountMapper#setCurrentMount(): The first argument given was not a string: undefined.');
             });
 
             it('throws on setting current mount if second arg is not an object', () => {
