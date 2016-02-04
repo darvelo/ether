@@ -158,13 +158,22 @@ class RootApp extends App {
         //     return;
         // }
 
-        let [ path, queryString='' ] = destination.split('?');
         // @TODO: adjust when NavigationRequest is implemented
+        let [ path, queryString='' ] = destination.split('?');
         let queryParams = this.parseQueryString(queryString);
         let queryParamsDiff = null;
 
         if (isnt(queryParams, 'Null') || isnt(this._lastQueryParams, 'Null')) {
             queryParamsDiff = diffObjects(this._lastQueryParams || {}, queryParams || {});
+        }
+
+        // check if we're navigating to the same URL as the one we're
+        // currently on. this can happen if a link was clicked twice
+        if (this.fullUrl()) {
+            let [ lastPath ] = this.fullUrl().split('?');
+            if (path === lastPath && is(queryParamsDiff, 'Null')) {
+                return Promise.resolve({sameUrl: true});
+            }
         }
 
         let routingTrace = this._buildPath(path);
@@ -178,6 +187,7 @@ class RootApp extends App {
             return this._constructState(routingTrace, queryParams, queryParamsDiff).then(() => {
                 // @TODO: make sure this to put the URL string here if navigating by address/params/queryParams
                 this._fullUrl = destination;
+                this._lastQueryParams = queryParams;
             });
         } else {
             throw new Error('??????????');

@@ -299,6 +299,31 @@ describe.only('Acceptance Tests', () => {
                 });
             });
 
+            navTest('does nothing if navigating to the same URL as the current URL', [
+                '/',
+                '/?hello=true&goodbye=false',
+                '/user/1/action/go?hello=true&goodbye=false',
+            ], (done, dest) => {
+                let rootApp = new MyRootApp(defaultOpts);
+                expect(rootApp.fullUrl()).to.equal(undefined);
+                rootApp.navigate(dest).then(() => {
+                    let queryParams;
+                    [ dest, queryParams ] = dest.split('?');
+                    // switch around query params to make sure it
+                    // still recognizes the URL as being the same
+                    if (queryParams) {
+                        queryParams = '?goodbye=false&hello=true';
+                        dest += queryParams;
+                    }
+                    return rootApp.navigate(dest);
+                }).then(msg => {
+                    expect(msg).to.deep.equal({sameUrl: true});
+                    done();
+                }).catch(err => {
+                    // if test fails, pass error to Mocha
+                    done(err);
+                });
+            });
         });
 
         describe('Prerender/Deactivate/Render Cycle', () => {
@@ -491,7 +516,6 @@ describe.only('Acceptance Tests', () => {
                 });
             });
 
-            navTest.skip('does nothing if navigating to the same URL as the current URL');
             // stub out _constructState for this one to return rejected promise
             navTest.skip('throws if construction fails');
             // stub out _buildPath for this one to return {result: null}
