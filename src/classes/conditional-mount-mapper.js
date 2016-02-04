@@ -3,7 +3,7 @@ import MountMapper from './mount-mapper';
 import Modified from './modified';
 import App from './app';
 import Route from './route';
-import { isnt } from '../utils/is';
+import { is, isnt } from '../utils/is';
 import ctorName from '../utils/ctor-name';
 
 class ConditionalMountMapper extends BaseMountMapper {
@@ -14,7 +14,7 @@ class ConditionalMountMapper extends BaseMountMapper {
         this._mountsAdded = false;
         // an array holding the logic crumbs representing
         // the currently-active cMounts on the App
-        this._currentMounts = undefined;
+        this._currentMounts = null;
         /**
          * @namespace
          * @desc Stores last params for every cMount activated by the App.
@@ -352,7 +352,7 @@ class ConditionalMountMapper extends BaseMountMapper {
 
     /**
      * Stores the names and params of the currently-active cMounts.
-     * @param {object} mountsToParams An object where the keys are the logic crumbs of the active cMounts and the values are arrays of objects holding each cMount's routes' current params.
+     * @param {object} logicsToParams An object where the keys are the logic crumbs of the active cMounts and the values are arrays of objects holding each cMount's routes' current params.
      * @example
      * // with App#mount() returning object {
      * //     '{id=\\w+}': Route.addresses('first')
@@ -376,17 +376,21 @@ class ConditionalMountMapper extends BaseMountMapper {
      * });
      * @return
      */
-    setCurrentMounts(mountsToParams) {
-        if (isnt(mountsToParams, 'Object')) {
-            throw new TypeError(`ConditionalMountMapper#setCurrentMounts(): The first argument given was not an object: ${JSON.stringify(mountsToParams)}.`);
+    setCurrentMounts(logicsToParams) {
+        if (is(logicsToParams, 'Null')) {
+            this._currentMounts = null;
+            return;
+        }
+        if (isnt(logicsToParams, 'Object')) {
+            throw new TypeError(`ConditionalMountMapper#setCurrentMounts(): The first argument given was not an object: ${JSON.stringify(logicsToParams)}.`);
         }
 
         let unknownLogics = [];
         let mounts = [];
 
         // filter given mounts that are not actually in this mapper and throw
-        for (let logic in mountsToParams) {
-            if (mountsToParams.hasOwnProperty(logic)) {
+        for (let logic in logicsToParams) {
+            if (logicsToParams.hasOwnProperty(logic)) {
                 if (!this._mounts.hasOwnProperty(logic)) {
                     unknownLogics.push(logic);
                 } else {
@@ -402,7 +406,7 @@ class ConditionalMountMapper extends BaseMountMapper {
         mounts.forEach(logic => {
             let routes = this._mounts[logic].mounts;
             routes.forEach((route, idx) => {
-                let givenParams = mountsToParams[logic][idx];
+                let givenParams = logicsToParams[logic][idx];
                 let expectedParams = route.expectedParams();
                 for (let expectedParam of expectedParams) {
                     if (!givenParams.hasOwnProperty(expectedParam)) {
@@ -415,9 +419,9 @@ class ConditionalMountMapper extends BaseMountMapper {
             });
         });
 
-        this._currentMounts = Object.keys(mountsToParams).sort();
-        // deep copy, while retaining last params for mounts not in mountsToParams
-        this._lastParams = Object.assign(this._lastParams, JSON.parse(JSON.stringify(mountsToParams)));
+        this._currentMounts = Object.keys(logicsToParams).sort();
+        // deep copy, while retaining last params for mounts not in logicsToParams
+        this._lastParams = Object.assign(this._lastParams, JSON.parse(JSON.stringify(logicsToParams)));
     }
 
     getCurrentMounts() {

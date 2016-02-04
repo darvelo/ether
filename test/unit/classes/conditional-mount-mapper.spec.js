@@ -277,16 +277,26 @@ describe('ConditionalMountMapper', () => {
         });
 
         describe('Getting the Current Mounts', () => {
-            it('returns undefined if no current mounts are set', () => {
+            it('returns null if no current mounts are set', () => {
                 let crumb = '+first';
                 mapper.add({[crumb]: TestRoute}, parentData);
-                expect(mapper.getCurrentMounts()).to.equal(undefined);
+                expect(mapper.getCurrentMounts()).to.equal(null);
             });
 
-            it('throws on setting current mounts if first arg is not an object', () => {
+            it('allows setting current mounts to null', () => {
+                let crumb = '+first';
+                mapper.add({[crumb]: IdRoute}, parentData);
+                expect(() => mapper.setCurrentMounts(null)).to.not.throw();
+                expect(mapper.getCurrentMounts()).to.equal(null);
+            });
+
+            it('throws on setting current mounts if first arg is not an object nor null', () => {
                 let crumb = '+first';
                 mapper.add({[crumb]: IdRoute}, parentData);
                 expect(() => mapper.setCurrentMounts(['xyz'])).to.throw(TypeError, 'ConditionalMountMapper#setCurrentMounts(): The first argument given was not an object: ["xyz"].');
+                expect(() => mapper.setCurrentMounts('xyz')).to.throw(TypeError, 'ConditionalMountMapper#setCurrentMounts(): The first argument given was not an object: "xyz".');
+                expect(() => mapper.setCurrentMounts(1)).to.throw(TypeError, 'ConditionalMountMapper#setCurrentMounts(): The first argument given was not an object: 1.');
+                expect(() => mapper.setCurrentMounts()).to.throw(TypeError, 'ConditionalMountMapper#setCurrentMounts(): The first argument given was not an object: undefined.');
             });
 
             it('throws on setting current mounts if any key in the passed obj is not a previously-added logic crumb', () => {
