@@ -19,6 +19,25 @@ describe('Element Mock', () => {
         expect(element.parentNode).to.equal(element.parentNode);
     });
 
+    describe('classList', () => {
+        it('exists', () => {
+            expect(element.classList).to.be.ok;
+        });
+
+        it('contains/add', () => {
+            expect(element.classList.contains('cls')).to.equal(false);
+            element.classList.add('cls');
+            expect(element.classList.contains('cls')).to.equal(true);
+        });
+
+        it('remove', () => {
+            element.classList.add('cls');
+            expect(element.classList.contains('cls')).to.equal(true);
+            element.classList.remove('cls');
+            expect(element.classList.contains('cls')).to.equal(false);
+        });
+    });
+
     describe('innerHTML', () => {
         it('can set innerHTML when element has no children', () => {
             let html = '<div class="mydiv"></div>';

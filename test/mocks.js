@@ -48,6 +48,26 @@ export var document = {
     }
 };
 
+class ClassList {
+    constructor() {
+        this._classes = [];
+    }
+    contains(cls) {
+        return this._classes.some(className => className === cls);
+    }
+    add(cls) {
+        if (!this.contains(cls)) {
+            this._classes.push(cls);
+        }
+    }
+    remove(cls) {
+        let idx = this._classes.indexOf(cls);
+        if (idx !== -1) {
+            this._classes.splice(idx, 1);
+        }
+    }
+}
+
 export class Element extends Eventable {
     constructor(...args) {
         super(...args);
@@ -55,6 +75,9 @@ export class Element extends Eventable {
     }
     click() {
         this.fire('click');
+    }
+    get classList() {
+        return this._classList || (this._classList = new ClassList());
     }
     get children() {
         return this._children || (this._children = []);
