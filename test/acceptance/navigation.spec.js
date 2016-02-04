@@ -7,6 +7,8 @@ import { is, isnt } from '../../src/utils/is';
 
 import { navTest } from '../utils/acceptance-test-generator';
 
+let freeze = Object.freeze;
+
 // holds Sinon spies that are regenerated for each test
 let mountSpies;
 let cMountSpies;
@@ -123,16 +125,19 @@ class RootIdConditionalRouteTwo    extends IdRoute { }
 class UserIdConditionalRouteOne    extends IdRoute { }
 class UserIdConditionalRouteTwo    extends IdRoute { }
 class UserIdConditionalRouteThree  extends IdRoute { }
+class UserIdConditionalRouteFour   extends IdRoute { }
 class UserIdActionConditionalRoute extends SinonSpyRoute {
     expectedParams() {
         return ['id', 'action'];
     }
 }
-class UserIdMenuConditionalRoute extends SinonSpyRoute {
+class IdMenuRoute extends SinonSpyRoute {
     expectedParams() {
         return ['id', 'menu'];
     }
 }
+class UserIdMenuConditionalRouteOne extends IdMenuRoute { }
+class UserIdMenuConditionalRouteTwo extends IdMenuRoute { }
 
 // the actual Ether App structure
 class UserApp extends TestApp {
@@ -152,13 +157,17 @@ class UserApp extends TestApp {
     mountConditionals() {
         return {
             '*': [UserIdConditionalRouteOne.setup(()  => cMountSpies)],
+            // these two cMounts have the same logical result
             '+userIdAction': [
                 UserIdConditionalRouteTwo.setup(()    => cMountSpies),
                 UserIdActionConditionalRoute.setup(() => cMountSpies),
             ],
-            '+userIdMenuOne,userIdMenuTwo': UserIdConditionalRouteThree.setup(()  => cMountSpies),
-            '!userIdAction': UserIdMenuConditionalRoute.setup(() => cMountSpies),
-            '!userIdMenuOne,userIdMenuTwo': UserIdConditionalRouteThree.setup(()  => cMountSpies),
+            '!userIdMenuOne,userIdMenuTwo': UserIdConditionalRouteThree.setup(() => cMountSpies),
+            // these two cMounts have the same logical result
+            '+userIdMenuOne,userIdMenuTwo': UserIdConditionalRouteFour.setup(() => cMountSpies),
+            '!userIdAction': UserIdMenuConditionalRouteOne.setup(() => cMountSpies),
+            // cMount just for "profile" route
+            '+userIdMenuTwo': UserIdMenuConditionalRouteTwo.setup(() => cMountSpies),
         };
     }
 }
@@ -203,13 +212,17 @@ describe.only('Acceptance Tests', () => {
         cMountSpies = [
             'RootAllConditionalRoute',
             'RootNewsConditionalRoute',
+
             'RootIdConditionalRouteOne',
             'RootIdConditionalRouteTwo',
+
             'UserIdConditionalRouteOne',
             'UserIdConditionalRouteTwo',
-            'UserIdActionConditionalRoute',
-            'UserIdMenuConditionalRoute',
             'UserIdConditionalRouteThree',
+            'UserIdConditionalRouteFour',
+            'UserIdActionConditionalRoute',
+            'UserIdMenuConditionalRouteOne',
+            'UserIdMenuConditionalRouteTwo',
         ].reduce((memo, key) => {
             memo[key] = {
                 prerenderSpy:  sinon.spy(),
@@ -234,6 +247,9 @@ describe.only('Acceptance Tests', () => {
                 let rootApp = new MyRootApp(defaultOpts);
                 rootApp.navigate(dest).then(() => {
                     done();
+                }).catch(err => {
+                    // if test fails, pass error to Mocha
+                    done(err);
                 });
             });
 
@@ -359,23 +375,115 @@ describe.only('Acceptance Tests', () => {
                 });
             });
 
-            navTest.skip('passes to all conditional mounts\' prerender()/render() fns all queryParams and only the expected params for the Route', [
-                '/user/1/action/go?sort=true&sort_type=asc&idx=1',
-            ], (done, dest) => {
-                let expectedArgs = [
-                    {id: 1, action: 'go'},
-                    {sort: true, sort_type: 'asc', idx: 1},
-                    {
-                        params: {id: [undefined, 1], action: [undefined, 'go']},
-                        queryParams: {sort: [undefined, true], sort_type: [undefined, 'asc'], idx: [undefined, 1]},
-                    },
-                ];
+            navTest('passes to all conditional mounts\' prerender()/render() fns all queryParams and only the expected params for the Route', [
+                // @TODO: add destinations, here and in other navTests, that navigate by address and given params/queryParams
+                ['/', null, null, [RootAllConditionalRoute]],
+                ['/?sort=true&sort_type=asc&idx=1', null, freeze({sort: true, sort_type: 'asc', idx: 1}), [RootAllConditionalRoute]],
+                ['/news/story?', freeze({news: 'story'}), null, [RootAllConditionalRoute, RootNewsConditionalRoute]],
+                ['/news/story?idx=3', freeze({news: 'story'}), freeze({idx: 3}), [RootAllConditionalRoute, RootNewsConditionalRoute]],
+                ['/user/1/action/go?', freeze({id: 1, action: 'go'}), null,
+                    [
+                        RootAllConditionalRoute, RootIdConditionalRouteOne, RootIdConditionalRouteTwo,
+                        UserIdConditionalRouteOne, UserIdConditionalRouteTwo, UserIdConditionalRouteThree, UserIdActionConditionalRoute,
+                    ]
+                ],
+                ['/user/2/menu/stats?', freeze({id: 2, menu: 'stats'}), null,
+                    [
+                        RootAllConditionalRoute, RootIdConditionalRouteOne, RootIdConditionalRouteTwo,
+                        UserIdConditionalRouteOne, UserIdConditionalRouteFour, UserIdMenuConditionalRouteOne,
+                    ]
+                ],
+                ['/user/2/menu/stats?bestFirst=true&limit=10&order=abc', freeze({id: 2, menu: 'stats'}), {bestFirst: true, limit: 10, order: 'abc'},
+                    [
+                        RootAllConditionalRoute, RootIdConditionalRouteOne, RootIdConditionalRouteTwo,
+                        UserIdConditionalRouteOne, UserIdConditionalRouteFour, UserIdMenuConditionalRouteOne,
+                    ]
+                ],
+                ['/user/2/menu/stats/profile', freeze({id: 2, menu: 'stats'}), null,
+                    [
+                        RootAllConditionalRoute, RootIdConditionalRouteOne, RootIdConditionalRouteTwo,
+                        UserIdConditionalRouteOne, UserIdConditionalRouteFour, UserIdMenuConditionalRouteOne, UserIdMenuConditionalRouteTwo,
+                    ]
+                ],
+                ['/user/2/menu/stats/profile?bestFirst=true&limit=10&order=abc', freeze({id: 2, menu: 'stats'}), {bestFirst: true, limit: 10, order: 'abc'},
+                    [
+                        RootAllConditionalRoute, RootIdConditionalRouteOne, RootIdConditionalRouteTwo,
+                        UserIdConditionalRouteOne, UserIdConditionalRouteFour, UserIdMenuConditionalRouteOne, UserIdMenuConditionalRouteTwo,
+                    ]
+                ],
+                // ['/user/1/action/go', freeze({news: 'story', action: 'go'}), null, [RootAllConditionalRoute]],
+            ], (done, dest, allParams, queryParams, expectedCondRoutesRendered) => {
+                let queryParamsDiff;
+                if (is(queryParams, 'Null')) {
+                    queryParamsDiff = null;
+                } else {
+                    queryParamsDiff = freeze(Object.keys(queryParams).reduce((memo, qp) => {
+                        // since we're navigating from a fresh state,
+                        // all queryParam previous values should be `undefined`,
+                        // and all expected values should be equal to the
+                        // expected values passed in from the test function
+                        memo[qp] = [undefined, queryParams[qp]];
+                        return memo;
+                    }, {}));
+                }
+
+                // builds the expected params and paramsDiff values to test
+                // against by mapping from a route's expectedParams()
+                function buildParamsData(params, paramsDiff) {
+                    return function(expectedParam) {
+                        params[expectedParam] = allParams[expectedParam];
+                        paramsDiff[expectedParam] = [undefined, allParams[expectedParam]];
+                    };
+                }
+
+                function finalDiff(paramsDiff) {
+                    if (is(paramsDiff, 'Null') && is(queryParamsDiff, 'Null')) {
+                        return null;
+                    }
+                    return {
+                        params: paramsDiff,
+                        queryParams: queryParamsDiff,
+                    };
+                }
+
                 let rootApp = new MyRootApp(defaultOpts);
                 rootApp.navigate(dest).then(() => {
-                    let spies = mountSpies.UserIdActionRoute;
-                    let { prerenderSpy, renderSpy } = spies;
-                    prerenderSpy.should.have.been.calledWith(...expectedArgs);
-                    renderSpy.should.have.been.calledWith(...expectedArgs);
+                    for (let route of expectedCondRoutesRendered) {
+                        let { expectedParams, constructor: { name: ctorname } } = route.prototype;
+                        let spies = cMountSpies[ctorname];
+                        let { prerenderSpy, renderSpy } = spies;
+                        let params, paramsDiff;
+                        // if we have explicitly stated in the args that
+                        // no params should exist, test that both params
+                        // and paramsDiff in prerender/ender are null.
+                        // they should also be null if the route is not
+                        // expecting any params.
+                        if (is(allParams, 'Null') || !expectedParams().length) {
+                            params = null;
+                            paramsDiff = null;
+                        } else {
+                            // build a list of params that should be passed
+                            // into prerender/render based on the route's
+                            // expected params
+                            params = {};
+                            paramsDiff = {};
+                            expectedParams().forEach(buildParamsData(params, paramsDiff));
+                        }
+                        let expectedArgs = [
+                            params,
+                            queryParams,
+                            finalDiff(paramsDiff),
+                        ];
+                        prerenderSpy.should.have.been.calledWith(...expectedArgs);
+                        renderSpy.should.have.been.calledWith(...expectedArgs);
+                        // remove spies from hashtable of all spies so that
+                        // we can test that the rest have not been called
+                        delete spies.prerenderSpy;
+                        delete spies.renderSpy;
+                    }
+                    // test that all spies not explicitly
+                    // tested above have not been called
+                    getAllSpyFns(cMountSpies).forEach(spy => spy.should.not.have.been.called);
                     done();
                 }).catch(err => {
                     // if test fails, pass error to Mocha
@@ -383,14 +491,11 @@ describe.only('Acceptance Tests', () => {
                 });
             });
 
-            navTest.skip('passes to a mount\'s prerender()/render() fns the proper query params');
-            navTest.skip('passes to all conditional mounts\' prerender()/render() fns the proper query params');
             navTest.skip('does nothing if navigating to the same URL as the current URL');
+            // stub out _constructState for this one to return rejected promise
+            navTest.skip('throws if construction fails');
+            // stub out _buildPath for this one to return {result: null}
             navTest.skip('throws if `routingTrace.result` is neither `success` nor `404`');
-
-            // gotta be careful with this one.. don't wanna duplicate tests because they may eventually become out of sync
-            // @TODO: use navTest() for this instead of writing individual tests
-            // it.skip('navigates using an address passed with params and queryParams');
         });
     });
 });

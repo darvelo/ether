@@ -37,6 +37,24 @@ class Route extends Modifiable {
         return;
     }
 
+    _prerender(params, queryParams, diff) {
+        return Promise.resolve().then(() => {
+            return this.prerender(params, queryParams, diff);
+        });
+    }
+
+    _deactivate() {
+        return Promise.resolve().then(() => {
+            return this.deactivate();
+        });
+    }
+
+    _render(params, queryParams, diff) {
+        return Promise.resolve().then(() => {
+            return this.render(params, queryParams, diff);
+        });
+    }
+
     /**
      * User-defined function meant to perform any data-gathering or rendering when this route is navigated to, *before* the previously-navigated-to route is deactivated.
      * @param {object|null} params All parameters parsed from the URL that are only also listed in this route's `expectedParams()` method. `null` if either no params are expected by this route or if no mount up to this point had any params to be parsed.

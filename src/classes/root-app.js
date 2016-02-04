@@ -5,6 +5,16 @@ import { is, isnt } from '../utils/is';
 import isNumeric from '../utils/is-numeric';
 import diffObjects from '../utils/diff-objects';
 
+function finalDiff(paramsDiff, queryParamsDiff) {
+    if (is(paramsDiff, 'Null') && is(queryParamsDiff, 'Null')) {
+        return null;
+    }
+    return {
+        params: paramsDiff,
+        queryParams: queryParamsDiff,
+    };
+}
+
 class RootApp extends App {
     constructor(opts) {
         if (is(opts, 'Object')) {
@@ -16,6 +26,9 @@ class RootApp extends App {
         super(opts);
         // the last URL that was navigated to successfully
         this._fullUrl = undefined;
+        // the querystring params parsed from the
+        // last URL that was navigated to successfully
+        this._lastQueryParams = null;
     }
 
     fullUrl() {
@@ -148,7 +161,11 @@ class RootApp extends App {
         let [ path, queryString='' ] = destination.split('?');
         // @TODO: adjust when NavigationRequest is implemented
         let queryParams = this.parseQueryString(queryString);
-        let queryParamsDiff = diffObjects(this._lastQueryParams, queryParams);
+        let queryParamsDiff = null;
+
+        if (isnt(queryParams, 'Null') || isnt(this._lastQueryParams, 'Null')) {
+            queryParamsDiff = diffObjects(this._lastQueryParams || {}, queryParams || {});
+        }
 
         let routingTrace = this._buildPath(path);
         if (routingTrace.result === '404') {
@@ -161,9 +178,6 @@ class RootApp extends App {
             return this._constructState(routingTrace, queryParams, queryParamsDiff).then(() => {
                 // @TODO: make sure this to put the URL string here if navigating by address/params/queryParams
                 this._fullUrl = destination;
-            }, err => {
-                // @TODO: notify user how this error occurred
-                return Promise.reject();
             });
         } else {
             throw new Error('??????????');
@@ -172,6 +186,7 @@ class RootApp extends App {
 
     /**
      * @typedef DivergenceRecord
+     * @private
      * @type {object}
      * @property {App} app The App where the divergence is taking place.
      * @property {string} from The crumb on the `app` of the to-be-deactivated mount that is currently activated based on the current URL.
@@ -180,6 +195,7 @@ class RootApp extends App {
 
     /**
      * @typedef NavigationStep
+     * @private
      * @type {object}
      * @property {string} crumb The string representing a mount that's mounted on a particular App.
      * @property {App} app The App that holds the mount pointed to by `crumb`.
@@ -203,6 +219,7 @@ class RootApp extends App {
 
     /**
      * @typedef RoutingTrace
+     * @private
      * @type {object}
      * @property {string} result `success` or `404`.
      * @property {DivergenceRecord|undefined} diverge An object that describes where the path in the URL diverged when tracing the new navigation path from the URL passed to `navigate()` as compared to the navigation path of current URL. `undefined` if the path was the same as before and only params or query params changed.
@@ -246,8 +263,6 @@ class RootApp extends App {
      * @return {RoutingTrace} A routing trace object that can be used to construct app state: successful navigation or 404.
      */
     _buildPath(path) {
-        // @TODO: test this fn by stubbing out _constructState()
-
         let app = this;
         let steps = [];
         let matchResult, result, diverge;
@@ -307,10 +322,139 @@ class RootApp extends App {
     }
 
     /**
+     * Use a promise to call `_prerender` or `_render` on all activating
+     * cMounts' routes at each step all at once, then use the promise's
+     * .then() to do the same at the next step. The net effect is that
+     * all cmounts' `_prerender`/`_render` is called for each step in
+     * order, step by step, visiting the next step/node only after all
+     * activating cMounts' routes' `_prerender`/`render` are called at
+     * that step/node.
+     * At the last step, call `_prerender`/`_render` on the leaf mount's Route.
+     * @private
+     * @param {string} renderType The method to call on the route, either `_prerender` or `_render`.
+     * @param {Array.<NavigationData>} steps All the information needed to successfully traverse and navigate Apps to the leaf Route.
+     * @param {object|null} queryParams The query params parsed from the URL passed to `navigate()`. Null if there were none.
+     * @return {Promise} A promise that resolves when all `_prerender`/`_render` functions have resolved, or rejects if any one of them has rejected.
+     */
+    _renderStepsAs(renderType, steps, queryParams) {
+        if (renderType !== '_prerender' && renderType !== '_render') {
+            throw new Error(`Tried to render a step but was not given the right render type: ${renderType}.`);
+        }
+        return steps.reduce((promise, step) => {
+            return promise.then(() => {
+                // call all `renderType` fns for all cMounts' routes
+                let promises = step.cMountsToRender.map(obj => {
+                    let { route, params, diff } = obj;
+                    return route[renderType](params, queryParams, diff);
+                });
+                if (step.mountToRender) {
+                    // call `renderType` fn on the leaf mount's route
+                    let { route, params, diff } = step.mountToRender;
+                    promises.push(route[renderType](params, queryParams, diff));
+                }
+                // @TODO: set currentMount(s) at app#mm/cmm. need to put at end of promises. Add to NavigationData JsDoc as you add to _rebuildStepsAsRoutes return val.
+                // mountMapper#setCurrentMount(crumb, params)
+                // cMM#setCurrentMounts(logicsToParams)
+                return Promise.all(promises);
+            });
+        }, Promise.resolve());
+    }
+
+    /**
+     * @typedef RouteNavigationData
+     * @private
+     * @type {object}
+     * @property {Route} route
+     * @property {string} crumb The string representing a mount that's mounted on a particular App.
+     * @property {object|null} params
+     * @property {object|null} diff
+     * @property {object|null} diff.params
+     * @property {object|null} diff.queryParams
+     * @example
+     * {
+     *     crumb: 'first/{id=\\d+}/',
+     *     params: {id: 1},
+     * }
+     */
+
+    /**
+     * @typedef NavigationData
+     * @private
+     * @type {object}
+     * @property {App} app The App that holds the mounts and conditional mounts in this step data.
+     * @property {RouteNavigationData|undefined} mountToRender
+     * @property {Array.<RouteNavigationData>} cMountsToRender
+     * @property {Array.<string>} cMountsToDeactivate
+     * @example
+     * {
+     *     crumb: 'first/{id=\\d+}/',
+     *     params: {id: 1},
+     * }
+     */
+
+    /**
+     * Use the passed in `steps` data to create an array of objects that can be used to perform the navigation process to a new leaf Route.
+     * @private
+     * @param {Array.<NavigationStep>} steps The crumbs, in order from the RootApp to the leaf Route, that we can follow to the navigation destination.
+     * @param {object|null} queryParamsDiff The change in query params since the last call to `navigate()`. Null if no change.
+     * @return {Array.<NavigationData>} steps All the information needed to successfully traverse and navigate Apps to the leaf Route.
+     */
+    _rebuildStepsAsRoutes(steps, queryParamsDiff) {
+        let accumulatedParams = {};
+        let lastStepIdx = steps.length - 1;
+        return steps.map((step, stepIdx) => {
+            Object.assign(accumulatedParams, step.params);
+            let { app, crumb } = step;
+            let mm = app._mountMapper;
+            let cmm = app._conditionalMountMapper;
+            let cMountsToRender = cmm.match(mm.addressesFor(crumb)) || {};
+            let cMountsToDeactivate = (cmm.getCurrentMounts() || []).filter(logic => !cMountsToRender[logic]);
+
+            // create an array of objects that hold cMount render information
+            // (params, paramsDiffs) for each Route in the cMount so that
+            // calling prerender and then render later on will be easy
+            cMountsToRender = Object.keys(cMountsToRender).reduce((memo, logic) => {
+                let routes = cmm.routesFor(logic);
+                let routesLastParams = cmm.lastParamsFor(logic) || routes.map(() => { return {}; });
+                routes.forEach((route, idx) => {
+                    let params = route.expectedParams().reduce((memo, paramName) => (memo[paramName] = accumulatedParams[paramName]) && memo, {});
+                    let paramsDiff = diffObjects(routesLastParams[idx], params);
+                    let diff = finalDiff(paramsDiff, queryParamsDiff);
+                    if (!Object.keys(params).length) {
+                        params = null;
+                    }
+                    memo.push({route, params, diff});
+                });
+                return memo;
+            }, []);
+
+            // compile params for leaf mount
+            let mountToRender;
+            if (stepIdx === lastStepIdx) {
+                let route = mm.mountFor(crumb);
+                let lastParams = mm.lastParamsFor(crumb) || {};
+                let params = route.expectedParams().reduce((memo, param) => (memo[param] = accumulatedParams[param]) && memo, {});
+                let paramsDiff = diffObjects(lastParams, params);
+                let diff = finalDiff(paramsDiff, queryParamsDiff);
+                if (!Object.keys(params).length) {
+                    params = null;
+                }
+                mountToRender = {route, params, diff};
+            }
+
+            return {
+                mountToRender,
+                cMountsToRender,
+                cMountsToDeactivate,
+            };
+        });
+    }
+
+    /**
      * Constructs app state by using the routing trace object to prerender, render, and deactivate routes as needed.
      * @private
      * @param {RoutingTrace} routingTrace The routing trace object used to construct the app state.
-     * @property {object} queryParams The query params parsed from the URL passed to `navigate()`.
+     * @property {object|null} queryParams The query params parsed from the URL passed to `navigate()`. Null if there were none.
      * @property {object|null} queryParamsDiff The change in query params since the last call to `navigate()`. Null if no change.
      * @return {Promise} A promise that, if rejected, means a user-defined prerender/render/deactivate promise rejected and the Ether app is now in an undefined state.
      * @example
@@ -337,49 +481,15 @@ class RootApp extends App {
      * }
      */
     _constructState(routingTrace, queryParams, queryParamsDiff) {
-        let accumulatedParams = {};
-        let steps = routingTrace.steps.map(step => {
-            Object.assign(accumulatedParams, step.params);
-            let paramsAtStep = Object.assign({}, accumulatedParams);
-            let { app, crumb } = step;
-            let mount = app._mountMapper.mountFor(crumb);
-            let addresses = app._mountMapper.addressesFor(crumb);
-            let currentConditionalMounts = app._conditionalMountMapper.getCurrentMounts() || [];
-            let cMountsToActivate = app._conditionalMountMapper.match(addresses) || {};
-            let cMountsToDeactivate = currentConditionalMounts.filter(logic => !cMountsToActivate[logic]);
-            cMountsToActivate = Object.keys(cMountsToActivate);
-            return {
-                app,
-                crumb,
-                mount,
-                cMountsToActivate,
-                cMountsToDeactivate,
-                params: paramsAtStep,
-            };
+        let steps = this._rebuildStepsAsRoutes(routingTrace.steps, queryParamsDiff);
+        return Promise.resolve().then(() => {
+            return this._renderStepsAs('_prerender', steps, queryParams);
+        }).then(() => {
+            // deactivate step
+            // go through steps backwards, doing Promise.all() on `step.cMountsToDeactivate`
+        }).then(() => {
+            return this._renderStepsAs('_render', steps, queryParams);
         });
-
-        // shim until cMounts are accounted for
-        // @TODO: each step needs:
-        //     mounts  => accumulated params for the mount up to that point, a single object, filtered by expectedParams
-        //     cMounts => accumulated params up to that point, array of objs for each Route filtered by expectedParams for each
-        let { app, crumb, mount } = steps[steps.length-1];
-        let lastParams = app._mountMapper.lastParamsFor(crumb) || {};
-        let expectedParams = mount.expectedParams();
-        let params = expectedParams.reduce((memo, param) => (memo[param] = accumulatedParams[param]) && memo, {});
-        let paramsDiff = diffObjects(lastParams, params);
-        let diff;
-
-        if (paramsDiff === null && queryParamsDiff === null) {
-            diff = null;
-        } else {
-            diff = {
-                params: paramsDiff,
-                queryParams: queryParamsDiff,
-            };
-        }
-
-        return Promise.resolve().then(() => mount.prerender(params, queryParams, diff))
-                                .then(() => mount.render(params, queryParams, diff));
     }
 }
 

@@ -1,6 +1,8 @@
-function doTest(testFn, destination) {
+import { is } from '../../src/utils/is';
+
+function doTest(testFn, ...args) {
     return function(done) {
-        testFn(done, destination);
+        testFn(done, ...args);
     };
 }
 
@@ -31,15 +33,18 @@ export function navTest(testName, destinations, testFn, testType=null) {
         throw new Error(`Navigation Test Generator: No destinations listed: "${testName}".`);
     }
     for (let dest of destinations) {
-        let navType;
-        if (typeof dest === 'string') {
+        let navType, rest = [];
+        if (Array.isArray(dest)) {
+            [ dest, ...rest ] = dest;
+        }
+        if (is(dest, 'String')) {
             navType = 'NavString';
-        } else if (typeof dest === 'object') {
+        } else if (is(dest, 'Object')) {
             navType = 'NavObject';
         } else {
             throw new Error(`Navigation Test Generator: Wrong Test NavType: "${testName}".`);
         }
-        testStarter(`${navType}: ${testName}`, doTest(testFn, dest));
+        testStarter(`${navType}: ${testName}`, doTest(testFn, dest, ...rest));
     }
 }
 
