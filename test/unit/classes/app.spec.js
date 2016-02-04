@@ -168,5 +168,32 @@ describe('App', function() {
             }
             let app = new AppWithSetup(defaultOpts);
         });
+
+        it('sets `ether-deactivated` class on all outlets after createOutlets()', () => {
+            let deactivatedClass = 'ether-deactivated';
+            let element1 = document.createElement('div');
+            let element2 = document.createElement('div');
+            let element3 = document.createElement('div');
+            let element4 = document.createElement('div');
+            defaultOpts.outlets = {
+                first: new MutableOutlet(element1),
+                second: new Outlet(element2),
+            };
+            class AppWithOutlets extends TestApp {
+                expectedOutlets() {
+                    return ['first', 'second'];
+                }
+                createOutlets(outlets) {
+                    outlets.third = new MutableOutlet(element3);
+                    outlets.fourth = new MutableOutlet(element4);
+                    return outlets;
+                }
+            }
+            let app = new AppWithOutlets(defaultOpts);
+            expect(element1.classList.contains(deactivatedClass)).to.equal(true);
+            expect(element2.classList.contains(deactivatedClass)).to.equal(true);
+            expect(element3.classList.contains(deactivatedClass)).to.equal(true);
+            expect(element4.classList.contains(deactivatedClass)).to.equal(true);
+        });
     });
 });

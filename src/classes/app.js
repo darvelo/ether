@@ -29,6 +29,7 @@ class App extends Modifiable {
             this._makeOutletsImmutable(opts.outlets);
         }
         this.outlets = this.createOutlets(opts.outlets);
+        this._setDeactivatedClassOnOutlets();
         this._mountMapper = new MountMapper();
         this._conditionalMountMapper = new ConditionalMountMapper();
         let mountsMetadata = this._instantiateMounts(opts.params);
@@ -46,6 +47,12 @@ class App extends Modifiable {
                 outlets[prop] = new Outlet(outlets[prop].get());
             }
         }
+    }
+
+    _setDeactivatedClassOnOutlets() {
+        Object.keys(this.outlets).forEach(name => {
+            this.outlets[name]._element.classList.add('ether-deactivated');
+        });
     }
 
     _instantiateMounts(params) {
