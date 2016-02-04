@@ -190,7 +190,7 @@ class RootApp extends App {
                 this._lastQueryParams = queryParams;
             });
         } else {
-            throw new Error('??????????');
+            throw new TypeError(`${ctorName(this)}#navigate(): routingTrace had in invalid value: ${JSON.stringify(routingTrace.result)}.`);
         }
     }
 

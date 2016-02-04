@@ -324,6 +324,32 @@ describe.only('Acceptance Tests', () => {
                     done(err);
                 });
             });
+
+            navTest('throws if construction of app state fails', [
+                '/',
+            ], (done, dest) => {
+                let rootApp = new MyRootApp(defaultOpts);
+                let stub = sinon.stub(rootApp, '_constructState').returns(Promise.reject(new Error('fail!')));
+                rootApp.navigate(dest).then(null, err => {
+                    expect(err.message).to.equal('fail!');
+                    stub.restore();
+                    done();
+                }).catch(err => {
+                    // if test fails, pass error to Mocha
+                    stub.restore();
+                    done(err);
+                });
+            });
+
+            navTest('throws if `routingTrace.result` is neither `success` nor `404`', [
+                '/',
+            ], (done, dest) => {
+                let rootApp = new MyRootApp(defaultOpts);
+                let stub = sinon.stub(rootApp, '_buildPath').returns({result: null});
+                expect(() => rootApp.navigate(dest)).to.throw(TypeError, 'MyRootApp#navigate(): routingTrace had in invalid value: null.');
+                stub.restore();
+                done();
+            });
         });
 
         describe('Prerender/Deactivate/Render Cycle', () => {
@@ -515,11 +541,6 @@ describe.only('Acceptance Tests', () => {
                     done(err);
                 });
             });
-
-            // stub out _constructState for this one to return rejected promise
-            navTest.skip('throws if construction fails');
-            // stub out _buildPath for this one to return {result: null}
-            navTest.skip('throws if `routingTrace.result` is neither `success` nor `404`');
         });
     });
 });
