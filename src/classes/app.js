@@ -135,6 +135,10 @@ class App extends Modifiable {
         // user can throw if `setup` is not as expected
         return;
     }
+
+    navigate(...args) {
+        return this._rootApp.navigate(...args);
+    }
 }
 
 export default App;

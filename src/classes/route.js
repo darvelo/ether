@@ -37,6 +37,10 @@ class Route extends Modifiable {
         return;
     }
 
+    navigate(...args) {
+        return this._rootApp.navigate(...args);
+    }
+
     _prerender(params, queryParams, diff) {
         return Promise.resolve().then(() => {
             return this.prerender(params, queryParams, diff);

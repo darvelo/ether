@@ -350,6 +350,39 @@ describe.only('Acceptance Tests', () => {
                 stub.restore();
                 done();
             });
+
+            navTest('App can call navigate', [
+                ['/', 'userApp'],
+                ['/news/story?xyz=true&option=1', 'userApp'],
+                ['/user/1/action/go?option=1', 'userApp'],
+            ], (done, dest, address) => {
+                let rootApp = new MyRootApp(defaultOpts);
+                let app = rootApp._atAddress(address);
+                expect(app).to.be.an.instanceof(App);
+                app.navigate(dest).then(() => {
+                    done();
+                }).catch(err => {
+                    // if test fails, pass error to Mocha
+                    done(err);
+                });
+            });
+
+            navTest('Route can call navigate', [
+                ['/', 'userIdAction'],
+                ['/news/story?xyz=true&option=1', 'userIdMenuOne'],
+                ['/user/1/action/go?option=1', 'rootRoot'],
+            ], (done, dest, address) => {
+                let rootApp = new MyRootApp(defaultOpts);
+                let route = rootApp._atAddress(address);
+                expect(route).to.be.an.instanceof(Route);
+                route.navigate(dest).then(() => {
+                    done();
+                }).catch(err => {
+                    // if test fails, pass error to Mocha
+                    done(err);
+                });
+            });
+
         });
 
         describe('Prerender/Deactivate/Render Cycle', () => {
