@@ -93,6 +93,26 @@ describe('Expectable', function() {
                 '.'
             ].join(''));
         });
+
+        it('throws if any given address is the empty string', () => {
+            defaultOpts.addresses = ['', 'first'];
+            class EmptyAddress extends TestExpectable {
+                expectedAddresses() {
+                    return ['firs', 't'];
+                }
+            }
+            expect(() => new EmptyAddress(defaultOpts)).to.throw(Error, 'EmptyAddress received an address that was the empty string.');
+        });
+
+        it('throws if any expected address is the empty string', () => {
+            defaultOpts.addresses = ['firs', 't'];
+            class EmptyAddress extends TestExpectable {
+                expectedAddresses() {
+                    return ['first', ''];
+                }
+            }
+            expect(() => new EmptyAddress(defaultOpts)).to.throw(Error, 'EmptyAddress expected an address that was the empty string.');
+        });
     });
 
     describe('addressesHandlers() tests', () => {

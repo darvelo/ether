@@ -68,26 +68,7 @@ class Expectable {
         return true;
     }
 
-    _checkAddresses(addresses) {
-        let expected = this.expectedAddresses();
-        let result = this._compareArrays(addresses, expected);
-        switch (result) {
-            case RECEIVED_NOT_ARRAY:
-                throw new TypeError(ctorName(this) + ' constructor\'s options.addresses property was not an Array.');
-            case EXPECTED_NOT_ARRAY:
-                throw new TypeError(ctorName(this) + '#expectedAddresses() did not return an Array.');
-            case ARRAYS_NOT_EQUAL:
-                throw new Error([
-                    ctorName(this),
-                    '\'s received addresses ',
-                        JSON.stringify(addresses),
-                    ' did not match its expected addresses ',
-                        JSON.stringify(expected),
-                    '.'
-                ].join(''));
-            default:
-                break;
-        }
+    _checkAddressesHandlers(expected) {
         let handlers = this.addressesHandlers();
         if (!Array.isArray(handlers)) {
             throw new TypeError(`${ctorName(this)}#addressesHandlers() did not return an Array.`);
@@ -127,6 +108,34 @@ class Expectable {
                 '.'
             ].join(''));
         }
+    }
+
+    _checkAddresses(addresses) {
+        let expected = this.expectedAddresses();
+        let result = this._compareArrays(addresses, expected);
+        switch (result) {
+            case RECEIVED_NOT_ARRAY:
+                throw new TypeError(ctorName(this) + ' constructor\'s options.addresses property was not an Array.');
+            case EXPECTED_NOT_ARRAY:
+                throw new TypeError(ctorName(this) + '#expectedAddresses() did not return an Array.');
+            case ARRAYS_NOT_EQUAL:
+                throw new Error([
+                    ctorName(this),
+                    '\'s received addresses ',
+                        JSON.stringify(addresses),
+                    ' did not match its expected addresses ',
+                        JSON.stringify(expected),
+                    '.'
+                ].join(''));
+            default:
+                break;
+        }
+        if (addresses.some(addr => addr === '')) {
+            throw new Error(ctorName(this) + ' received an address that was the empty string.');
+        } else if (expected.some(addr => addr === '')) {
+            throw new Error(ctorName(this) + ' expected an address that was the empty string.');
+        }
+        this._checkAddressesHandlers(expected);
     }
 
     _checkOutlets(outlets) {
