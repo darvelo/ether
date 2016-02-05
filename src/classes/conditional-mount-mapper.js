@@ -306,6 +306,12 @@ class ConditionalMountMapper extends BaseMountMapper {
             }
             let mountData = this._mounts[logic];
             let { operator, regex } = mountData;
+            // empty addresses are disallowed in parse(),
+            // so we can use the empty string to test a Route
+            // that does not have any addresses assigned to it
+            if (!addresses.length) {
+                addresses = [''];
+            }
             for (let address of addresses) {
                 switch (operator) {
                     // * is always added to the list

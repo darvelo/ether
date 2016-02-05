@@ -197,6 +197,7 @@ describe('ConditionalMountMapper', () => {
                 mapper.add({
                     '*': [TestRoute],
                 }, parentData);
+                onlyHasProperties(mapper.match([]),  ['*']);
                 onlyHasProperties(mapper.match(['first']),  ['*']);
                 onlyHasProperties(mapper.match(['second']), ['*']);
                 onlyHasProperties(mapper.match(['third']),  ['*']);
@@ -231,6 +232,7 @@ describe('ConditionalMountMapper', () => {
                 onlyHasProperties(mapper.match(['second']), ['!first', '!third']);
                 onlyHasProperties(mapper.match(['third']), ['!first', '!first,second', '!second']);
                 onlyHasProperties(mapper.match(['fourth']), ['!first', '!first,second', '!second', '!third']);
+                onlyHasProperties(mapper.match([]), ['!first', '!first,second', '!second', '!third']);
                 // note in the following how passing multiple addresses compounds the exclusion.
                 // think of passing multiple addresses as an AND operation, not OR
                 onlyHasProperties(mapper.match(['first', 'second']), ['!third']);
@@ -256,6 +258,7 @@ describe('ConditionalMountMapper', () => {
                     '!fifth': TestRoute,
                     '*': [TestRoute],
                 }, parentData);
+                onlyHasProperties(mapper.match([]), ['!third,fourth', '!fifth', '*']);
                 onlyHasProperties(mapper.match(['first']), ['+first', '+first,second', '!third,fourth', '!fifth', '*']);
                 onlyHasProperties(mapper.match(['second']), ['+first,second', '!third,fourth', '!fifth', '*']);
                 onlyHasProperties(mapper.match(['fifth']), ['!third,fourth', '*']);
