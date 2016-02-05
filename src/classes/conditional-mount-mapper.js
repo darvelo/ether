@@ -60,6 +60,10 @@ class ConditionalMountMapper extends BaseMountMapper {
             addresses = [];
         }
 
+        if (addresses.some(addr => addr === '')) {
+            throw new Error(`ConditionalMountMapper#parse(): Empty addresses are not allowed in conditional mount: "${logic}".`);
+        }
+
         let regex;
         switch (operator) {
             case '*':

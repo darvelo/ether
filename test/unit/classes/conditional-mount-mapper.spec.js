@@ -119,6 +119,17 @@ describe('ConditionalMountMapper', () => {
             expect(() => mapper.parse('!')).to.throw(Error, 'Conditional mounts that are not "*" require a comma-delimited list of required addresses.');
             expect(() => mapper.parse('+')).to.throw(Error, 'Conditional mounts that are not "*" require a comma-delimited list of required addresses.');
         });
+
+        it('throws is any comma-delimited address is empty', () => {
+            expect(() => mapper.parse('!,')).to.throw(Error, 'ConditionalMountMapper#parse(): Empty addresses are not allowed in conditional mount: "!,".');
+            expect(() => mapper.parse('+,')).to.throw(Error, 'ConditionalMountMapper#parse(): Empty addresses are not allowed in conditional mount: "+,".');
+            expect(() => mapper.parse('!hi,')).to.throw(Error, 'ConditionalMountMapper#parse(): Empty addresses are not allowed in conditional mount: "!hi,".');
+            expect(() => mapper.parse('+hi,')).to.throw(Error, 'ConditionalMountMapper#parse(): Empty addresses are not allowed in conditional mount: "+hi,".');
+            expect(() => mapper.parse('!,hi')).to.throw(Error, 'ConditionalMountMapper#parse(): Empty addresses are not allowed in conditional mount: "!,hi".');
+            expect(() => mapper.parse('+,hi')).to.throw(Error, 'ConditionalMountMapper#parse(): Empty addresses are not allowed in conditional mount: "+,hi".');
+            expect(() => mapper.parse('!hi,,hello')).to.throw(Error, 'ConditionalMountMapper#parse(): Empty addresses are not allowed in conditional mount: "!hi,,hello".');
+            expect(() => mapper.parse('+hi,,hello')).to.throw(Error, 'ConditionalMountMapper#parse(): Empty addresses are not allowed in conditional mount: "+hi,,hello".');
+        });
     });
 
     describe('Adding', () => {
