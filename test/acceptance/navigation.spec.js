@@ -22,6 +22,50 @@ function getAllSpyFns(spies) {
     return allSpies;
 }
 
+function resetSpies() {
+    // don't replace the spies object or its inner spy objects if they
+    // exist since Routes will always reference the originally passed
+    // in objects.
+    mountSpies = [
+        'RootRootRoute',
+        'RootNewsRoute',
+        'UserIdActionRoute',
+        'UserIdMenuRouteOne',
+        'UserIdMenuRouteTwo',
+    ].reduce((memo, key) => {
+        memo[key] = memo[key] || {};
+        memo[key].prerenderSpy = sinon.spy();
+        memo[key].renderSpy = sinon.spy();
+        memo[key].deactivateSpy = sinon.spy();
+        return memo;
+    }, mountSpies || {});
+
+    // don't replace the spies object or its inner spy objects if they
+    // exist since Routes will always reference the originally passed
+    // in objects.
+    cMountSpies = [
+        'RootAllConditionalRoute',
+        'RootNewsConditionalRoute',
+
+        'RootIdConditionalRouteOne',
+        'RootIdConditionalRouteTwo',
+
+        'UserIdConditionalRouteOne',
+        'UserIdConditionalRouteTwo',
+        'UserIdConditionalRouteThree',
+        'UserIdConditionalRouteFour',
+        'UserIdActionConditionalRoute',
+        'UserIdMenuConditionalRouteOne',
+        'UserIdMenuConditionalRouteTwo',
+    ].reduce((memo, key) => {
+        memo[key] = memo[key] || {};
+        memo[key].prerenderSpy = sinon.spy();
+        memo[key].renderSpy = sinon.spy();
+        memo[key].deactivateSpy = sinon.spy();
+        return memo;
+    }, cMountSpies || {});
+}
+
 class TestApp extends App {
     expectedOutlets() {
         return [];
@@ -188,43 +232,7 @@ describe.only('Acceptance Tests', () => {
     let defaultOpts;
 
     beforeEach(() => {
-        mountSpies = [
-            'RootRootRoute',
-            'RootNewsRoute',
-            'UserIdActionRoute',
-            'UserIdMenuRouteOne',
-            'UserIdMenuRouteTwo',
-        ].reduce((memo, key) => {
-            memo[key] = {
-                prerenderSpy:  sinon.spy(),
-                deactivateSpy: sinon.spy(),
-                renderSpy:     sinon.spy(),
-            };
-            return memo;
-        }, {});
-        cMountSpies = [
-            'RootAllConditionalRoute',
-            'RootNewsConditionalRoute',
-
-            'RootIdConditionalRouteOne',
-            'RootIdConditionalRouteTwo',
-
-            'UserIdConditionalRouteOne',
-            'UserIdConditionalRouteTwo',
-            'UserIdConditionalRouteThree',
-            'UserIdConditionalRouteFour',
-            'UserIdActionConditionalRoute',
-            'UserIdMenuConditionalRouteOne',
-            'UserIdMenuConditionalRouteTwo',
-        ].reduce((memo, key) => {
-            memo[key] = {
-                prerenderSpy:  sinon.spy(),
-                deactivateSpy: sinon.spy(),
-                renderSpy:     sinon.spy(),
-            };
-            return memo;
-        }, {});
-
+        resetSpies();
         defaultOpts = {
             outlets: {
                 main: new MutableOutlet(document.createElement('div')),
@@ -601,6 +609,9 @@ describe.only('Acceptance Tests', () => {
             ], (done, dest1, dest2, expectedRenderedMounts, expectedDeactivatedRoutes, expectedUnaffectedRoutes) => {
                 let rootApp = new MyRootApp(defaultOpts);
                 rootApp.navigate(dest1).then(() => {
+                    // only test spy calls after the
+                    // second call to navigate()
+                    resetSpies();
                     return rootApp.navigate(dest2);
                 }).then(() => {
                     for (let renderedMountStr of expectedRenderedMounts) {
@@ -608,10 +619,10 @@ describe.only('Acceptance Tests', () => {
                         for (let deactivatedMountStr of expectedDeactivatedRoutes) {
                             let { deactivateSpy } = (mountSpies[deactivatedMountStr] || cMountSpies[deactivatedMountStr]);
                             deactivateSpy.should.have.been.calledOnce;
-                            // using sinon's `always` gives a bit of extra insurance
-                            // that sinon's not just checking against a single call
-                            prerenderSpy.should.have.always.been.calledBefore(deactivateSpy);
-                            renderSpy.should.have.always.been.calledAfter(deactivateSpy);
+                            prerenderSpy.should.have.been.calledOnce;
+                            renderSpy.should.have.been.calledOnce;
+                            prerenderSpy.should.have.been.calledBefore(deactivateSpy);
+                            renderSpy.should.have.been.calledAfter(deactivateSpy);
                         }
                     }
                     for (let unaffectedRouteStr of expectedUnaffectedRoutes) {
@@ -629,7 +640,7 @@ describe.only('Acceptance Tests', () => {
 
             navTest('prerender/render are called for each navigation step in forwards order');
             navTest('deactivate is called for each navigation step in backwards order');
-            navTest('sets currentMount(s) for MM/CMM when diverging');
+            // test that all routes get _active true or false at the right times
             navTest('sets the correct value for isActive() on the proper mounts/cMounts');
             // test that all classes happen at the right times, e.g. ether-prerendering vs. ether-prerendered
             navTest('sets the correct CSS class for all outlets on the proper mounts/cMounts');
