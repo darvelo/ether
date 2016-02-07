@@ -214,8 +214,8 @@ class TodoApp extends TestApp {
     }
     mountConditionals() {
         return {
-            '*': TodoIdConditionalRoute.setup(()  => cMountSpies),
-            '+todoIdRenderStyle': TodoIdRenderStyleConditionalRoute.setup(()    => cMountSpies),
+            '*': TodoIdConditionalRoute.setup(() => cMountSpies),
+            '+todoIdRenderStyle': TodoIdRenderStyleConditionalRoute.setup(() => cMountSpies),
         };
     }
 }
@@ -626,6 +626,78 @@ describe.only('Acceptance Tests', () => {
             // ]);
 
             navTest('calls deactivate() when diverging from active mount/conditional mounts between prerender and render of to-be-activated mount/cMounts', [
+                // In these scenarios:
+                //    • `o` represents a Route or an App
+                //    • dashed lines represent the previous navigation destination path
+                //    • solid lines represent the current navigation destination path
+
+                // Scenario 1: going from a node to a sibling node
+                // ──o--o
+                //   └──o
+                ['/', '/news/story',
+                    [
+                        // root-based mounts
+                        'RootNewsRoute',
+                        // root-based conditional mounts
+                        'RootAllConditionalRoute', 'RootNewsConditionalRoute',
+                    ],
+                    [
+                        // root-based mounts
+                        'RootRootRoute',
+                        // root-based conditional mounts
+                        'RootConditionalRoute',
+                    ],
+                    [
+                        // root-based conditional mounts
+                        'RootIdConditionalRouteOne', 'RootIdConditionalRouteTwo',
+                        // todo-based mounts
+                        'TodoIdRenderStyleRoute',
+                        // todo-based conditional mounts
+                        'TodoIdConditionalRoute', 'TodoIdRenderStyleConditionalRoute',
+                        // userApp-based mounts
+                        'UserIdActionRoute', 'UserIdMenuRouteOne', 'UserIdMenuRouteTwo',
+                        // userApp-based conditional mounts
+                        'UserIdConditionalRouteOne',
+                        'UserIdConditionalRouteTwo', 'UserIdConditionalRouteThree', 'UserIdActionConditionalRoute',
+                        'UserIdConditionalRouteFour', 'UserIdMenuConditionalRouteOne',
+                        'UserIdMenuConditionalRouteTwo',
+                    ],
+                ],
+                // Scenario 2: going from a node to a deeper branch on a sibling node
+                // ──o--o
+                //   └──o──o
+                ['/', '/todos/1/list',
+                    [
+                        // root-based conditional mounts
+                        'RootAllConditionalRoute',
+                        // todo-based mounts
+                        'TodoIdRenderStyleRoute',
+                        // todo-based conditional mounts
+                        'TodoIdConditionalRoute', 'TodoIdRenderStyleConditionalRoute',
+                    ],
+                    [
+                        // root-based mounts
+                        'RootRootRoute',
+                        // root-based conditional mounts
+                        'RootConditionalRoute',
+                    ],
+                    [
+                        // root-based mounts
+                        'RootNewsRoute',
+                        // root-based conditional mounts
+                        'RootIdConditionalRouteOne', 'RootIdConditionalRouteTwo', 'RootNewsConditionalRoute',
+                        // userApp-based mounts
+                        'UserIdActionRoute', 'UserIdMenuRouteOne', 'UserIdMenuRouteTwo',
+                        // userApp-based conditional mounts
+                        'UserIdConditionalRouteOne',
+                        'UserIdConditionalRouteTwo', 'UserIdConditionalRouteThree', 'UserIdActionConditionalRoute',
+                        'UserIdConditionalRouteFour', 'UserIdMenuConditionalRouteOne',
+                        'UserIdMenuConditionalRouteTwo',
+                    ],
+                ],
+                // Scenario 3: going from a deep routing node to a node on a common ancestor node
+                // ──o--o--o
+                //   └──o
                 ['/user/1/action/go', '/news/story',
                     [
                         // root-based mounts
@@ -639,19 +711,56 @@ describe.only('Acceptance Tests', () => {
                         // userApp-based mounts
                         'UserIdActionRoute',
                         // userApp-based conditional mounts
-                        'UserIdActionConditionalRoute', 'UserIdConditionalRouteOne', 'UserIdConditionalRouteTwo', 'UserIdConditionalRouteThree',
+                        'UserIdConditionalRouteOne',
+                        'UserIdConditionalRouteTwo', 'UserIdConditionalRouteThree', 'UserIdActionConditionalRoute',
                     ],
                     [
                         // root-based mounts
                         'RootRootRoute',
                         // root-based conditional mounts
                         'RootConditionalRoute',
+                        // todoApp-based mounts
+                        'TodoIdRenderStyleRoute',
+                        // todoApp-based conditional mounts
+                        'TodoIdConditionalRoute', 'TodoIdRenderStyleConditionalRoute',
                         // userApp-based mounts
                         'UserIdMenuRouteOne', 'UserIdMenuRouteTwo',
                         // userApp-based conditional mounts
-                        'UserIdConditionalRouteFour', 'UserIdMenuConditionalRouteOne', 'UserIdMenuConditionalRouteTwo',
+                        'UserIdConditionalRouteFour', 'UserIdMenuConditionalRouteOne',
+                        'UserIdMenuConditionalRouteTwo',
                     ],
-                ]
+                ],
+                // Scenario 4: going from a deep branch within a node to a deep branch on a sibling node
+                // ──o--o--o
+                //   └──o──o
+                ['/todos/1/list', '/user/1/menu/stats/profile',
+                    [
+                        // root-based conditional mounts
+                        'RootAllConditionalRoute', 'RootIdConditionalRouteOne', 'RootIdConditionalRouteTwo',
+                        // userApp-based mounts
+                        'UserIdMenuRouteTwo',
+                        // userApp-based conditional mounts
+                        'UserIdConditionalRouteOne',
+                        'UserIdConditionalRouteFour', 'UserIdMenuConditionalRouteOne',
+                        'UserIdMenuConditionalRouteTwo',
+                    ],
+                    [
+                        // todo-based mounts
+                        'TodoIdRenderStyleRoute',
+                        // todo-based conditional mounts
+                        'TodoIdConditionalRoute', 'TodoIdRenderStyleConditionalRoute',
+                    ],
+                    [
+                        // root-based mounts
+                        'RootRootRoute', 'RootNewsRoute',
+                        // root-based conditional mounts
+                        'RootConditionalRoute', 'RootNewsConditionalRoute',
+                        // userApp-based mounts
+                        'UserIdActionRoute', 'UserIdMenuRouteOne',
+                        // userApp-based conditional mounts
+                        'UserIdConditionalRouteTwo', 'UserIdConditionalRouteThree', 'UserIdActionConditionalRoute',
+                    ],
+                ],
             ], (done, dest1, dest2, expectedRenderedMounts, expectedDeactivatedRoutes, expectedUnaffectedRoutes) => {
                 let rootApp = new MyRootApp(defaultOpts);
                 rootApp.navigate(dest1).then(() => {
