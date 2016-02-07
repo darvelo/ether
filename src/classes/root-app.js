@@ -4,16 +4,7 @@ import ctorName from '../utils/ctor-name';
 import { is, isnt } from '../utils/is';
 import isNumeric from '../utils/is-numeric';
 import diffObjects from '../utils/diff-objects';
-
-function finalDiff(paramsDiff, queryParamsDiff) {
-    if (is(paramsDiff, 'Null') && is(queryParamsDiff, 'Null')) {
-        return null;
-    }
-    return {
-        params: paramsDiff,
-        queryParams: queryParamsDiff,
-    };
-}
+import finalDiff from '../utils/final-diff';
 
 class RootApp extends App {
     constructor(opts) {
