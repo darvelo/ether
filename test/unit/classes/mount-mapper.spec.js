@@ -323,10 +323,12 @@ describe('MountMapper', () => {
                 expect(() => mapper.setCurrentMount(undefined)).to.throw(TypeError, 'MountMapper#setCurrentMount(): The first argument given was not a string: undefined.');
             });
 
-            it('throws on setting current mount if second arg is not an object', () => {
+            it('throws on setting current mount if second arg is not an object or null', () => {
                 let crumb = '/user/{id=\\d+}';
                 mapper.add({[crumb]: IdParamRoute}, parentData);
-                expect(() => mapper.setCurrentMount('xyz', [])).to.throw(TypeError, 'MountMapper#setCurrentMount(): The second argument given was not an object: [].');
+                expect(() => mapper.setCurrentMount('xyz', [])).to.throw(TypeError, 'MountMapper#setCurrentMount(): The second argument given was not an object or null: [].');
+                expect(() => mapper.setCurrentMount('xyz', 1)).to.throw(TypeError, 'MountMapper#setCurrentMount(): The second argument given was not an object or null: 1.');
+                expect(() => mapper.setCurrentMount('xyz', 'hi')).to.throw(TypeError, 'MountMapper#setCurrentMount(): The second argument given was not an object or null: "hi".');
             });
 
             it('throws on setting current mount if first arg is not a previously-added crumb', () => {
@@ -353,6 +355,13 @@ describe('MountMapper', () => {
                 mapper.setCurrentMount(crumb, {id: 20});
                 expect(mapper.getCurrentMount()).to.equal(crumb);
             });
+
+            it('sets the current mount with a crumb and with params as null', () => {
+                let crumb = '/user/{id=\\d+}';
+                mapper.add({[crumb]: TestRoute}, parentData);
+                mapper.setCurrentMount(crumb, null);
+                expect(mapper.getCurrentMount()).to.equal(crumb);
+            });
         });
 
         describe('Getting the last params of a mount', () => {
@@ -363,12 +372,18 @@ describe('MountMapper', () => {
             });
 
             it('sets the last params for a mount when setCurrentMount() is called', () => {
-                let crumb = '/user/{id=\\d+}';
+                let crumb1 = '/user/{id=\\d+}';
+                let crumb2 = '/action';
                 let params = {id: 20};
-                mapper.add({[crumb]: IdParamRoute}, parentData);
-                mapper.setCurrentMount(crumb, params);
-                expect(mapper.lastParamsFor(crumb)).to.not.equal(params);
-                expect(mapper.lastParamsFor(crumb)).to.deep.equal(params);
+                mapper.add({
+                    [crumb1]: IdParamRoute,
+                    [crumb2]: TestRoute,
+                }, parentData);
+                mapper.setCurrentMount(crumb1, params);
+                expect(mapper.lastParamsFor(crumb1)).to.not.equal(params);
+                expect(mapper.lastParamsFor(crumb1)).to.deep.equal(params);
+                mapper.setCurrentMount(crumb2, null);
+                expect(mapper.lastParamsFor(crumb2)).to.deep.equal({});
             });
         });
 

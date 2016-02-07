@@ -364,8 +364,11 @@ class MountMapper extends BaseMountMapper {
         if (isnt(crumb, 'String')) {
             throw new TypeError(`MountMapper#setCurrentMount(): The first argument given was not a string: ${JSON.stringify(crumb)}.`);
         }
-        if (isnt(params, 'Object')) {
-            throw new TypeError(`MountMapper#setCurrentMount(): The second argument given was not an object: ${JSON.stringify(params)}.`);
+
+        if (is(params, 'Null')) {
+            params = {};
+        } else if (isnt(params, 'Object')) {
+            throw new TypeError(`MountMapper#setCurrentMount(): The second argument given was not an object or null: ${JSON.stringify(params)}.`);
         }
 
         let crumbData = this._crumbMap[crumb];
