@@ -68,14 +68,7 @@ class RootRootRoute extends SinonSpyRoute {
         return [function(){}];
     }
 }
-class RootNewsRoute extends SinonSpyRoute {
-    expectedAddresses() {
-        return ['rootNews'];
-    }
-    addressesHandlers() {
-        return [function(){}];
-    }
-}
+class RootNewsRoute extends SinonSpyRoute { }
 class UserIdActionRoute extends SinonSpyRoute {
     expectedParams() {
         return ['id', 'action'];
@@ -175,7 +168,7 @@ class MyRootApp extends RootApp {
     mount() {
         return {
             '': RootRootRoute.addresses('rootRoot').setup(() => mountSpies),
-            'news/{news=\\w+}': RootNewsRoute.addresses('rootNews').setup(() => mountSpies),
+            'news/{news=\\w+}': RootNewsRoute.setup(() => mountSpies),
             'user/{id=\\d+}': UserApp.addresses('userApp'),
         };
     }
@@ -574,6 +567,72 @@ describe.only('Acceptance Tests', () => {
                     done(err);
                 });
             });
+
+            navTest('passes the right params/queryParams/diffs to mounts/conditional mounts\' prerender()/render() fns on return visits');
+            // , [
+            //     ['/user/1/action/go', '/user/1/action/go', null, null],
+            // ]);
+
+            navTest('calls deactivate() when diverging from active mount/conditional mounts between prerender and render of to-be-activated mount/cMounts', [
+                ['/user/1/action/go', '/news/story',
+                    [
+                        // root-based mounts
+                        'RootNewsRoute',
+                        // root-based conditional mounts
+                        'RootAllConditionalRoute', 'RootNewsConditionalRoute',
+                    ],
+                    [
+                        // root-based conditional mounts
+                        'RootIdConditionalRouteOne', 'RootIdConditionalRouteTwo',
+                        // userApp-based mounts
+                        'UserIdActionRoute',
+                        // userApp-based conditional mounts
+                        'UserIdActionConditionalRoute', 'UserIdConditionalRouteOne', 'UserIdConditionalRouteTwo', 'UserIdConditionalRouteThree',
+                    ],
+                    [
+                        // root-based conditional mounts
+                        'RootRootRoute',
+                        // userApp-based mounts
+                        'UserIdMenuRouteOne', 'UserIdMenuRouteTwo',
+                        // userApp-based conditional mounts
+                        'UserIdConditionalRouteFour', 'UserIdMenuConditionalRouteOne', 'UserIdMenuConditionalRouteTwo',
+                    ],
+                ]
+            ], (done, dest1, dest2, expectedRenderedMounts, expectedDeactivatedRoutes, expectedUnaffectedRoutes) => {
+                let rootApp = new MyRootApp(defaultOpts);
+                rootApp.navigate(dest1).then(() => {
+                    return rootApp.navigate(dest2);
+                }).then(() => {
+                    for (let renderedMountStr of expectedRenderedMounts) {
+                        let { prerenderSpy, renderSpy } = (mountSpies[renderedMountStr] || cMountSpies[renderedMountStr]);
+                        for (let deactivatedMountStr of expectedDeactivatedRoutes) {
+                            let { deactivateSpy } = (mountSpies[deactivatedMountStr] || cMountSpies[deactivatedMountStr]);
+                            deactivateSpy.should.have.been.calledOnce;
+                            // using sinon's `always` gives a bit of extra insurance
+                            // that sinon's not just checking against a single call
+                            prerenderSpy.should.have.always.been.calledBefore(deactivateSpy);
+                            renderSpy.should.have.always.been.calledAfter(deactivateSpy);
+                        }
+                    }
+                    for (let unaffectedRouteStr of expectedUnaffectedRoutes) {
+                        let { prerenderSpy, deactivateSpy, renderSpy } = (mountSpies[unaffectedRouteStr] || cMountSpies[unaffectedRouteStr]);
+                        prerenderSpy.should.not.have.been.called;
+                        deactivateSpy.should.not.have.been.called;
+                        renderSpy.should.not.have.been.called;
+                    }
+                    done();
+                }).catch(err => {
+                    // if test fails, pass error to Mocha
+                    done(err);
+                });
+            });
+
+            navTest('prerender/render are called for each navigation step in forwards order');
+            navTest('deactivate is called for each navigation step in backwards order');
+            navTest('sets currentMount(s) for MM/CMM when diverging');
+            navTest('sets the correct value for isActive() on the proper mounts/cMounts');
+            // test that all classes happen at the right times, e.g. ether-prerendering vs. ether-prerendered
+            navTest('sets the correct CSS class for all outlets on the proper mounts/cMounts');
         });
     });
 });
