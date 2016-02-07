@@ -29,6 +29,7 @@ function resetSpies() {
     mountSpies = [
         'RootRootRoute',
         'RootNewsRoute',
+        'TodoIdRenderStyleRoute',
         'UserIdActionRoute',
         'UserIdMenuRouteOne',
         'UserIdMenuRouteTwo',
@@ -46,9 +47,13 @@ function resetSpies() {
     cMountSpies = [
         'RootAllConditionalRoute',
         'RootNewsConditionalRoute',
+        'RootConditionalRoute',
 
         'RootIdConditionalRouteOne',
         'RootIdConditionalRouteTwo',
+
+        'TodoIdConditionalRoute',
+        'TodoIdRenderStyleConditionalRoute',
 
         'UserIdConditionalRouteOne',
         'UserIdConditionalRouteTwo',
@@ -113,6 +118,17 @@ class RootRootRoute extends SinonSpyRoute {
     }
 }
 class RootNewsRoute extends SinonSpyRoute { }
+class TodoIdRenderStyleRoute extends SinonSpyRoute {
+    expectedParams() {
+        return ['id', 'renderStyle'];
+    }
+    expectedAddresses() {
+        return ['todoIdRenderStyle'];
+    }
+    addressesHandlers() {
+        return [function(){}];
+    }
+}
 class UserIdActionRoute extends SinonSpyRoute {
     expectedParams() {
         return ['id', 'action'];
@@ -146,7 +162,8 @@ class UserIdMenuRouteTwo extends UserIdMenuRoute {
 // conditional routes
 // need to make sure to mount each exactly once,
 // to ensure spy call counts are correct
-class RootAllConditionalRoute    extends SinonSpyRoute { }
+class RootAllConditionalRoute  extends SinonSpyRoute { }
+class RootConditionalRoute     extends SinonSpyRoute { }
 class RootNewsConditionalRoute extends SinonSpyRoute {
     expectedParams() {
         return ['news'];
@@ -159,6 +176,7 @@ class IdRoute extends SinonSpyRoute {
 }
 class RootIdConditionalRouteOne    extends IdRoute { }
 class RootIdConditionalRouteTwo    extends IdRoute { }
+class TodoIdConditionalRoute       extends IdRoute { }
 class UserIdConditionalRouteOne    extends IdRoute { }
 class UserIdConditionalRouteTwo    extends IdRoute { }
 class UserIdConditionalRouteThree  extends IdRoute { }
@@ -175,8 +193,32 @@ class IdMenuRoute extends SinonSpyRoute {
 }
 class UserIdMenuConditionalRouteOne extends IdMenuRoute { }
 class UserIdMenuConditionalRouteTwo extends IdMenuRoute { }
+class TodoIdRenderStyleConditionalRoute extends IdRoute {
+    expectedParams() {
+        return ['id', 'renderStyle'];
+    }
+}
 
 // the actual Ether App structure
+class TodoApp extends TestApp {
+    expectedAddresses() {
+        return ['todoApp'];
+    }
+    addressesHandlers() {
+        return [function(){}];
+    }
+    mount() {
+        return {
+            '{renderStyle=\\w+}': TodoIdRenderStyleRoute.addresses('todoIdRenderStyle').setup(() => mountSpies),
+        };
+    }
+    mountConditionals() {
+        return {
+            '*': TodoIdConditionalRoute.setup(()  => cMountSpies),
+            '+todoIdRenderStyle': TodoIdRenderStyleConditionalRoute.setup(()    => cMountSpies),
+        };
+    }
+}
 class UserApp extends TestApp {
     expectedAddresses() {
         return ['userApp'];
@@ -213,17 +255,19 @@ class MyRootApp extends RootApp {
         return {
             '': RootRootRoute.addresses('rootRoot').setup(() => mountSpies),
             'news/{news=\\w+}': RootNewsRoute.setup(() => mountSpies),
+            'todos/{id=\\d+}': TodoApp.addresses('todoApp'),
             'user/{id=\\d+}': UserApp.addresses('userApp'),
         };
     }
     mountConditionals() {
         return {
             '*': RootAllConditionalRoute.setup(() => cMountSpies),
-            '!userApp,rootRoot': RootNewsConditionalRoute.setup(() => cMountSpies),
+            '!todoApp,userApp,rootRoot': RootNewsConditionalRoute.setup(() => cMountSpies),
             '+userApp': [
                 RootIdConditionalRouteOne.setup(() => cMountSpies),
                 RootIdConditionalRouteTwo.setup(() => cMountSpies),
             ],
+            '+rootRoot': RootConditionalRoute.setup(() => cMountSpies),
         };
     }
 }
@@ -462,8 +506,8 @@ describe.only('Acceptance Tests', () => {
 
             navTest('passes to all conditional mounts\' prerender()/render() fns all queryParams and only the expected params for the Route', [
                 // @TODO: add destinations, here and in other navTests, that navigate by address and given params/queryParams
-                ['/', null, null, [RootAllConditionalRoute]],
-                ['/?sort=true&sort_type=asc&idx=1', null, freeze({sort: true, sort_type: 'asc', idx: 1}), [RootAllConditionalRoute]],
+                ['/', null, null, [RootAllConditionalRoute, RootConditionalRoute]],
+                ['/?sort=true&sort_type=asc&idx=1', null, freeze({sort: true, sort_type: 'asc', idx: 1}), [RootAllConditionalRoute, RootConditionalRoute]],
                 ['/news/story?', freeze({news: 'story'}), null, [RootAllConditionalRoute, RootNewsConditionalRoute]],
                 ['/news/story?idx=3', freeze({news: 'story'}), freeze({idx: 3}), [RootAllConditionalRoute, RootNewsConditionalRoute]],
                 ['/user/1/action/go?', freeze({id: 1, action: 'go'}), null,
@@ -598,8 +642,10 @@ describe.only('Acceptance Tests', () => {
                         'UserIdActionConditionalRoute', 'UserIdConditionalRouteOne', 'UserIdConditionalRouteTwo', 'UserIdConditionalRouteThree',
                     ],
                     [
-                        // root-based conditional mounts
+                        // root-based mounts
                         'RootRootRoute',
+                        // root-based conditional mounts
+                        'RootConditionalRoute',
                         // userApp-based mounts
                         'UserIdMenuRouteOne', 'UserIdMenuRouteTwo',
                         // userApp-based conditional mounts
