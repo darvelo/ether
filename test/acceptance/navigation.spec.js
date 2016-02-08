@@ -4,6 +4,8 @@ import App from '../../src/classes/app';
 import Route from '../../src/classes/route';
 import ctorName from '../../src/utils/ctor-name';
 import { is, isnt } from '../../src/utils/is';
+import diffObjects from '../../src/utils/diff-objects';
+import finalDiff from '../../src/utils/final-diff';
 
 import { navTest } from '../utils/acceptance-test-generator';
 
@@ -522,7 +524,7 @@ describe.only('Acceptance Tests', () => {
                         UserIdConditionalRouteOne, UserIdConditionalRouteFour, UserIdMenuConditionalRouteOne,
                     ]
                 ],
-                ['/user/2/menu/stats?bestFirst=true&limit=10&order=abc', freeze({id: 2, menu: 'stats'}), {bestFirst: true, limit: 10, order: 'abc'},
+                ['/user/2/menu/stats?bestFirst=true&limit=10&order=abc', freeze({id: 2, menu: 'stats'}), freeze({bestFirst: true, limit: 10, order: 'abc'}),
                     [
                         RootAllConditionalRoute, RootIdConditionalRouteOne, RootIdConditionalRouteTwo,
                         UserIdConditionalRouteOne, UserIdConditionalRouteFour, UserIdMenuConditionalRouteOne,
@@ -534,7 +536,7 @@ describe.only('Acceptance Tests', () => {
                         UserIdConditionalRouteOne, UserIdConditionalRouteFour, UserIdMenuConditionalRouteOne, UserIdMenuConditionalRouteTwo,
                     ]
                 ],
-                ['/user/2/menu/stats/profile?bestFirst=true&limit=10&order=abc', freeze({id: 2, menu: 'stats'}), {bestFirst: true, limit: 10, order: 'abc'},
+                ['/user/2/menu/stats/profile?bestFirst=true&limit=10&order=abc', freeze({id: 2, menu: 'stats'}), freeze({bestFirst: true, limit: 10, order: 'abc'}),
                     [
                         RootAllConditionalRoute, RootIdConditionalRouteOne, RootIdConditionalRouteTwo,
                         UserIdConditionalRouteOne, UserIdConditionalRouteFour, UserIdMenuConditionalRouteOne, UserIdMenuConditionalRouteTwo,
@@ -565,16 +567,6 @@ describe.only('Acceptance Tests', () => {
                     };
                 }
 
-                function finalDiff(paramsDiff) {
-                    if (is(paramsDiff, 'Null') && is(queryParamsDiff, 'Null')) {
-                        return null;
-                    }
-                    return {
-                        params: paramsDiff,
-                        queryParams: queryParamsDiff,
-                    };
-                }
-
                 let rootApp = new MyRootApp(defaultOpts);
                 rootApp.navigate(dest).then(() => {
                     for (let route of expectedCondRoutesRendered) {
@@ -601,7 +593,7 @@ describe.only('Acceptance Tests', () => {
                         let expectedArgs = [
                             params,
                             queryParams,
-                            finalDiff(paramsDiff),
+                            finalDiff(paramsDiff, queryParamsDiff),
                         ];
                         prerenderSpy.should.have.been.calledWith(...expectedArgs);
                         renderSpy.should.have.been.calledWith(...expectedArgs);
@@ -620,10 +612,368 @@ describe.only('Acceptance Tests', () => {
                 });
             });
 
-            navTest('passes the right params/queryParams/diffs to mounts/conditional mounts\' prerender()/render() fns on return visits');
-            // , [
-            //     ['/user/1/action/go', '/user/1/action/go', null, null],
-            // ]);
+            function checkRenderArgsAfterNavigation(done, dests, prevQueryParams, queryParams, expectedRenderedMounts) {
+                let lastIdx = dests.length-1;
+                let rootApp = new MyRootApp(defaultOpts);
+                dests.reduce((memo, dest, idx) => {
+                    return memo.then(() => {
+                        // only test spy calls after the
+                        // last call to navigate()
+                        if (idx === lastIdx) {
+                            resetSpies();
+                        }
+                        return rootApp.navigate(dest);
+                    });
+                }, Promise.resolve()).then(() => {
+                    for (let [ renderedMountStr, prevParams, params ] of expectedRenderedMounts) {
+                        let { prerenderSpy, renderSpy } = (mountSpies[renderedMountStr] || cMountSpies[renderedMountStr]);
+                        let expectedArgs = [
+                            params,
+                            queryParams,
+                            finalDiff(
+                                diffObjects(prevParams      || {}, params      || {}),
+                                diffObjects(prevQueryParams || {}, queryParams || {})
+                            ),
+                        ];
+                        prerenderSpy.should.have.been.calledOnce;
+                        renderSpy.should.have.been.calledOnce;
+                        prerenderSpy.should.have.been.calledWith(...expectedArgs);
+                        renderSpy.should.have.been.calledWith(...expectedArgs);
+                    }
+                    done();
+                }).catch(err => {
+                    // if test fails, pass error to Mocha
+                    done(err);
+                });
+            }
+
+            navTest('passes the right params/queryParams/diffs to mounts/conditional mounts\' prerender()/render() fns on two consecutive visits', [
+                // same params and query params isn't tested because same-URL navigation is a noop
+
+                // different params, same query params
+                [
+                    ['/todos/1/list?hello=1&sort=asc', '/todos/2/chart?sort=asc&hello=1'],
+                    freeze({hello: 1, sort: 'asc'}), freeze({hello: 1, sort: 'asc'}),
+                    [
+                        // root-based conditional mounts
+                        ['RootAllConditionalRoute', null, null],
+                        // todo-based mounts
+                        ['TodoIdRenderStyleRoute', freeze({id: 1, renderStyle: 'list'}), freeze({id: 2, renderStyle: 'chart'})],
+                        // todo-based conditional mounts
+                        ['TodoIdConditionalRoute', freeze({id: 1}), freeze({id: 2})],
+                        ['TodoIdRenderStyleConditionalRoute', freeze({id: 1, renderStyle: 'list'}), freeze({id: 2, renderStyle: 'chart'})],
+                    ],
+                ],
+                [
+                    ['/user/1/action/go?', '/user/2/action/stop'],
+                    null, null,
+                    [
+                        // root-based conditional mounts
+                        ['RootAllConditionalRoute', null, null],
+                        ['RootIdConditionalRouteOne', freeze({id: 1}), freeze({id: 2})],
+                        ['RootIdConditionalRouteTwo', freeze({id: 1}), freeze({id: 2})],
+                        // userApp-based mounts
+                        ['UserIdActionRoute', freeze({id: 1, action: 'go'}), freeze({id: 2, action: 'stop'})],
+                        // userApp-based conditional mounts
+                        ['UserIdConditionalRouteOne', freeze({id: 1}), freeze({id: 2})],
+                        ['UserIdConditionalRouteTwo', freeze({id: 1}), freeze({id: 2})],
+                        ['UserIdActionConditionalRoute', freeze({id: 1, action: 'go'}), freeze({id: 2, action: 'stop'})],
+                        ['UserIdConditionalRouteThree', freeze({id: 1}), freeze({id: 2})],
+                    ],
+                ],
+                // same params, different query params
+                [
+                    ['/todos/1/list', '/todos/1/list?sort=asc&hello=1'],
+                    null, freeze({hello: 1, sort: 'asc'}),
+                    [
+                        // root-based conditional mounts
+                        ['RootAllConditionalRoute', null, null],
+                        // todo-based mounts
+                        ['TodoIdRenderStyleRoute', freeze({id: 1, renderStyle: 'list'}), freeze({id: 1, renderStyle: 'list'})],
+                        // todo-based conditional mounts
+                        ['TodoIdConditionalRoute', freeze({id: 1}), freeze({id: 1})],
+                        ['TodoIdRenderStyleConditionalRoute', freeze({id: 1, renderStyle: 'list'}), freeze({id: 1, renderStyle: 'list'})],
+                    ],
+                ],
+                [
+                    ['/user/1/action/go?sort=true&asc=1', '/user/1/action/go?sort=false&list=yes'],
+                    freeze({sort: true, asc: 1}), freeze({sort: false, list: 'yes'}),
+                    [
+                        // root-based conditional mounts
+                        ['RootAllConditionalRoute', null, null],
+                        ['RootIdConditionalRouteOne', freeze({id: 1}), freeze({id: 1})],
+                        ['RootIdConditionalRouteTwo', freeze({id: 1}), freeze({id: 1})],
+                        // userApp-based mounts
+                        ['UserIdActionRoute', freeze({id: 1, action: 'go'}), freeze({id: 1, action: 'go'})],
+                        // userApp-based conditional mounts
+                        ['UserIdConditionalRouteOne', freeze({id: 1}), freeze({id: 1})],
+                        ['UserIdConditionalRouteTwo', freeze({id: 1}), freeze({id: 1})],
+                        ['UserIdActionConditionalRoute', freeze({id: 1, action: 'go'}), freeze({id: 1, action: 'go'})],
+                        ['UserIdConditionalRouteThree', freeze({id: 1}), freeze({id: 1})],
+                    ],
+                ],
+                // different params, different query params
+                [
+                    ['/todos/1/list?sort=desc&index=1', '/todos/2/chart?sort=asc&hello=1'],
+                    freeze({index: 1, sort: 'desc'}), freeze({hello: 1, sort: 'asc'}),
+                    [
+                        // root-based conditional mounts
+                        ['RootAllConditionalRoute', null, null],
+                        // todo-based mounts
+                        ['TodoIdRenderStyleRoute', freeze({id: 1, renderStyle: 'list'}), freeze({id: 2, renderStyle: 'chart'})],
+                        // todo-based conditional mounts
+                        ['TodoIdConditionalRoute', freeze({id: 1}), freeze({id: 2})],
+                        ['TodoIdRenderStyleConditionalRoute', freeze({id: 1, renderStyle: 'list'}), freeze({id: 2, renderStyle: 'chart'})],
+                    ],
+                ],
+                [
+                    ['/user/1/action/go?sort=true&asc=1', '/user/2/action/stop?'],
+                    freeze({sort: true, asc: 1}), null,
+                    [
+                        // root-based conditional mounts
+                        ['RootAllConditionalRoute', null, null],
+                        ['RootIdConditionalRouteOne', freeze({id: 1}), freeze({id: 2})],
+                        ['RootIdConditionalRouteTwo', freeze({id: 1}), freeze({id: 2})],
+                        // userApp-based mounts
+                        ['UserIdActionRoute', freeze({id: 1, action: 'go'}), freeze({id: 2, action: 'stop'})],
+                        // userApp-based conditional mounts
+                        ['UserIdConditionalRouteOne', freeze({id: 1}), freeze({id: 2})],
+                        ['UserIdConditionalRouteTwo', freeze({id: 1}), freeze({id: 2})],
+                        ['UserIdActionConditionalRoute', freeze({id: 1, action: 'go'}), freeze({id: 2, action: 'stop'})],
+                        ['UserIdConditionalRouteThree', freeze({id: 1}), freeze({id: 2})],
+                    ],
+                ],
+            ], checkRenderArgsAfterNavigation);
+
+            navTest('passes to all conditional mounts\' prerender()/render() fns all queryParams and only the expected params for the Route when navigating to it for the first time from a previous destination', [
+                // In these scenarios:
+                //    • `o` represents a Route or an App
+                //    • dashed lines represent the previous navigation destination path
+                //    • solid lines represent the current navigation destination path
+
+                // Scenario 1: going from a node to a sibling node
+                // ──o--o
+                //   └──o
+                [
+                    ['/?hello=1&sort=asc', '/news/story'],
+                    freeze({hello: 1, sort: 'asc'}), null,
+                    [
+                        // root-based mounts
+                        ['RootNewsRoute', null, null],
+                        // root-based conditional mounts
+                        ['RootAllConditionalRoute', null, null],
+                        ['RootNewsConditionalRoute', null, freeze({news: 'story'})],
+                    ],
+                ],
+                // Scenario 2: going from a node to a deeper branch on a sibling node
+                // ──o--o
+                //   └──o──o
+                [
+                    ['/', '/todos/1/list?hello=hi&sort=true'],
+                    null, freeze({hello: 'hi', sort: true}),
+                    [
+                        // root-based conditional mounts
+                        ['RootAllConditionalRoute', null, null],
+                        // todo-based mounts
+                        ['TodoIdRenderStyleRoute', null, freeze({id: 1, renderStyle: 'list'})],
+                        // todo-based conditional mounts
+                        ['TodoIdConditionalRoute', null, freeze({id: 1})],
+                        ['TodoIdRenderStyleConditionalRoute', null, freeze({id: 1, renderStyle: 'list'})],
+                    ],
+                ],
+                // Scenario 3: going from a deep routing node to a node on a common ancestor node
+                // ──o--o--o
+                //   └──o
+                [
+                    ['/user/1/action/go?sort=true&asc=1', '/news/story?list=yes&sort=false'],
+                    freeze({sort: true, asc: 1}), freeze({sort: false, list: 'yes'}),
+                    [
+                        // root-based mounts
+                        ['RootNewsRoute', null, null],
+                        // root-based conditional mounts
+                        ['RootAllConditionalRoute', null, null],
+                        ['RootNewsConditionalRoute', null, freeze({news: 'story'})],
+                    ],
+                ],
+                // Scenario 4: going from a deep branch within a node to a deep branch on a sibling node
+                // ──o--o--o
+                //   └──o──o
+                [
+                    ['/todos/1/list?', '/user/2/menu/stats/profile'],
+                    null, null,
+                    [
+                        // root-based conditional mounts
+                        ['RootAllConditionalRoute', null, null],
+                        ['RootIdConditionalRouteOne', null, freeze({id: 2})],
+                        ['RootIdConditionalRouteTwo', null, freeze({id: 2})],
+                        // userApp-based mounts
+                        ['UserIdMenuRouteTwo', null, freeze({id: 2, menu: 'stats'})],
+                        // userApp-based conditional mounts
+                        ['UserIdConditionalRouteOne', null, freeze({id: 2})],
+                        ['UserIdConditionalRouteFour', null, freeze({id: 2})],
+                        ['UserIdMenuConditionalRouteOne', null, freeze({id: 2, menu: 'stats'})],
+                        ['UserIdMenuConditionalRouteTwo', null, freeze({id: 2, menu: 'stats'})],
+                    ],
+                ],
+            ], checkRenderArgsAfterNavigation);
+
+            navTest('passes to all conditional mounts\' prerender()/render() fns all queryParams and only the expected params for the Route when navigating to it for the second time after being at a previous, different destination', [
+                // same params and query params
+                [
+                    ['/todos/1/list?unused=true', '/?hello=1&sort=asc', '/todos/1/list?sort=asc&hello=1'],
+                    freeze({hello: 1, sort: 'asc'}), freeze({hello: 1, sort: 'asc'}),
+                    [
+                        // root-based conditional mounts
+                        ['RootAllConditionalRoute', null, null],
+                        // todo-based mounts
+                        ['TodoIdRenderStyleRoute', freeze({id: 1, renderStyle: 'list'}), freeze({id: 1, renderStyle: 'list'})],
+                        // todo-based conditional mounts
+                        ['TodoIdConditionalRoute', freeze({id: 1}), freeze({id: 1})],
+                        ['TodoIdRenderStyleConditionalRoute', freeze({id: 1, renderStyle: 'list'}), freeze({id: 1, renderStyle: 'list'})],
+                    ],
+                ],
+                [
+                    ['/user/1/action/go?unused=true', '/', '/user/1/action/go?'],
+                    null, null,
+                    [
+                        // root-based conditional mounts
+                        ['RootAllConditionalRoute', null, null],
+                        ['RootIdConditionalRouteOne', freeze({id: 1}), freeze({id: 1})],
+                        ['RootIdConditionalRouteTwo', freeze({id: 1}), freeze({id: 1})],
+                        // userApp-based mounts
+                        ['UserIdActionRoute', freeze({id: 1, action: 'go'}), freeze({id: 1, action: 'go'})],
+                        // userApp-based conditional mounts
+                        ['UserIdConditionalRouteOne', freeze({id: 1}), freeze({id: 1})],
+                        ['UserIdConditionalRouteTwo', freeze({id: 1}), freeze({id: 1})],
+                        ['UserIdActionConditionalRoute', freeze({id: 1, action: 'go'}), freeze({id: 1, action: 'go'})],
+                        ['UserIdConditionalRouteThree', freeze({id: 1}), freeze({id: 1})],
+                    ],
+                ],
+                // different params, same query params
+                [
+                    ['/todos/1/list?unused=true', '/?hello=1&sort=asc', '/todos/2/chart?sort=asc&hello=1'],
+                    freeze({hello: 1, sort: 'asc'}), freeze({hello: 1, sort: 'asc'}),
+                    [
+                        // root-based conditional mounts
+                        ['RootAllConditionalRoute', null, null],
+                        // todo-based mounts
+                        ['TodoIdRenderStyleRoute', freeze({id: 1, renderStyle: 'list'}), freeze({id: 2, renderStyle: 'chart'})],
+                        // todo-based conditional mounts
+                        ['TodoIdConditionalRoute', freeze({id: 1}), freeze({id: 2})],
+                        ['TodoIdRenderStyleConditionalRoute', freeze({id: 1, renderStyle: 'list'}), freeze({id: 2, renderStyle: 'chart'})],
+                    ],
+                ],
+                [
+                    ['/user/1/action/go?unused=true', '/', '/user/2/action/stop'],
+                    null, null,
+                    [
+                        // root-based conditional mounts
+                        ['RootAllConditionalRoute', null, null],
+                        ['RootIdConditionalRouteOne', freeze({id: 1}), freeze({id: 2})],
+                        ['RootIdConditionalRouteTwo', freeze({id: 1}), freeze({id: 2})],
+                        // userApp-based mounts
+                        ['UserIdActionRoute', freeze({id: 1, action: 'go'}), freeze({id: 2, action: 'stop'})],
+                        // userApp-based conditional mounts
+                        ['UserIdConditionalRouteOne', freeze({id: 1}), freeze({id: 2})],
+                        ['UserIdConditionalRouteTwo', freeze({id: 1}), freeze({id: 2})],
+                        ['UserIdActionConditionalRoute', freeze({id: 1, action: 'go'}), freeze({id: 2, action: 'stop'})],
+                        ['UserIdConditionalRouteThree', freeze({id: 1}), freeze({id: 2})],
+                    ],
+                ],
+                // different params, same query params
+                [
+                    ['/todos/1/list?unused=true', '/?hello=1&sort=asc', '/todos/2/chart?sort=asc&hello=1'],
+                    freeze({hello: 1, sort: 'asc'}), freeze({hello: 1, sort: 'asc'}),
+                    [
+                        // root-based conditional mounts
+                        ['RootAllConditionalRoute', null, null],
+                        // todo-based mounts
+                        ['TodoIdRenderStyleRoute', freeze({id: 1, renderStyle: 'list'}), freeze({id: 2, renderStyle: 'chart'})],
+                        // todo-based conditional mounts
+                        ['TodoIdConditionalRoute', freeze({id: 1}), freeze({id: 2})],
+                        ['TodoIdRenderStyleConditionalRoute', freeze({id: 1, renderStyle: 'list'}), freeze({id: 2, renderStyle: 'chart'})],
+                    ],
+                ],
+                [
+                    ['/user/1/action/go?unused=true', '/', '/user/2/action/stop'],
+                    null, null,
+                    [
+                        // root-based conditional mounts
+                        ['RootAllConditionalRoute', null, null],
+                        ['RootIdConditionalRouteOne', freeze({id: 1}), freeze({id: 2})],
+                        ['RootIdConditionalRouteTwo', freeze({id: 1}), freeze({id: 2})],
+                        // userApp-based mounts
+                        ['UserIdActionRoute', freeze({id: 1, action: 'go'}), freeze({id: 2, action: 'stop'})],
+                        // userApp-based conditional mounts
+                        ['UserIdConditionalRouteOne', freeze({id: 1}), freeze({id: 2})],
+                        ['UserIdConditionalRouteTwo', freeze({id: 1}), freeze({id: 2})],
+                        ['UserIdActionConditionalRoute', freeze({id: 1, action: 'go'}), freeze({id: 2, action: 'stop'})],
+                        ['UserIdConditionalRouteThree', freeze({id: 1}), freeze({id: 2})],
+                    ],
+                ],
+                // same params, different query params
+                [
+                    ['/todos/1/list?unused=true', '/', '/todos/1/list?sort=asc&hello=1'],
+                    null, freeze({hello: 1, sort: 'asc'}),
+                    [
+                        // root-based conditional mounts
+                        ['RootAllConditionalRoute', null, null],
+                        // todo-based mounts
+                        ['TodoIdRenderStyleRoute', freeze({id: 1, renderStyle: 'list'}), freeze({id: 1, renderStyle: 'list'})],
+                        // todo-based conditional mounts
+                        ['TodoIdConditionalRoute', freeze({id: 1}), freeze({id: 1})],
+                        ['TodoIdRenderStyleConditionalRoute', freeze({id: 1, renderStyle: 'list'}), freeze({id: 1, renderStyle: 'list'})],
+                    ],
+                ],
+                [
+                    ['/user/1/action/go?unused=true', '/?sort=true&asc=1', '/user/1/action/go?sort=false&list=yes'],
+                    freeze({sort: true, asc: 1}), freeze({sort: false, list: 'yes'}),
+                    [
+                        // root-based conditional mounts
+                        ['RootAllConditionalRoute', null, null],
+                        ['RootIdConditionalRouteOne', freeze({id: 1}), freeze({id: 1})],
+                        ['RootIdConditionalRouteTwo', freeze({id: 1}), freeze({id: 1})],
+                        // userApp-based mounts
+                        ['UserIdActionRoute', freeze({id: 1, action: 'go'}), freeze({id: 1, action: 'go'})],
+                        // userApp-based conditional mounts
+                        ['UserIdConditionalRouteOne', freeze({id: 1}), freeze({id: 1})],
+                        ['UserIdConditionalRouteTwo', freeze({id: 1}), freeze({id: 1})],
+                        ['UserIdActionConditionalRoute', freeze({id: 1, action: 'go'}), freeze({id: 1, action: 'go'})],
+                        ['UserIdConditionalRouteThree', freeze({id: 1}), freeze({id: 1})],
+                    ],
+                ],
+                // different params, different query params
+                [
+                    ['/todos/1/list?unused=true', '/?sort=desc&index=1', '/todos/2/chart?sort=asc&hello=1'],
+                    freeze({index: 1, sort: 'desc'}), freeze({hello: 1, sort: 'asc'}),
+                    [
+                        // root-based conditional mounts
+                        ['RootAllConditionalRoute', null, null],
+                        // todo-based mounts
+                        ['TodoIdRenderStyleRoute', freeze({id: 1, renderStyle: 'list'}), freeze({id: 2, renderStyle: 'chart'})],
+                        // todo-based conditional mounts
+                        ['TodoIdConditionalRoute', freeze({id: 1}), freeze({id: 2})],
+                        ['TodoIdRenderStyleConditionalRoute', freeze({id: 1, renderStyle: 'list'}), freeze({id: 2, renderStyle: 'chart'})],
+                    ],
+                ],
+                [
+                    ['/user/1/action/go?unused=true', '/?sort=true&asc=1', '/user/2/action/stop?'],
+                    freeze({sort: true, asc: 1}), null,
+                    [
+                        // root-based conditional mounts
+                        ['RootAllConditionalRoute', null, null],
+                        ['RootIdConditionalRouteOne', freeze({id: 1}), freeze({id: 2})],
+                        ['RootIdConditionalRouteTwo', freeze({id: 1}), freeze({id: 2})],
+                        // userApp-based mounts
+                        ['UserIdActionRoute', freeze({id: 1, action: 'go'}), freeze({id: 2, action: 'stop'})],
+                        // userApp-based conditional mounts
+                        ['UserIdConditionalRouteOne', freeze({id: 1}), freeze({id: 2})],
+                        ['UserIdConditionalRouteTwo', freeze({id: 1}), freeze({id: 2})],
+                        ['UserIdActionConditionalRoute', freeze({id: 1, action: 'go'}), freeze({id: 2, action: 'stop'})],
+                        ['UserIdConditionalRouteThree', freeze({id: 1}), freeze({id: 2})],
+                    ],
+                ],
+            ], checkRenderArgsAfterNavigation);
 
             navTest('calls deactivate() when diverging from active mount/conditional mounts between prerender and render of to-be-activated mount/cMounts', [
                 // In these scenarios:

@@ -32,19 +32,11 @@ export function navTest(testName, destinations, testFn, testType=null) {
     if (!destinations.length) {
         throw new Error(`Navigation Test Generator: No destinations listed: "${testName}".`);
     }
-    for (let dest of destinations) {
-        let navType, rest = [];
-        if (Array.isArray(dest)) {
-            [ dest, ...rest ] = dest;
+    for (let args of destinations) {
+        if (is(args, 'String')) {
+            args = [args];
         }
-        if (is(dest, 'String')) {
-            navType = 'NavString';
-        } else if (is(dest, 'Object')) {
-            navType = 'NavObject';
-        } else {
-            throw new Error(`Navigation Test Generator: Wrong Test NavType: "${testName}".`);
-        }
-        testStarter(`${navType}: ${testName}`, doTest(testFn, dest, ...rest));
+        testStarter(testName, doTest(testFn, ...args));
     }
 }
 
