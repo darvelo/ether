@@ -12,6 +12,7 @@ import { navTest } from '../utils/acceptance-test-generator';
 let freeze = Object.freeze;
 
 // holds Sinon spies that are regenerated for each test
+// and sometimes within a test
 let mountSpies;
 let cMountSpies;
 
@@ -1143,10 +1144,92 @@ describe.only('Acceptance Tests', () => {
                 });
             });
 
-            navTest('prerender/render are called for each navigation step in forwards order');
-            navTest('deactivate is called for each navigation step in backwards order');
+            navTest('prerender/render are called for each navigation step in forwards order', [
+                [
+                    '/user/1/action/go',
+                    [
+                        ['RootAllConditionalRoute', 'RootIdConditionalRouteOne', 'RootIdConditionalRouteTwo'],
+                        ['UserIdConditionalRouteOne', 'UserIdConditionalRouteTwo', 'UserIdActionConditionalRoute', 'UserIdConditionalRouteThree', 'UserIdActionRoute'],
+                    ]
+                ],
+            ], (done, dest, steps) => {
+                let len = steps.length;
+                let rootApp = new MyRootApp(defaultOpts);
+                rootApp.navigate(dest).then(() => {
+                    steps.forEach((routesStrs, idx) => {
+                        if (idx < len-1) {
+                            let nextStepRoutesStrs = steps[idx+1];
+                            for (let currRouteStr of routesStrs) {
+                                let { prerenderSpy: currPrerenderSpy, renderSpy: currRenderSpy } = (mountSpies[currRouteStr] || cMountSpies[currRouteStr]);
+                                for (let nextRouteStr of nextStepRoutesStrs) {
+                                    let { prerenderSpy: nextPrerenderSpy, renderSpy: nextRenderSpy } = (mountSpies[nextRouteStr] || cMountSpies[nextRouteStr]);
+                                    // all prerender/render fns should only be called once
+                                    // we need this because sinon's `calledBefore` construct
+                                    // doesn't check whether the spy that is within calledBefore's
+                                    // parens was actually ever called.
+                                    currPrerenderSpy.should.have.been.calledOnce;
+                                    currRenderSpy.should.have.been.calledOnce;
+                                    nextPrerenderSpy.should.have.been.calledOnce;
+                                    nextRenderSpy.should.have.been.calledOnce;
+                                    // verify step execution order
+                                    currPrerenderSpy.should.have.been.calledBefore(currRenderSpy);
+                                    nextPrerenderSpy.should.have.been.calledBefore(nextRenderSpy);
+                                    currPrerenderSpy.should.have.been.calledBefore(nextPrerenderSpy);
+                                    nextPrerenderSpy.should.have.been.calledBefore(currRenderSpy);
+                                    currRenderSpy.should.have.been.calledBefore(nextRenderSpy);
+                                }
+                            }
+                        }
+                    });
+                    done();
+                }).catch(err => {
+                    done(err);
+                });
+            });
+
+            navTest('deactivate is called for each navigation step in backwards order', [
+                [
+                    '/user/1/action/go', '/',
+                    [
+                        ['UserIdConditionalRouteOne', 'UserIdConditionalRouteTwo', 'UserIdActionConditionalRoute', 'UserIdConditionalRouteThree', 'UserIdActionRoute'],
+                        ['RootIdConditionalRouteOne', 'RootIdConditionalRouteTwo'],
+                    ]
+                ],
+            ], (done, dest1, dest2, steps) => {
+                let len = steps.length;
+                let rootApp = new MyRootApp(defaultOpts);
+                rootApp.navigate(dest1).then(() => {
+                    resetSpies();
+                    return rootApp.navigate(dest2);
+                }).then(() => {
+                    steps.forEach((routesStrs, idx) => {
+                        if (idx < len-1) {
+                            let nextStepRoutesStrs = steps[idx+1];
+                            for (let currRouteStr of routesStrs) {
+                                let { deactivateSpy: currDeactivateSpy } = (mountSpies[currRouteStr] || cMountSpies[currRouteStr]);
+                                for (let nextRouteStr of nextStepRoutesStrs) {
+                                    let { deactivateSpy: nextDeactivateSpy } = (mountSpies[nextRouteStr] || cMountSpies[nextRouteStr]);
+                                    // all deactivate fns should only be called once
+                                    // we need this because sinon's `calledBefore` construct
+                                    // doesn't check whether the spy that is within calledBefore's
+                                    // parens was actually ever called.
+                                    currDeactivateSpy.should.have.been.calledOnce;
+                                    nextDeactivateSpy.should.have.been.calledOnce;
+                                    // verify step execution order
+                                    currDeactivateSpy.should.have.been.calledBefore(nextDeactivateSpy);
+                                }
+                            }
+                        }
+                    });
+                    done();
+                }).catch(err => {
+                    done(err);
+                });
+            });
+
+            // @TODO: these next two tests are very similar.. can I construct a method that flexibly and efficiently serves both?
             // test that all routes get _active true or false at the right times
-            navTest('sets the correct value for isActive() on the proper mounts/cMounts');
+            navTest('sets the correct value for isActive() on the proper mounts/cMounts'); // includes both Apps' and Routes' isActive()
             // test that all classes happen at the right times, e.g. ether-prerendering vs. ether-prerendered
             navTest('sets the correct CSS class for all outlets on the proper mounts/cMounts');
         });
