@@ -11,6 +11,115 @@ import { navTest } from '../utils/acceptance-test-generator';
 
 let freeze = Object.freeze;
 
+function assertAppState(app, state) {
+    let keyCount = 0;
+    for (let key of Object.keys(app.state)) {
+        if (state === key) {
+            keyCount++;
+            expect(app.state[key]).to.equal(true);
+        } else {
+            expect(app.state[key]).to.equal(false);
+        }
+    }
+    if (keyCount !== 1) {
+        throw new Error('bad count');
+    }
+}
+
+function injectRouteStateAssertions(routeClass, ...methodNames) {
+    let oldCreate = routeClass.create;
+
+    if (!methodNames.length) {
+        methodNames = ['deactivate', 'prerender', 'render'];
+    }
+    function inject(route, methodName) {
+        let privateFn = route['_' + methodName];
+        let publicFn = route[methodName];
+        let preState, inState, postState;
+
+        switch (methodName) {
+            case 'deactivate':
+                preState = /^rendered$/;
+                inState = /^deactivating$/;
+                postState = /^deactivated$/;
+                break;
+            case 'prerender':
+                preState = /^deactivated|rendered$/;
+                inState = /^prerendering$/;
+                postState = /^prerendered$/;
+                break;
+            case 'render':
+                preState = /^prerendered$/;
+                inState = /^rendering$/;
+                postState = /^rendered$/;
+                break;
+            default:
+                throw new Error('assertRouteState: unsupported methodName: ' + methodName);
+        }
+
+        function checkRouteState(stateRegex) {
+            let outlets = route.outlets;
+            let outletsNames = Object.keys(outlets);
+            let keyCount = 0;
+            for (let key of Object.keys(route.state)) {
+                if (route.state[key]) {
+                    keyCount++;
+                    expect(stateRegex.test(key), `expected state prop to be true: {${key}: ${route.state[key]}} ${JSON.stringify(route.state)}`).to.equal(true);
+                }
+            }
+            if (keyCount !== 1) {
+                throw new Error('bad key count');
+            }
+            // for all outlets, assert the only state-related
+            // CSS class that exists is for the given state
+            let cssState = new RegExp('^ether-(' + stateRegex.source.slice(1,-1) + ')$');
+            // @TODO: pass outlets in
+            outletsNames.forEach(name => {
+                expect(outlets[name]._element.className).to.equal(cssState);
+            });
+        }
+
+        route['_' + methodName] = function(...args) {
+            checkRouteState(preState);
+            return privateFn.apply(route, args).then(result => {
+                checkRouteState(postState);
+                return result;
+            });
+        };
+
+        route[methodName] = function(...args) {
+            checkRouteState(inState);
+            return publicFn.apply(route, args);
+        };
+
+        function restore() {
+            // restore original routeClass.create() method
+            routeClass.create = oldCreate;
+            // remove injected methods that are hasOwn on route
+            // and allow the original prototype methods to work
+            delete route['_' + methodName];
+            delete route[methodName];
+        }
+        return restore;
+    }
+
+    let restore;
+    routeClass.create = function(...args) {
+        let route = oldCreate.apply(routeClass, args);
+        let restoreMethodsFns = [];
+        for (let name of methodNames) {
+            restoreMethodsFns.push(inject(route, name));
+        }
+        restore = function() {
+            restoreMethodsFns.forEach(fn => fn());
+        };
+        return route;
+    };
+    return function() {
+        restore();
+    };
+}
+
 // holds Sinon spies that are regenerated for each test
 // and sometimes within a test
 let mountSpies;
@@ -275,7 +384,7 @@ class MyRootApp extends RootApp {
     }
 }
 
-describe.only('Acceptance Tests', () => {
+describe('Acceptance Tests', () => {
     let defaultOpts;
 
     beforeEach(() => {
@@ -1227,11 +1336,67 @@ describe.only('Acceptance Tests', () => {
                 });
             });
 
-            // @TODO: these next two tests are very similar.. can I construct a method that flexibly and efficiently serves both?
-            // test that all routes get _active true or false at the right times
-            navTest('sets the correct value for isActive() on the proper mounts/cMounts'); // includes both Apps' and Routes' isActive()
-            // test that all classes happen at the right times, e.g. ether-prerendering vs. ether-prerendered
-            navTest('sets the correct CSS class for all outlets on the proper mounts/cMounts');
+            navTest('sets the correct state for Apps and Routes during all transitions', [
+                [
+                    ['/todos/1/list', { active: ['todoApp'], inactive: ['userApp']}],
+                    ['/user/1/menu/stats', { active: ['userApp'], inactive: ['todoApp']}],
+                    ['/news/story', { active: [], inactive: ['todoApp', 'userApp']}],
+                ]
+            ], (done, ...expectations) => {
+                let restoreFns = [
+                    RootRootRoute,
+                    RootNewsRoute,
+                    TodoIdRenderStyleRoute,
+                    UserIdActionRoute,
+                    UserIdMenuRouteOne,
+                    UserIdMenuRouteTwo,
+                    RootAllConditionalRoute,
+                    RootNewsConditionalRoute,
+                    RootConditionalRoute,
+                    RootIdConditionalRouteOne,
+                    RootIdConditionalRouteTwo,
+                    TodoIdConditionalRoute,
+                    TodoIdRenderStyleConditionalRoute,
+                    UserIdConditionalRouteOne,
+                    UserIdConditionalRouteTwo,
+                    UserIdConditionalRouteThree,
+                    UserIdConditionalRouteFour,
+                    UserIdActionConditionalRoute,
+                    UserIdMenuConditionalRouteOne,
+                    UserIdMenuConditionalRouteTwo,
+                ].map(route => injectRouteStateAssertions(route));
+
+                let rootApp = MyRootApp.create(defaultOpts);
+                let promise = Promise.resolve();
+
+                function checkAppAtAddressHasState(state) {
+                    return function(address) {
+                        assertAppState(rootApp._atAddress(address), state);
+                    };
+                }
+
+                function navigateAndCheckApps(dest, appExpectations) {
+                    return function() {
+                        return rootApp.navigate(dest).then(() => {
+                            for (let state of Object.keys(appExpectations)) {
+                                let appAddresses = appExpectations[state];
+                                appAddresses.forEach(checkAppAtAddressHasState(state));
+                            }
+                        });
+                    };
+                }
+
+                for (let [ dest, appExpectations ] of expectations) {
+                    promise = promise.then(navigateAndCheckApps(dest, appExpectations));
+                }
+
+                promise.then(() => {
+                    restoreFns.forEach(fn => fn());
+                    done();
+                }).catch(err => {
+                    done(err);
+                });
+            });
         });
     });
 });

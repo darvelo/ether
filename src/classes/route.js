@@ -99,23 +99,32 @@ class Route extends Modifiable {
         return this._rootApp.navigate(...args);
     }
 
-    _prerender(params, queryParams, diffs) {
-        return Promise.resolve().then(() => {
-            return this.prerender(params, queryParams, diffs);
-        });
-    }
-
     _deactivate() {
         return Promise.resolve().then(() => {
+            this._setState('deactivating');
             return this.deactivate();
-        });
+        }).then(() => this._setState('deactivated'));
+    }
+
+    _prerender(params, queryParams, diffs) {
+        return Promise.resolve().then(() => {
+            this._setState('prerendering');
+            return this.prerender(params, queryParams, diffs);
+        }).then(() => this._setState('prerendered'));
     }
 
     _render(params, queryParams, diffs) {
         return Promise.resolve().then(() => {
+            this._setState('rendering');
             return this.render(params, queryParams, diffs);
-        });
+        }).then(() => this._setState('rendered'));
     }
+
+    /**
+     * A user-defined function that's called when the URL has changed and another, different route is to be rendered instead. This is a good opportunity to use CSS to hide all outlets or views in use by this route, as outlets are exclusive to a single route.
+     * @return {Promise} A promise that, when resolved, means all deactivate actions (e.g. sending data to the server, data cleanup for GC, hiding outlets, views, or UI components, etc.) have finished and navigation can continue toward rendering the new route destination. If the promise is rejected, the Ether app will be in an undefined state.
+     */
+    deactivate() { }
 
     /**
      * User-defined function meant to perform any data-gathering or rendering when this route is navigated to, *before* the previously-navigated-to route is deactivated.
@@ -138,12 +147,6 @@ class Route extends Modifiable {
      * @return {Promise} A promise that, when resolved, means all render actions (e.g. AJAX data retrieval/storage, populating/showing views, etc.) have finished and navigation can continue on to completion. If the promise is rejected, the Ether app will be in an undefined state.
      */
     render() { }
-
-    /**
-     * A user-defined function that's called when the URL has changed and another, different route is to be rendered instead. This is a good opportunity to use CSS to hide all outlets or views in use by this route, as outlets are exclusive to a single route.
-     * @return {Promise} A promise that, when resolved, means all deactivate actions (e.g. sending data to the server, data cleanup for GC, hiding outlets, views, or UI components, etc.) have finished and navigation can continue toward rendering the new route destination. If the promise is rejected, the Ether app will be in an undefined state.
-     */
-    deactivate() { }
 }
 
 export default Route;

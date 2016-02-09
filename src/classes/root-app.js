@@ -427,8 +427,11 @@ class RootApp extends App {
                             app._conditionalMountMapper.setCurrentMounts(null);
                         }
                         // on the App in this step, set MountMapper's currentMounts
-                        let { crumb, params } = mountData;
+                        let { mount, crumb, params } = mountData;
                         app._mountMapper.setCurrentMount(crumb, params);
+                        if (mount instanceof App) {
+                            mount._setState('active');
+                        }
                     }
                 });
             });
@@ -605,6 +608,7 @@ class RootApp extends App {
                     if (idx === lastStepIdx) {
                         mm.setCurrentMount(null);
                     }
+                    app._setState('inactive');
                 });
             });
         }, Promise.resolve());
