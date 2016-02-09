@@ -30,11 +30,44 @@ describe('Element Mock', () => {
             expect(element.classList.contains('cls')).to.equal(true);
         });
 
+        it('adds multiple', () => {
+            expect(element.classList.contains('cls1')).to.equal(false);
+            expect(element.classList.contains('cls2')).to.equal(false);
+            expect(element.classList.contains('cls3')).to.equal(false);
+            element.classList.add('cls1', 'cls2', 'cls3');
+            expect(element.classList.contains('cls1')).to.equal(true);
+            expect(element.classList.contains('cls2')).to.equal(true);
+            expect(element.classList.contains('cls3')).to.equal(true);
+        });
+
         it('remove', () => {
             element.classList.add('cls');
             expect(element.classList.contains('cls')).to.equal(true);
             element.classList.remove('cls');
             expect(element.classList.contains('cls')).to.equal(false);
+        });
+
+        it('removes multiple', () => {
+            element.classList.add('cls1', 'cls2', 'cls3');
+            expect(element.classList.contains('cls1')).to.equal(true);
+            expect(element.classList.contains('cls2')).to.equal(true);
+            expect(element.classList.contains('cls3')).to.equal(true);
+            element.classList.remove('cls1', 'cls2', 'cls3');
+            expect(element.classList.contains('cls1')).to.equal(false);
+            expect(element.classList.contains('cls2')).to.equal(false);
+            expect(element.classList.contains('cls3')).to.equal(false);
+        });
+    });
+
+    describe('className', () => {
+        it('gets className property', () => {
+            element.classList.add('cls1', 'cls2', 'cls3');
+            expect(element.className).to.be.a('string');
+            expect(element.className.split(/\s+/).sort()).to.deep.equal([
+                'cls1',
+                'cls2',
+                'cls3',
+            ]);
         });
     });
 

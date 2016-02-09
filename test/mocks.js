@@ -52,18 +52,22 @@ class ClassList {
     constructor() {
         this._classes = [];
     }
-    contains(cls) {
-        return this._classes.some(className => className === cls);
+    contains(className) {
+        return this._classes.some(name => name === className);
     }
-    add(cls) {
-        if (!this.contains(cls)) {
-            this._classes.push(cls);
+    add(...classNames) {
+        for (let className of classNames) {
+            if (!this.contains(className)) {
+                this._classes.push(className);
+            }
         }
     }
-    remove(cls) {
-        let idx = this._classes.indexOf(cls);
-        if (idx !== -1) {
-            this._classes.splice(idx, 1);
+    remove(...classNames) {
+        for (let className of classNames) {
+            let idx = this._classes.indexOf(className);
+            if (idx !== -1) {
+                this._classes.splice(idx, 1);
+            }
         }
     }
 }
@@ -78,6 +82,9 @@ export class Element extends Eventable {
     }
     get classList() {
         return this._classList || (this._classList = new ClassList());
+    }
+    get className() {
+        return this.classList._classes.join(' ');
     }
     get children() {
         return this._children || (this._children = []);
