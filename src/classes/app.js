@@ -6,6 +6,8 @@ import ConditionalMountMapper from './conditional-mount-mapper';
 import ctorName from '../utils/ctor-name';
 import { isnt } from '../utils/is';
 
+let possibleAppStates = Object.freeze(['active', 'inactive']);
+
 class App extends Modifiable {
     constructor(opts) {
         super(opts);
@@ -21,6 +23,23 @@ class App extends Modifiable {
             throw new TypeError(ctorName(this) + ' constructor was not given a reference to the Ether RootApp.');
         }
 
+        Object.defineProperty(this, 'state', {
+            value: {},
+            configurable: false,
+            enumerable: true,
+        });
+        Object.defineProperties(this.state, possibleAppStates.reduce((memo, state) => {
+            // create descriptor for each property on this.state
+            memo[state] = {
+                value: false,
+                writable: true,
+                enumerable: true,
+            };
+            return memo;
+        }, {}));
+        Object.seal(this.state);
+        this._setState('inactive');
+
         this._rootApp = opts.rootApp;
         this._registerAddresses(opts.addresses);
         if (this !== this._rootApp) {
@@ -29,7 +48,6 @@ class App extends Modifiable {
             this._makeOutletsImmutable(opts.outlets);
         }
         this.outlets = this.createOutlets(opts.outlets);
-        this._setDeactivatedClassOnOutlets();
         this._mountMapper = new MountMapper();
         this._conditionalMountMapper = new ConditionalMountMapper();
         let mountsMetadata = this._instantiateMounts(opts.params);
@@ -49,10 +67,17 @@ class App extends Modifiable {
         }
     }
 
-    _setDeactivatedClassOnOutlets() {
-        Object.keys(this.outlets).forEach(name => {
-            this.outlets[name]._element.classList.add('ether-deactivated');
-        });
+    _setState(state) {
+        if (!this.state.hasOwnProperty(state)) {
+            throw new Error(`${ctorName(this)}#_setState(): Tried to set app state to an unsupported value: ${JSON.stringify(state)}.`);
+        }
+        for (let possibleState of possibleAppStates) {
+            if (state === possibleState) {
+                this.state[possibleState] = true;
+            } else {
+                this.state[possibleState] = false;
+            }
+        }
     }
 
     _instantiateMounts(params) {

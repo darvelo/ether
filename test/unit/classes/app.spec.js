@@ -169,31 +169,48 @@ describe('App', function() {
             let app = new AppWithSetup(defaultOpts);
         });
 
-        it('sets `ether-deactivated` class on all outlets after createOutlets()', () => {
-            let deactivatedClass = 'ether-deactivated';
-            let element1 = document.createElement('div');
-            let element2 = document.createElement('div');
-            let element3 = document.createElement('div');
-            let element4 = document.createElement('div');
-            defaultOpts.outlets = {
-                first: new MutableOutlet(element1),
-                second: new Outlet(element2),
-            };
-            class AppWithOutlets extends TestApp {
-                expectedOutlets() {
-                    return ['first', 'second'];
-                }
-                createOutlets(outlets) {
-                    outlets.third = new MutableOutlet(element3);
-                    outlets.fourth = new MutableOutlet(element4);
-                    return outlets;
-                }
+        it('initializes the state object', () => {
+            let app = new TestApp(defaultOpts);
+            expect(app.state).to.be.an('object');
+            expect(Object.keys(app.state).sort()).to.deep.equal([
+                'active',
+                'inactive',
+            ].sort());
+        });
+
+        it('sets the state object descriptor properly', () => {
+            let app = new TestApp(defaultOpts);
+            expect(Object.getOwnPropertyDescriptor(app, 'state').configurable).to.equal(false);
+            expect(() => delete app.state).to.throw();
+            expect(() => app.state = {}).to.throw();
+        });
+
+        it('sets the state object\'s properties\' descriptors properly', () => {
+            let app = new TestApp(defaultOpts);
+            for (let key of Object.keys(app.state)) {
+                expect(Object.getOwnPropertyDescriptor(app.state, key).configurable).to.equal(false);
             }
-            let app = new AppWithOutlets(defaultOpts);
-            expect(element1.classList.contains(deactivatedClass)).to.equal(true);
-            expect(element2.classList.contains(deactivatedClass)).to.equal(true);
-            expect(element3.classList.contains(deactivatedClass)).to.equal(true);
-            expect(element4.classList.contains(deactivatedClass)).to.equal(true);
+        });
+
+        it('seals the state object', () => {
+            let app = new TestApp(defaultOpts);
+            expect(Object.isSealed(app.state)).to.equal(true);
+        });
+
+        it('sets state to "inactive"', () => {
+            let app = new TestApp(defaultOpts);
+            expect(app.state).to.deep.equal({
+                inactive: true,
+                active: false,
+            });
+        });
+    });
+
+    describe('State', () => {
+        it('throws when setting state to an unsupported value', () => {
+            let state = 'nope';
+            let app = new TestApp(defaultOpts);
+            expect(() => app._setState(state)).to.throw(Error, `TestApp#_setState(): Tried to set app state to an unsupported value: ${JSON.stringify(state)}.`);
         });
     });
 });
