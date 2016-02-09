@@ -1,4 +1,14 @@
 import Modifiable from './modifiable';
+import ctorName from '../utils/ctor-name';
+
+let possibleRouteStates = Object.freeze([
+    'deactivating',
+    'deactivated',
+    'prerendering',
+    'prerendered',
+    'rendering',
+    'rendered',
+]);
 
 class Route extends Modifiable {
     constructor(opts) {
@@ -6,7 +16,55 @@ class Route extends Modifiable {
         this._rootApp = opts.rootApp;
         this._registerAddresses(opts.addresses);
         this.outlets = opts.outlets;
+
+        Object.defineProperty(this, 'state', {
+            value: {},
+            configurable: false,
+            enumerable: true,
+        });
+        Object.defineProperties(this.state, possibleRouteStates.reduce((memo, state) => {
+            // create descriptor for each property on this.state
+            memo[state] = {
+                value: false,
+                writable: true,
+                enumerable: true,
+            };
+            return memo;
+        }, {}));
+        Object.seal(this.state);
+        this._setState('deactivated');
+
         this.init(opts.setup);
+    }
+
+    _setOutletsState(state) {
+        if (!this.state.hasOwnProperty(state)) {
+            throw new Error(`${ctorName(this)}#_setOutletsState(): Tried to set outlets state to an unsupported value: ${JSON.stringify(state)}.`);
+        }
+        let outlets = this.outlets;
+        let prefix = 'ether-';
+        let statesToRemove = possibleRouteStates
+            .filter(stateName => stateName !== state)
+            .map(stateName => prefix + stateName);
+        state = prefix + state;
+        Object.keys(this.outlets).forEach(name => {
+            outlets[name]._element.classList.add(state);
+            outlets[name]._element.classList.remove(statesToRemove);
+        });
+    }
+
+    _setState(state) {
+        if (!this.state.hasOwnProperty(state)) {
+            throw new Error(`${ctorName(this)}#_setState(): Tried to set route state to an unsupported value: ${JSON.stringify(state)}.`);
+        }
+        for (let possibleState of possibleRouteStates) {
+            if (state === possibleState) {
+                this.state[possibleState] = true;
+            } else {
+                this.state[possibleState] = false;
+            }
+        }
+        this._setOutletsState(state);
     }
 
     _registerAddresses(addresses) {

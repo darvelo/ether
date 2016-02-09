@@ -102,5 +102,81 @@ describe('Route', () => {
             let route = new RouteWithSetup(defaultOpts);
             spy.should.have.been.calledOnce;
         });
+
+        it('initializes the state object', () => {
+            let route = new TestRoute(defaultOpts);
+            expect(route.state).to.be.an('object');
+            expect(Object.keys(route.state).sort()).to.deep.equal([
+                'deactivating',
+                'deactivated',
+                'prerendering',
+                'prerendered',
+                'rendering',
+                'rendered',
+            ].sort());
+        });
+
+        it('sets the state object descriptor properly', () => {
+            let route = new TestRoute(defaultOpts);
+            expect(Object.getOwnPropertyDescriptor(route, 'state').configurable).to.equal(false);
+            expect(() => delete route.state).to.throw();
+            expect(() => route.state = {}).to.throw();
+        });
+
+        it('sets the state object\'s properties\' descriptors properly', () => {
+            let route = new TestRoute(defaultOpts);
+            for (let key of Object.keys(route.state)) {
+                expect(Object.getOwnPropertyDescriptor(route.state, key).configurable).to.equal(false);
+            }
+        });
+
+        it('seals the state object', () => {
+            let route = new TestRoute(defaultOpts);
+            expect(Object.isSealed(route.state)).to.equal(true);
+        });
+
+        it('sets state to "inactive"', () => {
+            let route = new TestRoute(defaultOpts);
+            expect(route.state).to.deep.equal({
+                deactivating: false,
+                deactivated: true,
+                prerendering: false,
+                prerendered: false,
+                rendering: false,
+                rendered: false,
+            });
+        });
+
+        it('adds only the CSS class "ether-deactivated" to all outlets to signify route state', () => {
+            let deactivatedClass = 'ether-deactivated';
+            let element1 = document.createElement('div');
+            let element2 = document.createElement('div');
+            defaultOpts.outlets = {
+                first: new MutableOutlet(element1),
+                second: new Outlet(element2),
+            };
+            class RouteWithOutlets extends Route {
+                expectedOutlets() {
+                    return ['first', 'second'];
+                }
+            }
+            let route = new RouteWithOutlets(defaultOpts);
+            expect(element1.className).to.equal(deactivatedClass);
+            expect(element2.className).to.equal(deactivatedClass);
+        });
+    });
+
+    describe('State', () => {
+        it('throws when setting state to an unsupported value', () => {
+            let state = 'nope';
+            let route = new TestRoute(defaultOpts);
+            expect(() => route._setState(state)).to.throw(Error, `TestRoute#_setState(): Tried to set route state to an unsupported value: ${JSON.stringify(state)}.`);
+        });
+
+        it('throws when setting state CSS class to an unsupported value', () => {
+            let state = 'nope';
+            let route = new TestRoute(defaultOpts);
+            expect(() => route._setOutletsState(state)).to.throw(Error, `TestRoute#_setOutletsState(): Tried to set outlets state to an unsupported value: ${JSON.stringify(state)}.`);
+        });
     });
 });
