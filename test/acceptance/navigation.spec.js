@@ -540,6 +540,45 @@ describe('Acceptance Tests', () => {
                 });
             });
 
+            navTest('uses transitions when navigating', [
+                ['/', '/todos/1/list', '/user/1/action/go'],
+            ], (done, dest1, dest2, dest3) => {
+                let doneCalled = false;
+                function callDone(err) {
+                    if (!doneCalled) {
+                        doneCalled = true;
+                        done(err);
+                    }
+                }
+
+                let results = [];
+                let rootApp = MyRootApp.create(defaultOpts);
+                expect(results).to.have.length(0);
+
+                // this promise should be terminated on next
+                // call to navigate(), so then() callback
+                // should never run
+                rootApp.navigate(dest1).then(() => {
+                    results.push(1);
+                }).catch(err => callDone(err));
+
+                // this promise should be terminated on next
+                // call to navigate(), so then() callback
+                // should never run
+                rootApp.navigate(dest2).then(() => {
+                    results.push(2);
+                }).catch(err => callDone(err));
+
+                // this navigate call should terminate the
+                // last one, and succeed in calling all
+                // then() callbacks
+                rootApp.navigate(dest3).then(() => {
+                    results.push(3);
+                }).then(() => {
+                    expect(results).to.deep.equal([3]);
+                    callDone();
+                }).catch(err => callDone(err));
+            });
         });
 
         describe('Prerender/Deactivate/Render Cycle', () => {

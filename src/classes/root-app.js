@@ -5,6 +5,7 @@ import { is, isnt } from '../utils/is';
 import isNumeric from '../utils/is-numeric';
 import diffObjects from '../utils/diff-objects';
 import finalDiff from '../utils/final-diff';
+import Transition from '../utils/transition';
 
 class RootApp extends App {
     constructor(opts) {
@@ -130,20 +131,49 @@ class RootApp extends App {
     }
 
     /**
-     * @typedef NavigationRequest
-     * @type {object}
-     * @property {string} address The address of the destination `Route` to navigate to.
-     * @property {object} params The params to apply during navigation while traversing each mount in the Ether app's mount tree, as if these params were parsed from the URL.
-     * @property {object|undefined} queryParams Any queryParams to apply during each step in the mount traversal.
+     * Navigates to a new URL path on the Ether application. Called manually or, if configured to, on: popstate, page landing, or intercepted links.
+     * @param {string} destination The navigation destination. Can be a URL string with or without a querystring.
+     * @return {Transition} A promise-like object that resolves if navigation succeeded, and rejects if it failed, with the details of the failure (404 or navigation error). Can be terminated early so successive calls to Transition#then() don't fire.
      */
+    navigate(destination) {
+        let transition = this._transition;
+        if (transition) {
+            if (transition.isHandlingCallback()) {
+                // one of the transition's callbacks is calling navigate().
+                // instead of terminating the transition, call _navigate()
+                // and allow the promise from there to take over the
+                // transition's chain of callbacks by allowing the
+                // transiton to use it as its promise.
+                // in effect, this allows chaining calls to navigate()
+                // within the then()/catch() callbacks of a transition.
+                //
+                // NOTE: a call to navigate() within a transition's
+                //       callback, without returning the promise from
+                //       navigate() in the callback, is not supported.
+                //       multiple calls to navigate() within a callback
+                //       is also not supported.
+                return this._navigate(destination);
+            } else {
+                // navigate() was called outside of the current
+                // transition's callbacks. terminate the current
+                // transition (meaning no further then()/catch()
+                // callbacks will be called) and create a new
+                // transition for navigation to `destination`.
+                transition.terminate();
+            }
+        }
+
+        this._transition = new Transition(this._navigate(destination));
+        return this._transition;
+    }
 
     /**
-     * Navigates to a new URL path on the Ether application. Called manually or, if configured to, on: popstate, page landing, or intercepted links.
-     * @param {string|NavigationRequest} destination The navigation destination. Can be a URL string with or without a querystring, or a `NavigationRequest`.
+     * Performs the navigation that was scheduled with a call to the non-private version of this function, `navigate()`.
+     * @private
+     * @param {string} destination The navigation destination. Can be a URL string with or without a querystring.
      * @return {Promise} A promise that resolves if navigation succeeded, and rejects if it failed, with the details of the failure (404 or navigation error).
      */
     navigate(destination) {
-        // @TODO: adjust when NavigationRequest is implemented
         let [ path, queryString='' ] = destination.split('?');
         let queryParams = this.parseQueryString(queryString);
         let queryParamsDiff = null;
@@ -170,7 +200,6 @@ class RootApp extends App {
             return Promise.reject(err);
         } else if (routingTrace.result === 'success'){
             return this._constructState(routingTrace, queryParams, queryParamsDiff).then(() => {
-                // @TODO: make sure this to put the URL string here if navigating by address/params/queryParams
                 this._fullUrl = destination;
                 this._lastQueryParams = queryParams;
             });
