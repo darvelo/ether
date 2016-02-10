@@ -4,50 +4,41 @@ class Transition {
         this._callbacks = [];
         this._terminated = false;
         this._handlingCallback = false;
-        // functions to pass to the promise's then()
-        this._iterateResolve = this._iteratePromise.bind(this, 'resolve');
-        this._iterateReject  = this._iteratePromise.bind(this, 'reject');
-        // allows a promise to pass its resolve/reject value
-        // into the next then()/catch() callbacks.
-        this._lastResult = {promise: true};
-        // kick off the calling of callbacks after they are
-        // all attached with synchronous calls to then()/catch()
+        // kick off the calling of callbacks after they've all been
+        // attached with this transition's then() and catch() methods
         setTimeout(() => {
-            this._handleThen();
+            this._attachCallbacksToPromise();
+            // don't waste memory
+            this._callbacks.length = 0;
         }, 1);
     }
 
     then(resolveFn, rejectFn) {
-        if (typeof resolveFn !== 'function') {
-            resolveFn = null;
-        }
-        if (typeof rejectFn !== 'function') {
-            rejectFn = null;
-        }
-        this._callbacks.push([resolveFn || null, rejectFn || null]);
+        this._callbacks.push([resolveFn, rejectFn]);
         return this;
     }
 
     catch(rejectFn) {
-        if (typeof rejectFn !== 'function') {
-            rejectFn = null;
-        }
         this._callbacks.push([null, rejectFn]);
         return this;
     }
 
     /**
-     * Remove remaining callbacks to prevent them from being called,
-     * disable effects from then() and catch(), set status to terminated.
+     * Throw on further calls to then() and catch(),
+     * then() and catch() callbacks already registered
+     * will be noops, isTerminated() returns `true`.
      */
     terminate() {
-        let noop = function(){ return this; }.bind(this);
-        this.then = this.catch = noop;
+        function errFn() {
+            throw new Error('This transition was terminated.');
+        }
+        this.then = this.catch = errFn;
         this._callbacks.length = 0;
         this._terminated = true;
     }
 
     /**
+     * Returns whether the transition is terminated.
      * @return {bool} Whether the transition is terminated.
      */
     isTerminated() {
@@ -73,71 +64,50 @@ class Transition {
     }
 
     /**
-     * Get the result of calling a resolveFn/rejectFn callback.
-     * If the callback returned a promise, make that promise the
-     * transition's promise from now on.
-     * If the callback returned a value, store that value to send
-     * to a callback on the next iteration of the promise.
+     * Calls the resolve or reject callback, but sets state
+     * so isHandlingCallback() calls will report correctly.
+     * Makes callbacks a noop if the transition has already
+     * been terminated. Returns the value of the callback to
+     * be used by the next set of callbacks that were previously
+     * attached with then() and catch().
      * @private
-     * @param {?function} callback The function to call if the promise resolved.
-     * @param {?function} lastResult The resulting value of the last promise.then()
+     * @param {?function} callback The resolve or reject callback.
+     * @param {} result The result of the last resolve or reject callback.
+     * @return {} The result of `callback(result)`.
      */
-    _getCallbackResult(callback, lastResult) {
-        let result;
+    _iteratePromise(callback, result) {
+        if (this._terminated) {
+            return;
+        }
         try {
             // set this flag so outside observers are aware
             this._handlingCallback = true;
-            result = callback(lastResult);
-            this._lastResult = {resolve: result};
-        } catch (err) {
-            // if we encountered an error executing the callback,
-            // make sure we call the next available rejectFn in our
-            // set of callbacks
-            this._lastResult = {reject: err};
+            // finally block will still execute before this return
+            // see: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/try...catch#The_finally_clause
+            return callback(result);
         } finally {
             // unset this flag so outside observers are aware
             this._handlingCallback = false;
-            // if the callback function returned a promise,
-            // set that promise as the transition's promise from now on,
-            // and allow its resolved/rejected value to be passed
-            // to the next callback iteration
-            if (result instanceof Promise) {
-                this._promise = result;
-                this._lastResult = {promise: true};
-            }
         }
     }
 
-    _iteratePromise(which, result) {
-        let [ resolveFn, rejectFn ] = this._callbacks.shift();
-        if (this._lastResult.hasOwnProperty('promise')) {
-            if (which === 'resolve') {
-                // call resolveFn if the promise resolved
-                this._lastResult = {resolve: result};
-            } else if (which === 'reject') {
-                // call rejectFn if the promise rejected
-                this._lastResult = {reject: result};
+    /**
+     * Pass wrapped callbacks, in sequence, into this
+     * transition's promise's own then() method.
+     * @private
+     */
+    _attachCallbacksToPromise() {
+        this._promise = this._callbacks.reduce((promise, [ resolveFn, rejectFn ]) => {
+            // pass non-function resolve and reject fns into
+            // promise while wrapping those that are functions
+            if (typeof resolveFn === 'function') {
+                resolveFn = this._iteratePromise.bind(this, resolveFn);
             }
-        }
-        // skip and wait until the next callback iteration
-        // if the right callback doesn't exist for the status
-        // of the last iteration of the promise (resolved or rejected)
-        if (resolveFn && this._lastResult.hasOwnProperty('resolve')) {
-            this._getCallbackResult(resolveFn, this._lastResult.resolve);
-        } else if (rejectFn && this._lastResult.hasOwnProperty('reject')) {
-            this._getCallbackResult(rejectFn, this._lastResult.reject);
-        }
-        if (this._callbacks.length) {
-            this._handleThen();
-        }
-    }
-
-    _handleThen() {
-        if (this._terminated || !this._callbacks.length) {
-            return;
-        }
-        // get result from the promise and pass it to the proper callback
-        this._promise = this._promise.then(this._iterateResolve, this._iterateReject);
+            if (typeof rejectFn === 'function') {
+                rejectFn = this._iteratePromise.bind(this, rejectFn);
+            }
+            return promise.then(resolveFn, rejectFn);
+        }, this._promise);
     }
 }
 

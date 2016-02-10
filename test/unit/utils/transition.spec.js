@@ -11,16 +11,16 @@ describe('Transition', () => {
         expect(transition.catch()).to.equal(transition);
     });
 
-    it('then() returns itself after terminate()', () => {
+    it('then() throws after terminate()', () => {
         let transition = new Transition(Promise.resolve());
         transition.terminate();
-        expect(transition.then()).to.equal(transition);
+        expect(() => transition.then()).to.throw(Error, 'This transition was terminated.');
     });
 
-    it('catch() returns itself after terminate()', () => {
+    it('catch() throws after terminate()', () => {
         let transition = new Transition(Promise.resolve());
         transition.terminate();
-        expect(transition.catch()).to.equal(transition);
+        expect(() => transition.catch()).to.throw(Error, 'This transition was terminated.');
     });
 
     it('calls resolveFn when promise resolves', done => {
@@ -243,7 +243,7 @@ describe('Transition', () => {
         new Transition(Promise.reject(1))
             .then(() => done(new Error('Called resolveFn.')), 'xyz')
             .then(() => {
-                done(new Error('Called resolveFn.'));
+                done(new Error('Called resolveFn!.'));
             }, val => {
                 expect(val).to.equal(1);
                 done();
