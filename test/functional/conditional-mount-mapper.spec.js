@@ -49,12 +49,13 @@ describe('ConditionalMountMapper', () => {
                     return ['action'];
                 }
             }
-            class BothParamsRoute extends TestRoute {
+            class TwoParamsRoute extends TestRoute {
                 expectedParams() {
                     return ['id', 'action'];
                 }
             }
-            class AddressesRoute extends BothParamsRoute {
+            class BothParamsRoute extends TwoParamsRoute { }
+            class AddressesRoute extends TwoParamsRoute {
                 expectedAddresses() {
                     return ['fourth'];
                 }
@@ -62,12 +63,12 @@ describe('ConditionalMountMapper', () => {
                     return [function(){}];
                 }
             }
-            class OutletRoute extends BothParamsRoute {
+            class OutletRoute extends TwoParamsRoute {
                 expectedOutlets() {
                     return ['fourth', 'fifth'];
                 }
             }
-            class SetupRoute extends BothParamsRoute {
+            class SetupRoute extends TwoParamsRoute {
                 init(setup, ...args) {
                     super.init(setup, ...args);
                     this.setup = setup;

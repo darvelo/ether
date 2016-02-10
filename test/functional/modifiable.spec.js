@@ -36,10 +36,9 @@ let transformTests = {
             expect(modified.addresses).to.deep.equal(this.args);
             // this allows us to bypass Expectable expected*() functions
             // and just check that the arguments are transformed correctly
-            let stub = sinon.stub(modified, 'klass');
+            let stub = sinon.stub(modified.klass, 'create');
             modified.create(...transformTestsArgs);
             stub.should.have.been.calledOnce;
-            stub.should.have.been.calledWithNew;
             let callArgs = stub.getCall(0).args;
             callArgs.should.deep.equal(transformTestsArgs);
             stub.restore();
@@ -54,10 +53,9 @@ let transformTests = {
             expect(modified.outlets).to.deep.equal(this.args);
             // this allows us to bypass Expectable expected*() functions
             // and just check that the arguments are transformed correctly
-            let stub = sinon.stub(modified, 'klass');
+            let stub = sinon.stub(modified.klass, 'create');
             modified.create(...transformTestsArgs);
             stub.should.have.been.calledOnce;
-            stub.should.have.been.calledWithNew;
             let callArgs = stub.getCall(0).args;
             callArgs.should.deep.equal(transformTestsArgs);
             stub.restore();
@@ -72,10 +70,9 @@ let transformTests = {
             expect(modified.setupFns).to.deep.equal(this.args);
             // this allows us to bypass Expectable expected*() functions
             // and just check that the arguments are transformed correctly
-            let stub = sinon.stub(modified, 'klass');
+            let stub = sinon.stub(modified.klass, 'create');
             modified.create(...transformTestsArgs);
             stub.should.have.been.calledOnce;
-            stub.should.have.been.calledWithNew;
             let callArgs = stub.getCall(0).args;
             callArgs.should.deep.equal(transformTestsArgs);
             stub.restore();
