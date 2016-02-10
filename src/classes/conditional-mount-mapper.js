@@ -241,7 +241,10 @@ class ConditionalMountMapper extends BaseMountMapper {
         let passedOutlets = parentData.mountsMetadata.outlets;
 
         // make parentApp's params an easily searchable object
-        parentData.params = Object.freeze(parentData.params.reduce((memo, p) => memo[p] = true && memo, {}));
+        parentData.params = Object.freeze(parentData.params.reduce((memo, p) => {
+            memo[p] = true;
+            return memo;
+        }, {}));
         // create a map from each address in parentApp's mounts to all the params in their crumbs
         parentData.addressesParams = parentData.mountMapper.allMounts().reduce((memo, crumbData) => {
             let params = {};

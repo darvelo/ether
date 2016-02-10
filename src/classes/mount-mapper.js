@@ -269,7 +269,10 @@ class MountMapper extends BaseMountMapper {
         let allAddresses = {};
 
         // make parentApp's params an easily searchable object
-        parentData.params = Object.freeze(parentData.params.reduce((memo, p) => memo[p] = true && memo, {}));
+        parentData.params = Object.freeze(parentData.params.reduce((memo, p) => {
+            memo[p] = true;
+            return memo;
+        }, {}));
 
         for (let crumb in mounts) {
             if (!mounts.hasOwnProperty(crumb)) {

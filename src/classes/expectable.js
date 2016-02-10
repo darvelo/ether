@@ -57,7 +57,10 @@ class Expectable {
         } else {
             // @TODO: replace with sorting smaller array + binary search,
             //        which is O(n*m*log(m)) where m is the smaller array
-            let given = array.reduce((memo, val) => (memo[val] = true) && memo, {});
+            let given = array.reduce((memo, val) => {
+                memo[val] = true;
+                return memo;
+            }, {});
             for (let val of expected) {
                 if (!given[val]) {
                     return EXPECTED_NOT_MET;

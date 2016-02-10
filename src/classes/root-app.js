@@ -453,7 +453,10 @@ class RootApp extends App {
      * @return {{params: object, diff: Diff}} The combination of: the params for this App/Route; and a combination of both the diff for both the params for this App/Route vs. those sent in the last navigation, and the diff of the global querystring params in the URL vs those in the last successful navigation. `Null` if neither the params nor queryParams diffs were different than what they were on last navigation.
      */
     _buildRenderData(accumulatedParams, expectedParams, lastParams, queryParamsDiff) {
-        let params = expectedParams.reduce((memo, paramName) => (memo[paramName] = accumulatedParams[paramName]) && memo, {});
+        let params = expectedParams.reduce((memo, paramName) => {
+            memo[paramName] = accumulatedParams[paramName];
+            return memo;
+        }, {});
         let paramsDiff = diffObjects(lastParams, params);
         let diff = finalDiff(paramsDiff, queryParamsDiff);
         if (!Object.keys(params).length) {
