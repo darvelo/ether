@@ -7,7 +7,11 @@ import { is, isnt } from '../../src/utils/is';
 import diffObjects from '../../src/utils/diff-objects';
 import finalDiff from '../../src/utils/final-diff';
 
-import { navTest } from '../utils/acceptance-test-generator';
+import {
+    navTest,
+    getAllRouteClassesRecursivelyForApp,
+} from '../utils/navigation-acceptance-tests-utils';
+
 import {
     DeactivateValidator,
     PrerenderValidator,
