@@ -571,11 +571,18 @@ describe('Acceptance Tests', () => {
         describe('Prerender/Deactivate/Render Cycle', () => {
             navTest('does not call any prerender/deactivate/render before calling navigate()', [
                 '/',
-            ], (done) => {
+            ], (done, dest) => {
                 let rootApp = new MyRootApp(defaultOpts);
                 getAllSpyFns(mountSpies).forEach(spy => spy.should.not.have.been.called);
                 getAllSpyFns(cMountSpies).forEach(spy => spy.should.not.have.been.called);
-                done();
+                rootApp.navigate(dest).then(() => {
+                    expect(getAllSpyFns(mountSpies).some(spy => spy.called)).to.equal(true);
+                    expect(getAllSpyFns(cMountSpies).some(spy => spy.called)).to.equal(true);
+                    done();
+                }).catch(err => {
+                    // if test fails, pass error to Mocha
+                    done(err);
+                });
             });
 
             navTest('calls prerender/render, in order, only on the navigated-to mount\'s Route', [
