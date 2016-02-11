@@ -5,7 +5,10 @@ class Transition {
         this._terminated = false;
         this._handlingCallback = false;
         // kick off the calling of callbacks after they've all been
-        // attached with this transition's then() and catch() methods
+        // attached with this transition's then() and catch() methods.
+        // The setTimeout is key... it's what allows us to have access
+        // to all the callbacks passed in through then() so that we
+        // can wrap them.
         setTimeout(() => {
             this._attachCallbacksToPromise();
             // don't waste memory
@@ -76,7 +79,7 @@ class Transition {
      * @return {} The result of `callback(result)`.
      */
     _iteratePromise(callback, result) {
-        if (this._terminated) {
+        if (this.isTerminated()) {
             return;
         }
         try {
@@ -97,7 +100,7 @@ class Transition {
      * @private
      */
     _attachCallbacksToPromise() {
-        this._promise = this._callbacks.reduce((promise, [ resolveFn, rejectFn ]) => {
+        this._callbacks.reduce((promise, [ resolveFn, rejectFn ]) => {
             // pass non-function resolve and reject fns into
             // promise while wrapping those that are functions
             if (typeof resolveFn === 'function') {

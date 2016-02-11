@@ -8,22 +8,78 @@ import diffObjects from '../../src/utils/diff-objects';
 import finalDiff from '../../src/utils/final-diff';
 
 import { navTest } from '../utils/acceptance-test-generator';
+import {
+    DeactivateValidator,
+    PrerenderValidator,
+    RenderValidator
+} from '../utils/route-state-validators';
 
 let freeze = Object.freeze;
 
 function assertAppState(app, state) {
-    let keyCount = 0;
     for (let key of Object.keys(app.state)) {
         if (state === key) {
-            keyCount++;
             expect(app.state[key]).to.equal(true);
         } else {
             expect(app.state[key]).to.equal(false);
         }
     }
-    if (keyCount !== 1) {
-        throw new Error('bad count');
+}
+
+function checkRouteState(route, stage, methodName) {
+    let validator;
+    switch (methodName) {
+    case 'deactivate':
+        validator = DeactivateValidator;
+        break;
+    case 'prerender':
+        validator = PrerenderValidator;
+        break;
+    case 'render':
+        validator = RenderValidator;
+        break;
+    default:
+        throw new Error(`checkRouteState(): unsupported methodName "${methodName}".`);
     }
+
+    let state = Object.assign({}, route.state);
+    // console.log();
+    // console.log(`${ctorName(route)}#${methodName} ${stage}`);
+    expect(validator.validate(stage, state)).to.equal(true);
+
+    let outlets = route.outlets;
+    let outletsNames = Object.keys(outlets);
+    // for all outlets, assert the only state-related
+    // CSS class that exists is for the given state
+    outletsNames.forEach(name => {
+        let classes = outlets[name]._element.className;
+        expect(validator.validateCSSClasses(stage, classes)).to.equal(true);
+    });
+}
+
+function inject(route, methodName) {
+    let [ privateName, publicName ]   = [`_${methodName}`,   methodName];
+    let [ oldPrivateFn, oldPublicFn ] = [route[privateName], route[publicName]] ;
+
+    route[privateName] = function(...args) {
+        checkRouteState(route, 'pre', methodName);
+        return oldPrivateFn.apply(route, args).then(result => {
+            checkRouteState(route, 'post', methodName);
+            return result;
+        });
+    };
+
+    route[publicName] = function(...args) {
+        checkRouteState(route, 'in', methodName);
+        return oldPublicFn.apply(route, args);
+    };
+
+    return function restore() {
+        // remove injected methods that are hasOwn on route
+        // and allow the original prototype methods to work
+        delete route[privateName];
+        delete route[publicName];
+    };
 }
 
 function injectRouteStateAssertions(routeClass, ...methodNames) {
@@ -32,91 +88,22 @@ function injectRouteStateAssertions(routeClass, ...methodNames) {
     if (!methodNames.length) {
         methodNames = ['deactivate', 'prerender', 'render'];
     }
-    function inject(route, methodName) {
-        let privateFn = route['_' + methodName];
-        let publicFn = route[methodName];
-        let preState, inState, postState;
 
-        switch (methodName) {
-            case 'deactivate':
-                preState = /^rendered$/;
-                inState = /^deactivating$/;
-                postState = /^deactivated$/;
-                break;
-            case 'prerender':
-                preState = /^deactivated|rendered$/;
-                inState = /^prerendering$/;
-                postState = /^prerendered$/;
-                break;
-            case 'render':
-                preState = /^prerendered$/;
-                inState = /^rendering$/;
-                postState = /^rendered$/;
-                break;
-            default:
-                throw new Error('assertRouteState: unsupported methodName: ' + methodName);
-        }
-
-        function checkRouteState(stateRegex) {
-            let outlets = route.outlets;
-            let outletsNames = Object.keys(outlets);
-            let keyCount = 0;
-            for (let key of Object.keys(route.state)) {
-                if (route.state[key]) {
-                    keyCount++;
-                    expect(stateRegex.test(key), `expected state prop to be true: {${key}: ${route.state[key]}} ${JSON.stringify(route.state)}`).to.equal(true);
-                }
-            }
-            if (keyCount !== 1) {
-                throw new Error('bad key count');
-            }
-            // for all outlets, assert the only state-related
-            // CSS class that exists is for the given state
-            let cssState = new RegExp('^ether-(' + stateRegex.source.slice(1,-1) + ')$');
-            // @TODO: pass outlets in
-            outletsNames.forEach(name => {
-                expect(outlets[name]._element.className).to.equal(cssState);
-            });
-        }
-
-        route['_' + methodName] = function(...args) {
-            checkRouteState(preState);
-            return privateFn.apply(route, args).then(result => {
-                checkRouteState(postState);
-                return result;
-            });
-        };
-
-        route[methodName] = function(...args) {
-            checkRouteState(inState);
-            return publicFn.apply(route, args);
-        };
-
-        function restore() {
-            // restore original routeClass.create() method
-            routeClass.create = oldCreate;
-            // remove injected methods that are hasOwn on route
-            // and allow the original prototype methods to work
-            delete route['_' + methodName];
-            delete route[methodName];
-        }
-        return restore;
-    }
-
-    let restore;
+    let restoreMethodsFns = [];
     routeClass.create = function(...args) {
         let route = oldCreate.apply(routeClass, args);
-        let restoreMethodsFns = [];
         for (let name of methodNames) {
             restoreMethodsFns.push(inject(route, name));
         }
-        restore = function() {
-            restoreMethodsFns.forEach(fn => fn());
-        };
         return route;
     };
-    return function() {
-        restore();
+
+    return function restore() {
+        // restore original routeClass.prototype.create() method
+        delete routeClass.create;
+        // remove injected methods that are hasOwn on route
+        // and allow the original prototype methods to work
+        restoreMethodsFns.forEach(fn => fn());
     };
 }
 
@@ -1378,6 +1365,11 @@ describe('Acceptance Tests', () => {
             navTest('sets the correct state for Apps and Routes during all transitions', [
                 [
                     ['/todos/1/list', { active: ['todoApp'], inactive: ['userApp']}],
+                    // same exact Routes will already be rendered, so
+                    // tests should check that Route states and their
+                    // outlets' CSS classes are correctly applied
+                    ['/todos/2/list', { active: ['todoApp'], inactive: ['userApp']}],
+
                     ['/user/1/menu/stats', { active: ['userApp'], inactive: ['todoApp']}],
                     ['/news/story', { active: [], inactive: ['todoApp', 'userApp']}],
                 ]
@@ -1406,7 +1398,6 @@ describe('Acceptance Tests', () => {
                 ].map(route => injectRouteStateAssertions(route));
 
                 let rootApp = MyRootApp.create(defaultOpts);
-                let promise = Promise.resolve();
 
                 function checkAppAtAddressHasState(state) {
                     return function(address) {
@@ -1414,22 +1405,29 @@ describe('Acceptance Tests', () => {
                     };
                 }
 
-                function navigateAndCheckApps(dest, appExpectations) {
-                    return function() {
+                // let promise;
+                // let first = true;
+                // for (let [ dest, appExpectations ] of expectations) {
+                //     if (first) {
+                //         promise = rootApp.navigate(dest).then(checkAppsState(appExpectations));
+                //         first = false;
+                //     } else {
+                //         promise = promise.then(navigateAndCheckApps(dest, appExpectations));
+                //     }
+                // }
+
+                expectations.reduce((promise, [ dest, appExpectations ]) => {
+                    console.log(promise);
+                    return promise.then(() => {
                         return rootApp.navigate(dest).then(() => {
                             for (let state of Object.keys(appExpectations)) {
                                 let appAddresses = appExpectations[state];
                                 appAddresses.forEach(checkAppAtAddressHasState(state));
                             }
                         });
-                    };
-                }
-
-                for (let [ dest, appExpectations ] of expectations) {
-                    promise = promise.then(navigateAndCheckApps(dest, appExpectations));
-                }
-
-                promise.then(() => {
+                    });
+                }, Promise.resolve()).then(() => {
+                    console.log('restoring');
                     restoreFns.forEach(fn => fn());
                     done();
                 }).catch(err => {

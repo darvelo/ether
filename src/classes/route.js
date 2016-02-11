@@ -54,6 +54,10 @@ class Route extends Modifiable {
     }
 
     _setState(state) {
+        let wasRendered;
+        if (this.state.rendered === true) {
+            wasRendered = true;
+        }
         if (!this.state.hasOwnProperty(state)) {
             throw new Error(`${ctorName(this)}#_setState(): Tried to set route state to an unsupported value: ${JSON.stringify(state)}.`);
         }
@@ -63,6 +67,17 @@ class Route extends Modifiable {
             } else {
                 this.state[possibleState] = false;
             }
+        }
+        switch(state) {
+        case 'prerendering':
+        case 'prerendered':
+        case 'rendering':
+            if (wasRendered) {
+                this.state.rendered = true;
+            }
+            break;
+        default:
+            break;
         }
         this._setOutletsState(state);
     }
