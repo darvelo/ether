@@ -9,8 +9,13 @@ import finalDiff from '../../src/utils/final-diff';
 
 import {
     navTest,
+} from '../utils/navigation-acceptance-tests/navigation-test-generator';
+import {
     getAllRouteClassesRecursivelyForApp,
-} from '../utils/navigation-acceptance-tests-utils';
+} from '../utils/navigation-acceptance-tests/routes-state-validator';
+import {
+    assertAppState,
+} from '../utils/navigation-acceptance-tests/app-state-validator';
 
 import {
     DeactivateValidator,
