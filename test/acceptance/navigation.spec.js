@@ -5,12 +5,6 @@ import diffObjects from '../../src/utils/diff-objects';
 import finalDiff from '../../src/utils/final-diff';
 
 import {
-    DeactivateValidator,
-    PrerenderValidator,
-    RenderValidator
-} from '../utils/route-state-validators';
-
-import {
     navTest,
 } from '../utils/navigation-acceptance-tests/navigation-test-generator';
 
@@ -20,6 +14,7 @@ import {
 
 import {
     getAllRouteClassesRecursivelyForApp,
+    injectRouteStateAssertions,
 } from '../utils/navigation-acceptance-tests/routes-state-validator';
 
 import MyRootApp from '../utils/navigation-acceptance-tests/app-under-test/root-app';
@@ -30,101 +25,12 @@ import {
     mountSpies,
     cMountSpies,
     resetSpies,
+    getAllSpyFns,
 } from '../utils/navigation-acceptance-tests/sinon-spies';
 
 resetSpies();
 
 let freeze = Object.freeze;
-
-function checkRouteState(route, stage, methodName) {
-    let validator;
-    switch (methodName) {
-    case 'deactivate':
-        validator = DeactivateValidator;
-        break;
-    case 'prerender':
-        validator = PrerenderValidator;
-        break;
-    case 'render':
-        validator = RenderValidator;
-        break;
-    default:
-        throw new Error(`checkRouteState(): unsupported methodName "${methodName}".`);
-    }
-
-    let state = Object.assign({}, route.state);
-    // console.log();
-    // console.log(`${ctorName(route)}#${methodName} ${stage}`);
-    expect(validator.validate(stage, state)).to.equal(true);
-
-    let outlets = route.outlets;
-    let outletsNames = Object.keys(outlets);
-    // for all outlets, assert the only state-related
-    // CSS class that exists is for the given state
-    outletsNames.forEach(name => {
-        let classes = outlets[name]._element.className;
-        expect(validator.validateCSSClasses(stage, classes)).to.equal(true);
-    });
-}
-
-function inject(route, methodName) {
-    let [ privateName, publicName ]   = [`_${methodName}`,   methodName];
-    let [ oldPrivateFn, oldPublicFn ] = [route[privateName], route[publicName]] ;
-
-    route[privateName] = function(...args) {
-        checkRouteState(route, 'pre', methodName);
-        return oldPrivateFn.apply(route, args).then(result => {
-            checkRouteState(route, 'post', methodName);
-            return result;
-        });
-    };
-
-    route[publicName] = function(...args) {
-        checkRouteState(route, 'in', methodName);
-        return oldPublicFn.apply(route, args);
-    };
-
-    return function restore() {
-        // remove injected methods that are hasOwn on route
-        // and allow the original prototype methods to work
-        delete route[privateName];
-        delete route[publicName];
-    };
-}
-
-function injectRouteStateAssertions(routeClass, ...methodNames) {
-    let oldCreate = routeClass.create;
-
-    if (!methodNames.length) {
-        methodNames = ['deactivate', 'prerender', 'render'];
-    }
-
-    let restoreMethodsFns = [];
-    routeClass.create = function(...args) {
-        let route = oldCreate.apply(routeClass, args);
-        for (let name of methodNames) {
-            restoreMethodsFns.push(inject(route, name));
-        }
-        return route;
-    };
-
-    return function restore() {
-        // restore original routeClass.prototype.create() method
-        delete routeClass.create;
-        // remove injected methods that are hasOwn on route
-        // and allow the original prototype methods to work
-        restoreMethodsFns.forEach(fn => fn());
-    };
-}
-
-function getAllSpyFns(spies) {
-    let allSpies = Object.keys(spies).reduce((memo, key) => {
-        let spiesForKey = Object.keys(spies[key]).map(spyName => spies[key][spyName]);
-        memo.push(...spiesForKey);
-        return memo;
-    }, []);
-    return allSpies;
-}
 
 describe.only('Acceptance Tests', () => {
     let defaultOpts;
