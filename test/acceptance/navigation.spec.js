@@ -25,16 +25,6 @@ import {
 
 let freeze = Object.freeze;
 
-function assertAppState(app, state) {
-    for (let key of Object.keys(app.state)) {
-        if (state === key) {
-            expect(app.state[key]).to.equal(true);
-        } else {
-            expect(app.state[key]).to.equal(false);
-        }
-    }
-}
-
 function checkRouteState(route, stage, methodName) {
     let validator;
     switch (methodName) {
@@ -658,112 +648,6 @@ describe('Acceptance Tests', () => {
                 });
             });
 
-            navTest('passes to all conditional mounts\' prerender()/render() fns all queryParams and only the expected params for the Route', [
-                // @TODO: add destinations, here and in other navTests, that navigate by address and given params/queryParams
-                ['/', null, null, [RootAllConditionalRoute, RootConditionalRoute]],
-                ['/?sort=true&sort_type=asc&idx=1', null, freeze({sort: true, sort_type: 'asc', idx: 1}), [RootAllConditionalRoute, RootConditionalRoute]],
-                ['/news/story?', freeze({news: 'story'}), null, [RootAllConditionalRoute, RootNewsConditionalRoute]],
-                ['/news/story?idx=3', freeze({news: 'story'}), freeze({idx: 3}), [RootAllConditionalRoute, RootNewsConditionalRoute]],
-                ['/user/1/action/go?', freeze({id: 1, action: 'go'}), null,
-                    [
-                        RootAllConditionalRoute, RootIdConditionalRouteOne, RootIdConditionalRouteTwo,
-                        UserIdConditionalRouteOne, UserIdConditionalRouteTwo, UserIdConditionalRouteThree, UserIdActionConditionalRoute,
-                    ]
-                ],
-                ['/user/2/menu/stats?', freeze({id: 2, menu: 'stats'}), null,
-                    [
-                        RootAllConditionalRoute, RootIdConditionalRouteOne, RootIdConditionalRouteTwo,
-                        UserIdConditionalRouteOne, UserIdConditionalRouteFour, UserIdMenuConditionalRouteOne,
-                    ]
-                ],
-                ['/user/2/menu/stats?bestFirst=true&limit=10&order=abc', freeze({id: 2, menu: 'stats'}), freeze({bestFirst: true, limit: 10, order: 'abc'}),
-                    [
-                        RootAllConditionalRoute, RootIdConditionalRouteOne, RootIdConditionalRouteTwo,
-                        UserIdConditionalRouteOne, UserIdConditionalRouteFour, UserIdMenuConditionalRouteOne,
-                    ]
-                ],
-                ['/user/2/menu/stats/profile', freeze({id: 2, menu: 'stats'}), null,
-                    [
-                        RootAllConditionalRoute, RootIdConditionalRouteOne, RootIdConditionalRouteTwo,
-                        UserIdConditionalRouteOne, UserIdConditionalRouteFour, UserIdMenuConditionalRouteOne, UserIdMenuConditionalRouteTwo,
-                    ]
-                ],
-                ['/user/2/menu/stats/profile?bestFirst=true&limit=10&order=abc', freeze({id: 2, menu: 'stats'}), freeze({bestFirst: true, limit: 10, order: 'abc'}),
-                    [
-                        RootAllConditionalRoute, RootIdConditionalRouteOne, RootIdConditionalRouteTwo,
-                        UserIdConditionalRouteOne, UserIdConditionalRouteFour, UserIdMenuConditionalRouteOne, UserIdMenuConditionalRouteTwo,
-                    ]
-                ],
-                // ['/user/1/action/go', freeze({news: 'story', action: 'go'}), null, [RootAllConditionalRoute]],
-            ], (done, dest, allParams, queryParams, expectedCondRoutesRendered) => {
-                let queryParamsDiff;
-                if (is(queryParams, 'Null')) {
-                    queryParamsDiff = null;
-                } else {
-                    queryParamsDiff = freeze(Object.keys(queryParams).reduce((memo, qp) => {
-                        // since we're navigating from a fresh state,
-                        // all queryParam previous values should be `undefined`,
-                        // and all expected values should be equal to the
-                        // expected values passed in from the test function
-                        memo[qp] = [undefined, queryParams[qp]];
-                        return memo;
-                    }, {}));
-                }
-
-                // builds the expected params and paramsDiff values to test
-                // against by mapping from a route's expectedParams()
-                function buildParamsData(params, paramsDiff) {
-                    return function(expectedParam) {
-                        params[expectedParam] = allParams[expectedParam];
-                        paramsDiff[expectedParam] = [undefined, allParams[expectedParam]];
-                    };
-                }
-
-                let rootApp = new MyRootApp(defaultOpts);
-                rootApp.navigate(dest).then(() => {
-                    for (let route of expectedCondRoutesRendered) {
-                        let { expectedParams, constructor: { name: ctorname } } = route.prototype;
-                        let spies = cMountSpies[ctorname];
-                        let { prerenderSpy, renderSpy } = spies;
-                        let params, paramsDiff;
-                        // if we have explicitly stated in the args that
-                        // no params should exist, test that both params
-                        // and paramsDiff in prerender/ender are null.
-                        // they should also be null if the route is not
-                        // expecting any params.
-                        if (is(allParams, 'Null') || !expectedParams().length) {
-                            params = null;
-                            paramsDiff = null;
-                        } else {
-                            // build a list of params that should be passed
-                            // into prerender/render based on the route's
-                            // expected params
-                            params = {};
-                            paramsDiff = {};
-                            expectedParams().forEach(buildParamsData(params, paramsDiff));
-                        }
-                        let expectedArgs = [
-                            params,
-                            queryParams,
-                            finalDiff(paramsDiff, queryParamsDiff),
-                        ];
-                        prerenderSpy.should.have.been.calledWith(...expectedArgs);
-                        renderSpy.should.have.been.calledWith(...expectedArgs);
-                        // remove spies from hashtable of all spies so that
-                        // we can test that the rest have not been called
-                        delete spies.prerenderSpy;
-                        delete spies.renderSpy;
-                    }
-                    // test that all spies not explicitly
-                    // tested above have not been called
-                    getAllSpyFns(cMountSpies).forEach(spy => spy.should.not.have.been.called);
-                    done();
-                }).catch(err => {
-                    // if test fails, pass error to Mocha
-                    done(err);
-                });
-            });
-
             function checkRenderArgsAfterNavigation(done, dests, prevQueryParams, queryParams, expectedRenderedMounts) {
                 let lastIdx = dests.length-1;
                 let rootApp = new MyRootApp(defaultOpts);
@@ -802,6 +686,104 @@ describe('Acceptance Tests', () => {
             navTest('passes the right params/queryParams/diffs to mounts/conditional mounts\' prerender()/render() fns on two consecutive visits', [
                 // same params and query params isn't tested because same-URL navigation is a noop
 
+                /* Single destination */
+                [
+                    ['/'],
+                    null, null,
+                    [
+                        ['RootAllConditionalRoute', null, null],
+                        ['RootConditionalRoute', null, null],
+                    ],
+                ],
+                [
+                    ['/?sort=true&sort_type=asc&idx=1'],
+                    null, freeze({sort: true, sort_type: 'asc', idx: 1}),
+                    [
+                        ['RootAllConditionalRoute', null, null],
+                        ['RootConditionalRoute', null, null],
+                    ],
+                ],
+                [
+                    ['/news/story?'],
+                    null, null,
+                    [
+                        ['RootAllConditionalRoute', null, null],
+                        ['RootNewsConditionalRoute', null, freeze({news: 'story'})],
+                    ],
+                ],
+                [
+                    ['/news/story?idx=3'],
+                    null, freeze({idx: 3}),
+                    [
+                        ['RootAllConditionalRoute', null, null],
+                        ['RootNewsConditionalRoute', null, freeze({news: 'story'})],
+                    ],
+                ],
+                [
+                    ['/user/1/action/go?'],
+                    null, null,
+                    [
+                        ['RootAllConditionalRoute', null, null],
+                        ['RootIdConditionalRouteOne', null, freeze({id: 1})],
+                        ['RootIdConditionalRouteTwo', null, freeze({id: 1})],
+                        ['UserIdConditionalRouteOne', null, freeze({id: 1})],
+                        ['UserIdConditionalRouteTwo', null, freeze({id: 1})],
+                        ['UserIdConditionalRouteThree', null, freeze({id: 1})],
+                        ['UserIdActionConditionalRoute', null, freeze({id: 1, action: 'go'})],
+                    ],
+                ],
+                [
+                    ['/user/2/menu/stats?'],
+                    null, null,
+                    [
+                        ['RootAllConditionalRoute', null, null],
+                        ['RootIdConditionalRouteOne', null, freeze({id: 2})],
+                        ['RootIdConditionalRouteTwo', null, freeze({id: 2})],
+                        ['UserIdConditionalRouteOne', null, freeze({id: 2})],
+                        ['UserIdConditionalRouteFour', null, freeze({id: 2})],
+                        ['UserIdMenuConditionalRouteOne', null, freeze({id: 2, menu: 'stats'})],
+                    ],
+                ],
+                [
+                    ['/user/2/menu/stats?bestFirst=true&limit=10&order=abc'],
+                    null, freeze({bestFirst: true, limit: 10, order: 'abc'}),
+                    [
+                        ['RootAllConditionalRoute', null, null],
+                        ['RootIdConditionalRouteOne', null, freeze({id: 2})],
+                        ['RootIdConditionalRouteTwo', null, freeze({id: 2})],
+                        ['UserIdConditionalRouteOne', null, freeze({id: 2})],
+                        ['UserIdConditionalRouteFour', null, freeze({id: 2})],
+                        ['UserIdMenuConditionalRouteOne', null, freeze({id: 2, menu: 'stats'})],
+                    ],
+                ],
+                [
+                    ['/user/2/menu/stats/profile'],
+                    null, null,
+                    [
+                        ['RootAllConditionalRoute', null, null],
+                        ['RootIdConditionalRouteOne', null, freeze({id: 2})],
+                        ['RootIdConditionalRouteTwo', null, freeze({id: 2})],
+                        ['UserIdConditionalRouteOne', null, freeze({id: 2})],
+                        ['UserIdConditionalRouteFour', null, freeze({id: 2})],
+                        ['UserIdMenuConditionalRouteOne', null, freeze({id: 2, menu: 'stats'})],
+                        ['UserIdMenuConditionalRouteTwo', null, freeze({id: 2, menu: 'stats'})],
+                    ],
+                ],
+                [
+                    ['/user/2/menu/stats/profile?bestFirst=true&limit=10&order=abc'],
+                    null, freeze({bestFirst: true, limit: 10, order: 'abc'}),
+                    [
+                        ['RootAllConditionalRoute', null, null],
+                        ['RootIdConditionalRouteOne', null, freeze({id: 2})],
+                        ['RootIdConditionalRouteTwo', null, freeze({id: 2})],
+                        ['UserIdConditionalRouteOne', null, freeze({id: 2})],
+                        ['UserIdConditionalRouteFour', null, freeze({id: 2})],
+                        ['UserIdMenuConditionalRouteOne', null, freeze({id: 2, menu: 'stats'})],
+                        ['UserIdMenuConditionalRouteTwo', null, freeze({id: 2, menu: 'stats'})],
+                    ],
+                ],
+
+                /* Multiple destinations */
                 // different params, same query params
                 [
                     ['/todos/1/list?hello=1&sort=asc', '/todos/2/chart?sort=asc&hello=1'],
