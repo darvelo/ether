@@ -1,27 +1,38 @@
-import RootApp from '../../src/classes/root-app';
-import MutableOutlet from '../../src/classes/mutable-outlet';
 import App from '../../src/classes/app';
 import Route from '../../src/classes/route';
-import ctorName from '../../src/utils/ctor-name';
-import { is, isnt } from '../../src/utils/is';
+import MutableOutlet from '../../src/classes/mutable-outlet';
 import diffObjects from '../../src/utils/diff-objects';
 import finalDiff from '../../src/utils/final-diff';
-
-import {
-    navTest,
-} from '../utils/navigation-acceptance-tests/navigation-test-generator';
-import {
-    getAllRouteClassesRecursivelyForApp,
-} from '../utils/navigation-acceptance-tests/routes-state-validator';
-import {
-    assertAppState,
-} from '../utils/navigation-acceptance-tests/app-state-validator';
 
 import {
     DeactivateValidator,
     PrerenderValidator,
     RenderValidator
 } from '../utils/route-state-validators';
+
+import {
+    navTest,
+} from '../utils/navigation-acceptance-tests/navigation-test-generator';
+
+import {
+    assertAppState,
+} from '../utils/navigation-acceptance-tests/app-state-validator';
+
+import {
+    getAllRouteClassesRecursivelyForApp,
+} from '../utils/navigation-acceptance-tests/routes-state-validator';
+
+import MyRootApp from '../utils/navigation-acceptance-tests/app-under-test/root-app';
+
+// holds Sinon spies that are regenerated
+// for each test, and sometimes within a test
+import {
+    mountSpies,
+    cMountSpies,
+    resetSpies,
+} from '../utils/navigation-acceptance-tests/sinon-spies';
+
+resetSpies();
 
 let freeze = Object.freeze;
 
@@ -106,11 +117,6 @@ function injectRouteStateAssertions(routeClass, ...methodNames) {
     };
 }
 
-// holds Sinon spies that are regenerated for each test
-// and sometimes within a test
-let mountSpies;
-let cMountSpies;
-
 function getAllSpyFns(spies) {
     let allSpies = Object.keys(spies).reduce((memo, key) => {
         let spiesForKey = Object.keys(spies[key]).map(spyName => spies[key][spyName]);
@@ -120,257 +126,7 @@ function getAllSpyFns(spies) {
     return allSpies;
 }
 
-function resetSpies() {
-    // don't replace the spies object or its inner spy objects if they
-    // exist since Routes will always reference the originally passed
-    // in objects.
-    mountSpies = [
-        'RootRootRoute',
-        'RootNewsRoute',
-        'TodoIdRenderStyleRoute',
-        'UserIdActionRoute',
-        'UserIdMenuRouteOne',
-        'UserIdMenuRouteTwo',
-    ].reduce((memo, key) => {
-        memo[key] = memo[key] || {};
-        memo[key].prerenderSpy = sinon.spy();
-        memo[key].renderSpy = sinon.spy();
-        memo[key].deactivateSpy = sinon.spy();
-        return memo;
-    }, mountSpies || {});
-
-    // don't replace the spies object or its inner spy objects if they
-    // exist since Routes will always reference the originally passed
-    // in objects.
-    cMountSpies = [
-        'RootAllConditionalRoute',
-        'RootNewsConditionalRoute',
-        'RootConditionalRoute',
-
-        'RootIdConditionalRouteOne',
-        'RootIdConditionalRouteTwo',
-
-        'TodoIdConditionalRoute',
-        'TodoIdRenderStyleConditionalRoute',
-
-        'UserIdConditionalRouteOne',
-        'UserIdConditionalRouteTwo',
-        'UserIdConditionalRouteThree',
-        'UserIdConditionalRouteFour',
-        'UserIdActionConditionalRoute',
-        'UserIdMenuConditionalRouteOne',
-        'UserIdMenuConditionalRouteTwo',
-    ].reduce((memo, key) => {
-        memo[key] = memo[key] || {};
-        memo[key].prerenderSpy = sinon.spy();
-        memo[key].renderSpy = sinon.spy();
-        memo[key].deactivateSpy = sinon.spy();
-        return memo;
-    }, cMountSpies || {});
-}
-
-class TestApp extends App {
-    expectedOutlets() {
-        return [];
-    }
-}
-
-class TestRoute extends Route {
-    expectedOutlets() {
-        return [];
-    }
-}
-
-class SinonSpyRoute extends TestRoute {
-    init(spies) {
-        let ctorname = ctorName(this);
-        if (isnt(spies, 'Object')) {
-            throw new Error(`Sinon spies were not passed into ${ctorname}#init().`);
-        }
-        let mySpies = spies[ctorname];
-        if (!mySpies) {
-            throw new Error(`Sinon spies were not attached to ${ctorname}.`);
-        }
-        this.spies = mySpies;
-    }
-    prerender(params, queryParams, diff) {
-        this.spies.prerenderSpy(params, queryParams, diff);
-    }
-    deactivate() {
-        this.spies.deactivateSpy();
-    }
-    render(params, queryParams, diff) {
-        this.spies.renderSpy(params, queryParams, diff);
-    }
-}
-
-// normal routes
-// need to make sure to mount each exactly once,
-// to ensure spy call counts are correct
-class RootRootRoute extends SinonSpyRoute {
-    expectedAddresses() {
-        return ['rootRoot'];
-    }
-    addressesHandlers() {
-        return [function(){}];
-    }
-}
-class RootNewsRoute extends SinonSpyRoute { }
-class TodoIdRenderStyleRoute extends SinonSpyRoute {
-    expectedParams() {
-        return ['id', 'renderStyle'];
-    }
-    expectedAddresses() {
-        return ['todoIdRenderStyle'];
-    }
-    addressesHandlers() {
-        return [function(){}];
-    }
-}
-class UserIdActionRoute extends SinonSpyRoute {
-    expectedParams() {
-        return ['id', 'action'];
-    }
-    expectedAddresses() {
-        return ['userIdAction'];
-    }
-    addressesHandlers() {
-        return [function(){}];
-    }
-}
-class UserIdMenuRoute extends SinonSpyRoute {
-    expectedParams() {
-        return ['id', 'menu'];
-    }
-    addressesHandlers() {
-        return [function(){}];
-    }
-}
-class UserIdMenuRouteOne extends UserIdMenuRoute {
-    expectedAddresses() {
-        return ['userIdMenuOne'];
-    }
-}
-class UserIdMenuRouteTwo extends UserIdMenuRoute {
-    expectedAddresses() {
-        return ['userIdMenuTwo'];
-    }
-}
-
-// conditional routes
-// need to make sure to mount each exactly once,
-// to ensure spy call counts are correct
-class RootAllConditionalRoute  extends SinonSpyRoute { }
-class RootConditionalRoute     extends SinonSpyRoute { }
-class RootNewsConditionalRoute extends SinonSpyRoute {
-    expectedParams() {
-        return ['news'];
-    }
-}
-class IdRoute extends SinonSpyRoute {
-    expectedParams() {
-        return ['id'];
-    }
-}
-class RootIdConditionalRouteOne    extends IdRoute { }
-class RootIdConditionalRouteTwo    extends IdRoute { }
-class TodoIdConditionalRoute       extends IdRoute { }
-class UserIdConditionalRouteOne    extends IdRoute { }
-class UserIdConditionalRouteTwo    extends IdRoute { }
-class UserIdConditionalRouteThree  extends IdRoute { }
-class UserIdConditionalRouteFour   extends IdRoute { }
-class UserIdActionConditionalRoute extends SinonSpyRoute {
-    expectedParams() {
-        return ['id', 'action'];
-    }
-}
-class IdMenuRoute extends SinonSpyRoute {
-    expectedParams() {
-        return ['id', 'menu'];
-    }
-}
-class UserIdMenuConditionalRouteOne extends IdMenuRoute { }
-class UserIdMenuConditionalRouteTwo extends IdMenuRoute { }
-class TodoIdRenderStyleConditionalRoute extends IdRoute {
-    expectedParams() {
-        return ['id', 'renderStyle'];
-    }
-}
-
-// the actual Ether App structure
-class TodoApp extends TestApp {
-    expectedAddresses() {
-        return ['todoApp'];
-    }
-    addressesHandlers() {
-        return [function(){}];
-    }
-    mount() {
-        return {
-            '{renderStyle=\\w+}': TodoIdRenderStyleRoute.addresses('todoIdRenderStyle').setup(() => mountSpies),
-        };
-    }
-    mountConditionals() {
-        return {
-            '*': TodoIdConditionalRoute.setup(() => cMountSpies),
-            '+todoIdRenderStyle': TodoIdRenderStyleConditionalRoute.setup(() => cMountSpies),
-        };
-    }
-}
-class UserApp extends TestApp {
-    expectedAddresses() {
-        return ['userApp'];
-    }
-    addressesHandlers() {
-        return [function(){}];
-    }
-    mount() {
-        return {
-            'action/{action=\\w+}': UserIdActionRoute.addresses('userIdAction').setup(() => mountSpies),
-            'menu/{menu=\\w+}': UserIdMenuRouteOne.addresses('userIdMenuOne').setup(() => mountSpies),
-            'menu/{menu=\\w+}/profile': UserIdMenuRouteTwo.addresses('userIdMenuTwo').setup(() => mountSpies),
-        };
-    }
-    mountConditionals() {
-        return {
-            '*': [UserIdConditionalRouteOne.setup(()  => cMountSpies)],
-            // these two cMounts have the same logical result
-            '+userIdAction': [
-                UserIdConditionalRouteTwo.setup(()    => cMountSpies),
-                UserIdActionConditionalRoute.setup(() => cMountSpies),
-            ],
-            '!userIdMenuOne,userIdMenuTwo': UserIdConditionalRouteThree.setup(() => cMountSpies),
-            // these two cMounts have the same logical result
-            '+userIdMenuOne,userIdMenuTwo': UserIdConditionalRouteFour.setup(() => cMountSpies),
-            '!userIdAction': UserIdMenuConditionalRouteOne.setup(() => cMountSpies),
-            // cMount just for "profile" route
-            '+userIdMenuTwo': UserIdMenuConditionalRouteTwo.setup(() => cMountSpies),
-        };
-    }
-}
-class MyRootApp extends RootApp {
-    mount() {
-        return {
-            '': RootRootRoute.addresses('rootRoot').setup(() => mountSpies),
-            'news/{news=\\w+}': RootNewsRoute.setup(() => mountSpies),
-            'todos/{id=\\d+}': TodoApp.addresses('todoApp'),
-            'user/{id=\\d+}': UserApp.addresses('userApp'),
-        };
-    }
-    mountConditionals() {
-        return {
-            '*': RootAllConditionalRoute.setup(() => cMountSpies),
-            '!todoApp,userApp,rootRoot': RootNewsConditionalRoute.setup(() => cMountSpies),
-            '+userApp': [
-                RootIdConditionalRouteOne.setup(() => cMountSpies),
-                RootIdConditionalRouteTwo.setup(() => cMountSpies),
-            ],
-            '+rootRoot': RootConditionalRoute.setup(() => cMountSpies),
-        };
-    }
-}
-
-describe('Acceptance Tests', () => {
+describe.only('Acceptance Tests', () => {
     let defaultOpts;
 
     beforeEach(() => {
@@ -1372,28 +1128,8 @@ describe('Acceptance Tests', () => {
                     ['/news/story', { active: [], inactive: ['todoApp', 'userApp']}],
                 ]
             ], (done, ...expectations) => {
-                let restoreFns = [
-                    RootRootRoute,
-                    RootNewsRoute,
-                    TodoIdRenderStyleRoute,
-                    UserIdActionRoute,
-                    UserIdMenuRouteOne,
-                    UserIdMenuRouteTwo,
-                    RootAllConditionalRoute,
-                    RootNewsConditionalRoute,
-                    RootConditionalRoute,
-                    RootIdConditionalRouteOne,
-                    RootIdConditionalRouteTwo,
-                    TodoIdConditionalRoute,
-                    TodoIdRenderStyleConditionalRoute,
-                    UserIdConditionalRouteOne,
-                    UserIdConditionalRouteTwo,
-                    UserIdConditionalRouteThree,
-                    UserIdConditionalRouteFour,
-                    UserIdActionConditionalRoute,
-                    UserIdMenuConditionalRouteOne,
-                    UserIdMenuConditionalRouteTwo,
-                ].map(route => injectRouteStateAssertions(route));
+                let restoreFns = getAllRouteClassesRecursivelyForApp(MyRootApp)
+                                    .map(route => injectRouteStateAssertions(route));
 
                 let rootApp = MyRootApp.create(defaultOpts);
 
