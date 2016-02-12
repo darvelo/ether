@@ -6,7 +6,7 @@ import ConditionalMountMapper from './conditional-mount-mapper';
 import ctorName from '../utils/ctor-name';
 import { isnt } from '../utils/is';
 
-let possibleAppStates = Object.freeze(['active', 'inactive']);
+const possibleAppStates = Object.freeze(['active', 'inactive']);
 
 class App extends Modifiable {
     constructor(opts) {

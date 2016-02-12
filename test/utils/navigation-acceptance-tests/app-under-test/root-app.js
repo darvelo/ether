@@ -15,8 +15,8 @@ import {
     RootConditionalRoute,
 } from './root-routes';
 
-import TodoApp from './todo-app/todo-app';
-import UserApp from './user-app/user-app';
+import TodoApp from './todo-app/';
+import UserApp from './user-app/';
 
 // need to make sure to mount each mount class and
 // each conditional mount class exactly once,

@@ -4,19 +4,9 @@ import MutableOutlet from '../../src/classes/mutable-outlet';
 import diffObjects from '../../src/utils/diff-objects';
 import finalDiff from '../../src/utils/final-diff';
 
-import {
-    navTest,
-} from '../utils/navigation-acceptance-tests/navigation-test-generator';
-
-import {
-    assertAppState,
-} from '../utils/navigation-acceptance-tests/app-state-validator';
-
-import {
-    getAllRouteClassesRecursivelyForApp,
-    injectRouteStateAssertions,
-} from '../utils/navigation-acceptance-tests/routes-state-validator';
-
+import { navTest } from '../utils/navigation-acceptance-tests/navigation-test-generator';
+import { assertAppState } from '../utils/navigation-acceptance-tests/app-state-validator';
+import RoutesStateValidator from '../utils/navigation-acceptance-tests/routes-state-validator/';
 import MyRootApp from '../utils/navigation-acceptance-tests/app-under-test/root-app';
 
 // holds Sinon spies that are regenerated
@@ -28,6 +18,7 @@ import {
     getAllSpyFns,
 } from '../utils/navigation-acceptance-tests/sinon-spies';
 
+// initialize the spies before the first test begins
 resetSpies();
 
 let freeze = Object.freeze;
@@ -345,7 +336,7 @@ describe.only('Acceptance Tests', () => {
                 });
             }
 
-            navTest('passes the right params/queryParams/diffs to mounts/conditional mounts\' prerender()/render() fns on two consecutive visits', [
+            navTest('passes the right params/queryParams/diffs to mounts/conditional mounts\' prerender()/render() fns', [
                 // same params and query params isn't tested because same-URL navigation is a noop
 
                 /* Single destination */
@@ -1034,8 +1025,8 @@ describe.only('Acceptance Tests', () => {
                     ['/news/story', { active: [], inactive: ['todoApp', 'userApp']}],
                 ]
             ], (done, ...expectations) => {
-                let restoreFns = getAllRouteClassesRecursivelyForApp(MyRootApp)
-                                    .map(route => injectRouteStateAssertions(route));
+                let validator = new RoutesStateValidator(MyRootApp);
+                validator.injectAssertions();
 
                 let rootApp = MyRootApp.create(defaultOpts);
 
@@ -1067,8 +1058,7 @@ describe.only('Acceptance Tests', () => {
                         });
                     });
                 }, Promise.resolve()).then(() => {
-                    console.log('restoring');
-                    restoreFns.forEach(fn => fn());
+                    validator.restoreMethods();
                     done();
                 }).catch(err => {
                     done(err);

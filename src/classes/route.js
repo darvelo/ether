@@ -1,7 +1,7 @@
 import Modifiable from './modifiable';
 import ctorName from '../utils/ctor-name';
 
-let possibleRouteStates = Object.freeze([
+const possibleRouteStates = Object.freeze([
     'deactivating',
     'deactivated',
     'prerendering',
