@@ -27,6 +27,27 @@ class RootApp extends App {
         return this._fullUrl;
     }
 
+    expectedAddresses() {
+        return [];
+    }
+
+    addressesHandlers() {
+        return [];
+    }
+
+    expectedOutlets() {
+        return ['main'];
+    }
+
+    expectedParams() {
+        return [];
+    }
+
+    expectedSetup(setup) {
+        // user/3rd-party library author can throw if `setup` is not as expected
+        return;
+    }
+
     _registerAddress(name, dest) {
         this._addresses = this._addresses || (this._addresses = {});
 
@@ -60,27 +81,6 @@ class RootApp extends App {
     _atAddress(name) {
         this._addresses = this._addresses || (this._addresses = {});
         return this._addresses[name];
-    }
-
-    expectedAddresses() {
-        return [];
-    }
-
-    addressesHandlers() {
-        return [];
-    }
-
-    expectedOutlets() {
-        return ['main'];
-    }
-
-    expectedParams() {
-        return [];
-    }
-
-    expectedSetup(setup) {
-        // user/3rd-party library author can throw if `setup` is not as expected
-        return;
     }
 
     start() {

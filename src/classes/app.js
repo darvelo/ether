@@ -55,6 +55,43 @@ class App extends Modifiable {
         this.init(opts.setup);
     }
 
+    mount() {
+        return {};
+    }
+
+    mountConditionals() {
+        return {};
+    }
+
+    navigate(...args) {
+        return this._rootApp.navigate(...args);
+    }
+
+    // receives setup result if the .setup() modifier
+    // was used to create this instance
+    init(setup) { }
+
+    createOutlets(outlets) {
+        return outlets;
+    }
+
+    expectedAddresses() {
+        return [];
+    }
+
+    addressesHandlers() {
+        return [];
+    }
+
+    expectedParams() {
+        return [];
+    }
+
+    expectedSetup(setup) {
+        // user can throw if `setup` is not as expected
+        return;
+    }
+
     _registerAddresses(addresses) {
         addresses.forEach(name => this._rootApp._registerAddress(name, this));
     }
@@ -133,43 +170,6 @@ class App extends Modifiable {
 
         // create conditional mount instances
         this._conditionalMountMapper.add(cMounts, data);
-    }
-
-    mount() {
-        return {};
-    }
-
-    mountConditionals() {
-        return {};
-    }
-
-    // receives setup result if the .setup() modifier
-    // was used to create this instance
-    init(setup) { }
-
-    createOutlets(outlets) {
-        return outlets;
-    }
-
-    expectedAddresses() {
-        return [];
-    }
-
-    addressesHandlers() {
-        return [];
-    }
-
-    expectedParams() {
-        return [];
-    }
-
-    expectedSetup(setup) {
-        // user can throw if `setup` is not as expected
-        return;
-    }
-
-    navigate(...args) {
-        return this._rootApp.navigate(...args);
     }
 }
 

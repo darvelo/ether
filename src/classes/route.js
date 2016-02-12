@@ -37,6 +37,28 @@ class Route extends Modifiable {
         this.init(opts.setup);
     }
 
+    // receives setup result if the .setup() modifier
+    // was used to create this instance
+    init(setup) { }
+
+    expectedAddresses() {
+        return [];
+    }
+
+    addressesHandlers() {
+        return [];
+    }
+
+    expectedParams() {
+        // default: don't pass any params to prerender/render on navigation
+        return [];
+    }
+
+    expectedSetup(setup) {
+        // user can throw if `setup` is not as expected
+        return;
+    }
+
     _setOutletsState(state) {
         if (!this.state.hasOwnProperty(state)) {
             throw new Error(`${ctorName(this)}#_setOutletsState(): Tried to set outlets state to an unsupported value: ${JSON.stringify(state)}.`);
@@ -84,30 +106,6 @@ class Route extends Modifiable {
 
     _registerAddresses(addresses) {
         addresses.forEach(name => this._rootApp._registerAddress(name, this));
-    }
-
-    // receives setup result if the .setup() modifier
-    // was used to create this instance
-    init(setup) { }
-
-    // user-overridable methods
-
-    expectedAddresses() {
-        return [];
-    }
-
-    addressesHandlers() {
-        return [];
-    }
-
-    expectedParams() {
-        // default: don't pass any params to prerender/render on navigation
-        return [];
-    }
-
-    expectedSetup(setup) {
-        // user can throw if `setup` is not as expected
-        return;
     }
 
     navigate(...args) {
