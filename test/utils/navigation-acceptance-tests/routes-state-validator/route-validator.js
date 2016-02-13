@@ -17,13 +17,15 @@ const validators = {
 // keeps track of Route classes that have had state assertions injected
 // so that we throw if we try to inject these assertions again before
 // restoring the original Route behavior
-let injectedRouteClasses = {};
+const injectedRouteClasses = {};
 
 class RouteValidator {
-    constructor(routeClass) {
+    constructor(routeClass, opts={}) {
         if (isnt(routeClass, 'Function') || !(Object.create(routeClass.prototype) instanceof Route)) {
             throw new Error('RouteValidator: value passed into constructor was not a Route class.');
         }
+
+        this._log = opts.log === true ? true : false;
 
         this._routeClass = routeClass;
         this._origCreateMethod = this._routeClass.create;
@@ -45,16 +47,41 @@ class RouteValidator {
         let lastState = this._lastState;
         let currentState = Object.assign({}, this._route.state);
 
-        // console.log();
-        // console.log(`${ctorName(route)}#${methodName} ${stage}`);
+        if (this._log) {
+            console.log();
+            console.log(`${this._routeClass.name}#${validator.name.split('V')[0]} ${stage}`);
+            console.log(Object.keys(currentState).map(key => {
+                let prefix = key + ':';
+                if (prefix.length < 13) {
+                    prefix = prefix + ' '.repeat(12 - key.length);
+                }
+                let lastVal = lastState[key];
+                let currVal = currentState[key];
+                // pad true value to match false length
+                if (lastVal === true) {
+                    lastVal = 'true ';
+                }
+                if (currVal === true) {
+                    currVal = 'true ';
+                }
+                return `    ${prefix} ${lastVal} => ${currVal}`;
+            }).join('\n'));
+        }
+
         expect(validator.validate(stage, lastState, currentState)).to.equal(true);
 
         let outlets = this._route.outlets;
         let outletsNames = Object.keys(outlets);
         // for all outlets, assert the only state-related
         // CSS classes that exist are for the given state
+        if (this._log) {
+            console.log(`${this._routeClass.name} outlets CSS classes:`);
+        }
         outletsNames.forEach(name => {
             let classes = outlets[name]._element.className;
+            if (this._log) {
+                console.log(`    ${name}: ${classes}`);
+            }
             expect(validator.validateCSSClasses(stage, lastState, currentState, classes)).to.equal(true);
         });
 

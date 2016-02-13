@@ -1025,7 +1025,7 @@ describe.only('Acceptance Tests', () => {
                     ['/news/story', { active: [], inactive: ['todoApp', 'userApp']}],
                 ]
             ], (done, ...expectations) => {
-                let validator = new RoutesStateValidator(MyRootApp);
+                let validator = new RoutesStateValidator(MyRootApp, {log: false});
                 validator.injectAssertions();
 
                 let rootApp = MyRootApp.create(defaultOpts);

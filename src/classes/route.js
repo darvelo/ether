@@ -59,29 +59,42 @@ class Route extends Modifiable {
         return;
     }
 
-    _setOutletsState(state) {
+    _setOutletsState(state, keepRendered) {
         if (!this.state.hasOwnProperty(state)) {
             throw new Error(`${ctorName(this)}#_setOutletsState(): Tried to set outlets state to an unsupported value: ${JSON.stringify(state)}.`);
         }
         let outlets = this.outlets;
-        let prefix = 'ether-';
+        let classPrefix = 'ether-';
         let statesToRemove = possibleRouteStates
-            .filter(stateName => stateName !== state)
-            .map(stateName => prefix + stateName);
-        state = prefix + state;
+            .filter(stateName => {
+                if (keepRendered && stateName === 'rendered') {
+                    return false;
+                }
+                return stateName !== state;
+            })
+            .map(stateName => classPrefix + stateName);
+        state = classPrefix + state;
         Object.keys(this.outlets).forEach(name => {
             outlets[name]._element.classList.add(state);
-            outlets[name]._element.classList.remove(statesToRemove);
+            outlets[name]._element.classList.remove(...statesToRemove);
         });
     }
 
     _setState(state) {
-        let wasRendered;
-        if (this.state.rendered === true) {
-            wasRendered = true;
-        }
         if (!this.state.hasOwnProperty(state)) {
             throw new Error(`${ctorName(this)}#_setState(): Tried to set route state to an unsupported value: ${JSON.stringify(state)}.`);
+        }
+        let keepRendered;
+        switch(state) {
+        case 'prerendering':
+        case 'prerendered':
+        case 'rendering':
+            if (this.state.rendered === true) {
+                keepRendered = true;
+            }
+            break;
+        default:
+            break;
         }
         for (let possibleState of possibleRouteStates) {
             if (state === possibleState) {
@@ -90,18 +103,10 @@ class Route extends Modifiable {
                 this.state[possibleState] = false;
             }
         }
-        switch(state) {
-        case 'prerendering':
-        case 'prerendered':
-        case 'rendering':
-            if (wasRendered) {
-                this.state.rendered = true;
-            }
-            break;
-        default:
-            break;
+        if (keepRendered) {
+            this.state.rendered = true;
         }
-        this._setOutletsState(state);
+        this._setOutletsState(state, keepRendered);
     }
 
     _registerAddresses(addresses) {

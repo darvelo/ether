@@ -1,4 +1,5 @@
 import RootApp from '../../../../src/classes/root-app';
+import Outlet from '../../../../src/classes/outlet';
 
 import {
     mountSpies,
@@ -22,23 +23,64 @@ import UserApp from './user-app/';
 // each conditional mount class exactly once,
 // to ensure spy call counts are unique and correct
 class MyRootApp extends RootApp {
+    createOutlets(outlets) {
+        return {
+            // mounts
+            RootRootRoute: new Outlet(document.createElement('div')),
+            RootNewsRoute: new Outlet(document.createElement('div')),
+            TodoApp: new Outlet(document.createElement('div')),
+            UserApp: new Outlet(document.createElement('div')),
+            // conditional mounts
+            RootAllConditionalRoute: new Outlet(document.createElement('div')),
+            RootNewsConditionalRoute: new Outlet(document.createElement('div')),
+            RootIdConditionalRouteOne: new Outlet(document.createElement('div')),
+            RootIdConditionalRouteTwo: new Outlet(document.createElement('div')),
+            RootConditionalRoute: new Outlet(document.createElement('div')),
+        };
+    }
     mount() {
         return {
-            '': RootRootRoute.addresses('rootRoot').setup(() => mountSpies),
-            'news/{news=\\w+}': RootNewsRoute.setup(() => mountSpies),
-            'todos/{id=\\d+}': TodoApp.addresses('todoApp'),
-            'user/{id=\\d+}': UserApp.addresses('userApp'),
+            '':
+                RootRootRoute
+                    .addresses('rootRoot')
+                    .outlets('RootRootRoute')
+                    .setup(() => mountSpies),
+            'news/{news=\\w+}':
+                RootNewsRoute
+                    .outlets('RootNewsRoute')
+                    .setup(() => mountSpies),
+            'todos/{id=\\d+}':
+                TodoApp
+                    .addresses('todoApp')
+                    .outlets('TodoApp'),
+            'user/{id=\\d+}':
+                UserApp
+                    .addresses('userApp')
+                    .outlets('UserApp'),
         };
     }
     mountConditionals() {
         return {
-            '*': RootAllConditionalRoute.setup(() => cMountSpies),
-            '!todoApp,userApp,rootRoot': RootNewsConditionalRoute.setup(() => cMountSpies),
+            '*':
+                RootAllConditionalRoute
+                    .outlets('RootAllConditionalRoute')
+                    .setup(() => cMountSpies),
+            '!todoApp,userApp,rootRoot':
+                RootNewsConditionalRoute
+                    .outlets('RootNewsConditionalRoute')
+                    .setup(() => cMountSpies),
             '+userApp': [
-                RootIdConditionalRouteOne.setup(() => cMountSpies),
-                RootIdConditionalRouteTwo.setup(() => cMountSpies),
+                RootIdConditionalRouteOne
+                    .outlets('RootIdConditionalRouteOne')
+                    .setup(() => cMountSpies),
+                RootIdConditionalRouteTwo
+                    .outlets('RootIdConditionalRouteTwo')
+                    .setup(() => cMountSpies),
             ],
-            '+rootRoot': RootConditionalRoute.setup(() => cMountSpies),
+            '+rootRoot':
+                RootConditionalRoute
+                    .outlets('RootConditionalRoute')
+                    .setup(() => cMountSpies),
         };
     }
 }

@@ -5,20 +5,30 @@ import {
 
 // mounts
 export class TodoIdRenderStyleRoute extends SinonSpyRoute {
-    expectedParams() {
-        return ['id', 'renderStyle'];
-    }
     expectedAddresses() {
         return ['todoIdRenderStyle'];
     }
     addressesHandlers() {
         return [function(){}];
     }
+    expectedOutlets() {
+        return ['TodoIdRenderStyleRoute'];
+    }
+    expectedParams() {
+        return ['id', 'renderStyle'];
+    }
 }
 
 // conditional mounts
-export class TodoIdConditionalRoute            extends IdRoute { }
+export class TodoIdConditionalRoute extends IdRoute {
+    expectedOutlets() {
+        return ['TodoIdConditionalRoute'];
+    }
+}
 export class TodoIdRenderStyleConditionalRoute extends IdRoute {
+    expectedOutlets() {
+        return ['TodoIdRenderStyleConditionalRoute'];
+    }
     expectedParams() {
         return ['id', 'renderStyle'];
     }

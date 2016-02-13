@@ -11,17 +11,43 @@ export class RootRootRoute extends SinonSpyRoute {
     addressesHandlers() {
         return [function(){}];
     }
+    expectedOutlets() {
+        return ['RootRootRoute'];
+    }
 }
 
-export class RootNewsRoute extends SinonSpyRoute { }
+export class RootNewsRoute extends SinonSpyRoute {
+    expectedOutlets() {
+        return ['RootNewsRoute'];
+    }
+}
 
 // conditional mounts
-export class RootIdConditionalRouteOne extends IdRoute { }
-export class RootIdConditionalRouteTwo extends IdRoute { }
-export class RootAllConditionalRoute   extends SinonSpyRoute { }
-export class RootConditionalRoute      extends SinonSpyRoute { }
+export class RootAllConditionalRoute   extends SinonSpyRoute {
+    expectedOutlets() {
+        return ['RootAllConditionalRoute'];
+    }
+}
 export class RootNewsConditionalRoute  extends SinonSpyRoute {
+    expectedOutlets() {
+        return ['RootNewsConditionalRoute'];
+    }
     expectedParams() {
         return ['news'];
+    }
+}
+export class RootIdConditionalRouteOne extends IdRoute {
+    expectedOutlets() {
+        return ['RootIdConditionalRouteOne'];
+    }
+}
+export class RootIdConditionalRouteTwo extends IdRoute {
+    expectedOutlets() {
+        return ['RootIdConditionalRouteTwo'];
+    }
+}
+export class RootConditionalRoute      extends SinonSpyRoute {
+    expectedOutlets() {
+        return ['RootConditionalRoute'];
     }
 }

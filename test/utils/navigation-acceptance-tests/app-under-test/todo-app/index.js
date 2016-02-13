@@ -1,3 +1,5 @@
+import Outlet from '../../../../../src/classes/outlet';
+
 import {
     mountSpies,
     cMountSpies,
@@ -18,15 +20,34 @@ class TodoApp extends TestApp {
     addressesHandlers() {
         return [function(){}];
     }
+    expectedOutlets() {
+        return ['TodoApp'];
+    }
+    createOutlets(outlets) {
+        return {
+            TodoIdRenderStyleRoute: new Outlet(document.createElement('div')),
+            TodoIdConditionalRoute: new Outlet(document.createElement('div')),
+            TodoIdRenderStyleConditionalRoute: new Outlet(document.createElement('div')),
+        };
+    }
     mount() {
         return {
-            '{renderStyle=\\w+}': TodoIdRenderStyleRoute.addresses('todoIdRenderStyle').setup(() => mountSpies),
+            '{renderStyle=\\w+}':
+                TodoIdRenderStyleRoute
+                    .addresses('todoIdRenderStyle').setup(() => mountSpies)
+                    .outlets('TodoIdRenderStyleRoute'),
         };
     }
     mountConditionals() {
         return {
-            '*': TodoIdConditionalRoute.setup(() => cMountSpies),
-            '+todoIdRenderStyle': TodoIdRenderStyleConditionalRoute.setup(() => cMountSpies),
+            '*':
+                TodoIdConditionalRoute
+                    .outlets('TodoIdConditionalRoute')
+                    .setup(() => cMountSpies),
+            '+todoIdRenderStyle':
+                TodoIdRenderStyleConditionalRoute
+                    .outlets('TodoIdRenderStyleConditionalRoute')
+                    .setup(() => cMountSpies),
         };
     }
 }

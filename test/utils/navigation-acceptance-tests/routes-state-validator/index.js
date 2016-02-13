@@ -5,12 +5,14 @@ import RouteValidator from './route-validator';
 import { getAllRouteClassesRecursivelyForApp } from './utils';
 
 class RoutesStateValidator {
-    constructor(rootAppClass) {
+    constructor(rootAppClass, opts={}) {
         if (isnt(rootAppClass, 'Function') || !(Object.create(rootAppClass.prototype) instanceof RootApp)) {
             throw new Error('RoutesStateValidator: value passed into constructor was not a RootApp class.');
         }
 
-        this._routeValidators = getAllRouteClassesRecursivelyForApp(rootAppClass).map(routeClass => new RouteValidator(routeClass));
+        this._log = opts.log === true ? true : false;
+
+        this._routeValidators = getAllRouteClassesRecursivelyForApp(rootAppClass).map(routeClass => new RouteValidator(routeClass, opts));
         this._alreadyInjected = false;
     }
 
