@@ -48,6 +48,14 @@ class RootApp extends App {
         return;
     }
 
+    sendTo(address, ...args) {
+        return Promise.resolve().then(() => {
+            let recipient = this._atAddress(address);
+            let handler = recipient._addressHandlers[address];
+            return handler.apply(recipient, args);
+        });
+    }
+
     _registerAddress(name, dest) {
         this._addresses = this._addresses || (this._addresses = {});
 

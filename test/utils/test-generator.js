@@ -1,4 +1,4 @@
-import { is } from '../../../src/utils/is';
+import { is } from '../../src/utils/is';
 
 function doTest(testFn, ...args) {
     return function(done) {
@@ -6,7 +6,7 @@ function doTest(testFn, ...args) {
     };
 }
 
-export function navTest(testName, destinations, testFn, testType=null) {
+export default function genTest(testName, destinations, testFn, testType=null) {
     let testStarter;
     let argLen = arguments.length;
     let isTestAStub = false;
@@ -30,7 +30,7 @@ export function navTest(testName, destinations, testFn, testType=null) {
     }
 
     if (!destinations.length) {
-        throw new Error(`Navigation Test Generator: No destinations listed: "${testName}".`);
+        throw new Error(`Test Generator: No destinations listed: "${testName}".`);
     }
     for (let args of destinations) {
         if (is(args, 'String')) {
@@ -40,10 +40,10 @@ export function navTest(testName, destinations, testFn, testType=null) {
     }
 }
 
-navTest.skip = function(...args) {
-    navTest(...args, 'skip');
+genTest.skip = function(...args) {
+    genTest(...args, 'skip');
 };
 
-navTest.only = function(...args) {
-    navTest(...args, 'only');
+genTest.only = function(...args) {
+    genTest(...args, 'only');
 };

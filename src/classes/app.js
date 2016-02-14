@@ -3,6 +3,7 @@ import MutableOutlet from './mutable-outlet';
 import Outlet from './outlet';
 import MountMapper from './mount-mapper';
 import ConditionalMountMapper from './conditional-mount-mapper';
+import registerAddresses from '../utils/register-addresses';
 import ctorName from '../utils/ctor-name';
 import { isnt } from '../utils/is';
 
@@ -41,7 +42,7 @@ class App extends Modifiable {
         this._setState('inactive');
 
         this._rootApp = opts.rootApp;
-        this._registerAddresses(opts.addresses);
+        registerAddresses(this, opts.addresses);
         if (this !== this._rootApp) {
             // only the creator of a MutableOutlet
             // should have control over its mutability
@@ -67,6 +68,10 @@ class App extends Modifiable {
         return this._rootApp.navigate(...args);
     }
 
+    sendTo(...args) {
+        return this._rootApp.sendTo(...args);
+    }
+
     // receives setup result if the .setup() modifier
     // was used to create this instance
     init(setup) { }
@@ -90,10 +95,6 @@ class App extends Modifiable {
     expectedSetup(setup) {
         // user can throw if `setup` is not as expected
         return;
-    }
-
-    _registerAddresses(addresses) {
-        addresses.forEach(name => this._rootApp._registerAddress(name, this));
     }
 
     _makeOutletsImmutable(outlets) {

@@ -4,8 +4,8 @@ import MutableOutlet from '../../src/classes/mutable-outlet';
 import diffObjects from '../../src/utils/diff-objects';
 import finalDiff from '../../src/utils/final-diff';
 
-import { navTest } from '../utils/navigation-acceptance-tests/navigation-test-generator';
-import { assertAppState } from '../utils/navigation-acceptance-tests/app-state-validator';
+import genTest from '../utils/test-generator';
+import assertAppState from '../utils/navigation-acceptance-tests/app-state-validator';
 import RoutesStateValidator from '../utils/navigation-acceptance-tests/routes-state-validator/';
 import MyRootApp from '../utils/navigation-acceptance-tests/app-under-test/root-app';
 
@@ -37,7 +37,7 @@ describe.only('Acceptance Tests', () => {
 
     describe('Navigation', () => {
         describe('Basic Tests', () => {
-            navTest('resolves a Promise on successful navigation', [
+            genTest('resolves a Promise on successful navigation', [
                 '/',
             ], (done, dest) => {
                 let rootApp = new MyRootApp(defaultOpts);
@@ -49,7 +49,7 @@ describe.only('Acceptance Tests', () => {
                 });
             });
 
-            navTest('Promise rejects on 404', [
+            genTest('Promise rejects on 404', [
                 // mount doesn't exist
                 '/nope',
                 // navigation ends on an App, not a Route
@@ -67,7 +67,7 @@ describe.only('Acceptance Tests', () => {
                 });
             });
 
-            navTest('sets return val of fullUrl() on the RootApp', [
+            genTest('sets return val of fullUrl() on the RootApp', [
                 '/',
             ], (done, dest) => {
                 let rootApp = new MyRootApp(defaultOpts);
@@ -81,7 +81,7 @@ describe.only('Acceptance Tests', () => {
                 });
             });
 
-            navTest('does not set return val of fullUrl() on the RootApp on nav failure', [
+            genTest('does not set return val of fullUrl() on the RootApp on nav failure', [
                 '/nope',
             ], (done, dest) => {
                 let rootApp = new MyRootApp(defaultOpts);
@@ -95,7 +95,7 @@ describe.only('Acceptance Tests', () => {
                 });
             });
 
-            navTest('does nothing if navigating to the same URL as the current URL', [
+            genTest('does nothing if navigating to the same URL as the current URL', [
                 '/',
                 '/?hello=true&goodbye=false',
                 '/user/1/action/go?hello=true&goodbye=false',
@@ -121,7 +121,7 @@ describe.only('Acceptance Tests', () => {
                 });
             });
 
-            navTest('throws if construction of app state fails', [
+            genTest('throws if construction of app state fails', [
                 '/',
             ], (done, dest) => {
                 let rootApp = new MyRootApp(defaultOpts);
@@ -137,7 +137,7 @@ describe.only('Acceptance Tests', () => {
                 });
             });
 
-            navTest('throws if `routingTrace.result` is neither `success` nor `404`', [
+            genTest('throws if `routingTrace.result` is neither `success` nor `404`', [
                 '/',
             ], (done, dest) => {
                 let rootApp = new MyRootApp(defaultOpts);
@@ -147,7 +147,7 @@ describe.only('Acceptance Tests', () => {
                 done();
             });
 
-            navTest('App can call navigate', [
+            genTest('App can call navigate', [
                 ['/', 'userApp'],
                 ['/news/story?xyz=true&option=1', 'userApp'],
                 ['/user/1/action/go?option=1', 'userApp'],
@@ -163,7 +163,7 @@ describe.only('Acceptance Tests', () => {
                 });
             });
 
-            navTest('Route can call navigate', [
+            genTest('Route can call navigate', [
                 ['/', 'userIdAction'],
                 ['/news/story?xyz=true&option=1', 'userIdMenuOne'],
                 ['/user/1/action/go?option=1', 'rootRoot'],
@@ -179,7 +179,7 @@ describe.only('Acceptance Tests', () => {
                 });
             });
 
-            navTest('uses transitions when navigating', [
+            genTest('uses transitions when navigating', [
                 ['/', '/todos/1/list', '/user/1/action/go'],
             ], (done, dest1, dest2, dest3) => {
                 let doneCalled = false;
@@ -221,7 +221,7 @@ describe.only('Acceptance Tests', () => {
         });
 
         describe('Prerender/Deactivate/Render Cycle', () => {
-            navTest('does not call any prerender/deactivate/render before calling navigate()', [
+            genTest('does not call any prerender/deactivate/render before calling navigate()', [
                 '/',
             ], (done, dest) => {
                 let rootApp = new MyRootApp(defaultOpts);
@@ -237,7 +237,7 @@ describe.only('Acceptance Tests', () => {
                 });
             });
 
-            navTest('calls prerender/render, in order, only on the navigated-to mount\'s Route', [
+            genTest('calls prerender/render, in order, only on the navigated-to mount\'s Route', [
                 '/',
             ], (done, dest) => {
                 let rootApp = new MyRootApp(defaultOpts);
@@ -257,7 +257,7 @@ describe.only('Acceptance Tests', () => {
                 });
             });
 
-            navTest('calls prerender/render, in order, only on the navigated-to mount\'s Route that is within a sub-App', [
+            genTest('calls prerender/render, in order, only on the navigated-to mount\'s Route that is within a sub-App', [
                 '/user/1/action/go',
             ], (done, dest) => {
                 let rootApp = new MyRootApp(defaultOpts);
@@ -277,7 +277,7 @@ describe.only('Acceptance Tests', () => {
                 });
             });
 
-            navTest('passes to a sub-App\'s mount\'s prerender()/render() fns all queryParams and only the expected params for the Route', [
+            genTest('passes to a sub-App\'s mount\'s prerender()/render() fns all queryParams and only the expected params for the Route', [
                 '/user/1/action/go?sort=true&sort_type=asc&idx=1',
             ], (done, dest) => {
                 let expectedArgs = [
@@ -336,7 +336,7 @@ describe.only('Acceptance Tests', () => {
                 });
             }
 
-            navTest('passes the right params/queryParams/diffs to mounts/conditional mounts\' prerender()/render() fns', [
+            genTest('passes the right params/queryParams/diffs to mounts/conditional mounts\' prerender()/render() fns', [
                 // same params and query params isn't tested because same-URL navigation is a noop
 
                 /* Single destination */
@@ -532,7 +532,7 @@ describe.only('Acceptance Tests', () => {
                 ],
             ], checkRenderArgsAfterNavigation);
 
-            navTest('passes to all conditional mounts\' prerender()/render() fns all queryParams and only the expected params for the Route when navigating to it for the first time from a previous destination', [
+            genTest('passes to all conditional mounts\' prerender()/render() fns all queryParams and only the expected params for the Route when navigating to it for the first time from a previous destination', [
                 // In these scenarios:
                 //    • `o` represents a Route or an App
                 //    • dashed lines represent the previous navigation destination path
@@ -604,7 +604,7 @@ describe.only('Acceptance Tests', () => {
                 ],
             ], checkRenderArgsAfterNavigation);
 
-            navTest('passes to all conditional mounts\' prerender()/render() fns all queryParams and only the expected params for the Route when navigating to it for the second time after being at a previous, different destination', [
+            genTest('passes to all conditional mounts\' prerender()/render() fns all queryParams and only the expected params for the Route when navigating to it for the second time after being at a previous, different destination', [
                 // same params and query params
                 [
                     ['/todos/1/list?unused=true', '/?hello=1&sort=asc', '/todos/1/list?sort=asc&hello=1'],
@@ -762,7 +762,7 @@ describe.only('Acceptance Tests', () => {
                 ],
             ], checkRenderArgsAfterNavigation);
 
-            navTest('calls deactivate() when diverging from active mount/conditional mounts between prerender and render of to-be-activated mount/cMounts', [
+            genTest('calls deactivate() when diverging from active mount/conditional mounts between prerender and render of to-be-activated mount/cMounts', [
                 // In these scenarios:
                 //    • `o` represents a Route or an App
                 //    • dashed lines represent the previous navigation destination path
@@ -930,7 +930,7 @@ describe.only('Acceptance Tests', () => {
                 });
             });
 
-            navTest('prerender/render are called for each navigation step in forwards order', [
+            genTest('prerender/render are called for each navigation step in forwards order', [
                 [
                     '/user/1/action/go',
                     [
@@ -973,7 +973,7 @@ describe.only('Acceptance Tests', () => {
                 });
             });
 
-            navTest('deactivate is called for each navigation step in backwards order', [
+            genTest('deactivate is called for each navigation step in backwards order', [
                 [
                     '/user/1/action/go', '/',
                     [
@@ -1013,7 +1013,7 @@ describe.only('Acceptance Tests', () => {
                 });
             });
 
-            navTest('sets the correct state for Apps and Routes during all transitions', [
+            genTest.only('sets the correct state for Apps and Routes during all transitions', [
                 [
                     ['/todos/1/list', { active: ['todoApp'], inactive: ['userApp']}],
                     // same exact Routes will already be rendered, so

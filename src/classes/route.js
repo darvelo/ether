@@ -1,4 +1,5 @@
 import Modifiable from './modifiable';
+import registerAddresses from '../utils/register-addresses';
 import ctorName from '../utils/ctor-name';
 
 const possibleRouteStates = Object.freeze([
@@ -14,7 +15,7 @@ class Route extends Modifiable {
     constructor(opts) {
         super(opts);
         this._rootApp = opts.rootApp;
-        this._registerAddresses(opts.addresses);
+        registerAddresses(this, opts.addresses);
         this.outlets = opts.outlets;
 
         Object.defineProperty(this, 'state', {
@@ -109,12 +110,12 @@ class Route extends Modifiable {
         this._setOutletsState(state, keepRendered);
     }
 
-    _registerAddresses(addresses) {
-        addresses.forEach(name => this._rootApp._registerAddress(name, this));
-    }
-
     navigate(...args) {
         return this._rootApp.navigate(...args);
+    }
+
+    sendTo(...args) {
+        return this._rootApp.sendTo(...args);
     }
 
     _deactivate() {
