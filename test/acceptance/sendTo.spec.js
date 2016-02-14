@@ -7,7 +7,7 @@ import {
     getAllSpyFns,
 } from '../utils/sendTo-acceptance-tests/sinon-spies';
 
-describe.only('sendTo()', () => {
+describe('sendTo()', () => {
     let rootApp;
 
     beforeEach(() => {

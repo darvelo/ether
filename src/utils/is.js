@@ -1,5 +1,5 @@
 export function is(obj, guess) {
-    if ((guess === 'Undefined' || typeof guess === undefined) && typeof obj === 'undefined') {
+    if ((guess === 'Undefined' || typeof guess === 'undefined') && typeof obj === 'undefined') {
         return true;
     }
 

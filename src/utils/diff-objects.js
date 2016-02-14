@@ -45,11 +45,6 @@ export default function diffObjects(o1, o2) {
                 throwTypeErr(2, prop, p2);
             }
             let p1 = o1[prop];
-            // if `o1` doesn't hasOwn `prop` we
-            // allow `undefined` as an acceptable value
-            if (o1.hasOwnProperty(prop) && isnt(p1, 'Number') && isnt(p1, 'String') && isnt(p1, 'Boolean')) {
-                throwTypeErr(1, prop, p1);
-            }
             if (p1 !== p2) {
                 hadDiffs = true;
                 result[prop] = [p1, p2];

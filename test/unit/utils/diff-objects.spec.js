@@ -67,15 +67,27 @@ describe('Diff Objects Util', () => {
         expect(() => diffObjects(o1, o2)).to.not.throw();
     });
 
-    it('throws if an existing object property is not a number, string, or boolean', () => {
+    it('throws if an existing property on both objs is not a number, string, or boolean on the first object', () => {
+        let o1 = {a: []};
+        let o2 = {a: 1};
+        expect(() => diffObjects(o1, o2)).to.throw(TypeError, 'diffObjects(): argument 1 had a property "a" that was not a number, string, or boolean: [].');
+    });
+
+    it('throws if an existing property on both objs is not a number, string, or boolean on the second object', () => {
+        let o1 = {a: 1};
+        let o2 = {a: []};
+        expect(() => diffObjects(o1, o2)).to.throw(TypeError, 'diffObjects(): argument 2 had a property "a" that was not a number, string, or boolean: [].');
+    });
+
+    it('throws if an non-existing property on first object is not a number, string, or boolean on the second object', () => {
         let o1 = {};
+        let o2 = {a: []};
+        expect(() => diffObjects(o1, o2)).to.throw(TypeError, 'diffObjects(): argument 2 had a property "a" that was not a number, string, or boolean: [].');
+    });
+
+    it('throws if an non-existing property on second object is not a number, string, or boolean on the first object', () => {
+        let o1 = {a: []};
         let o2 = {};
-        o1.a = ['hi'];
-        expect(() => diffObjects(o1, o2)).to.throw(TypeError, 'diffObjects(): argument 1 had a property "a" that was not a number, string, or boolean: ["hi"].');
-        o1.a = {hi:1};
-        expect(() => diffObjects(o1, o2)).to.throw(TypeError, 'diffObjects(): argument 1 had a property "a" that was not a number, string, or boolean: {"hi":1}.');
-        delete o1.a;
-        o2.b = null;
-        expect(() => diffObjects(o1, o2)).to.throw(TypeError, 'diffObjects(): argument 2 had a property "b" that was not a number, string, or boolean: null.');
+        expect(() => diffObjects(o1, o2)).to.throw(TypeError, 'diffObjects(): argument 1 had a property "a" that was not a number, string, or boolean: [].');
     });
 });
