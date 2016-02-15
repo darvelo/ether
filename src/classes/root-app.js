@@ -16,6 +16,9 @@ class RootApp extends App {
             opts.params = [];
         }
         super(opts);
+        this._opts = {
+            stripTrailingSlash: !!opts.stripTrailingSlash || false,
+        };
         // the last URL that was navigated to successfully
         this._fullUrl = undefined;
         // the querystring params parsed from the
@@ -185,6 +188,13 @@ class RootApp extends App {
         let [ path, queryString='' ] = destination.split('?');
         let queryParams = this.parseQueryString(queryString);
         let queryParamsDiff = null;
+
+        if (this._opts.stripTrailingSlash === true) {
+            let regex = /\/+$/;
+            if (regex.test(path)) {
+                path = path.replace(regex, '');
+            }
+        }
 
         if (isnt(queryParams, 'Null') || isnt(this._lastQueryParams, 'Null')) {
             queryParamsDiff = diffObjects(this._lastQueryParams || {}, queryParams || {});
