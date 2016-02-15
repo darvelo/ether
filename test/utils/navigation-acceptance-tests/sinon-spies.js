@@ -52,11 +52,19 @@ export function resetSpies() {
     }, cMountSpies);
 }
 
+export function onAllSpyFnsBySpyNames(spies, spyNames, callback) {
+    Object.keys(spies).forEach(key => {
+        Object.keys(spies[key]).forEach(spyName => {
+            if (spyNames.indexOf(spyName) !== -1) {
+                callback(key, spyName, spies[key][spyName]);
+            }
+        });
+    });
+}
+
 export function getAllSpyFns(spies) {
-    let allSpies = Object.keys(spies).reduce((memo, key) => {
-        let spiesForKey = Object.keys(spies[key]).map(spyName => spies[key][spyName]);
-        memo.push(...spiesForKey);
+    return Object.keys(spies).reduce((memo, key) => {
+        Object.keys(spies[key]).forEach(spyName => memo.push(spies[key][spyName]));
         return memo;
     }, []);
-    return allSpies;
 }

@@ -16,6 +16,7 @@ import {
     cMountSpies,
     resetSpies,
     getAllSpyFns,
+    onAllSpyFnsBySpyNames,
 } from '../utils/navigation-acceptance-tests/sinon-spies';
 
 let freeze = Object.freeze;
@@ -259,6 +260,13 @@ describe('Acceptance Tests', () => {
             });
 
             function checkRenderArgsAfterNavigation(done, dests, prevQueryParams, queryParams, expectedRenderedMounts) {
+                let doneCalled = false;
+                function callDone(err) {
+                    if (!doneCalled) {
+                        doneCalled = true;
+                        done(err);
+                    }
+                }
                 let lastIdx = dests.length-1;
                 let rootApp = new MyRootApp(defaultOpts);
                 dests.reduce((memo, dest, idx) => {
@@ -286,10 +294,31 @@ describe('Acceptance Tests', () => {
                         prerenderSpy.should.have.been.calledWith(...expectedArgs);
                         renderSpy.should.have.been.calledWith(...expectedArgs);
                     }
-                    done();
+                    // delete spies that we know were called
+                    // and check that no other spies were called
+                    for (let [ renderedMountStr ] of expectedRenderedMounts) {
+                        if (mountSpies[renderedMountStr]) {
+                            delete mountSpies[renderedMountStr].prerenderSpy;
+                            delete mountSpies[renderedMountStr].renderSpy;
+                        } else if (cMountSpies[renderedMountStr]) {
+                            delete cMountSpies[renderedMountStr].prerenderSpy;
+                            delete cMountSpies[renderedMountStr].renderSpy;
+                        }
+                    }
+                    onAllSpyFnsBySpyNames(mountSpies, ['prerenderSpy', 'renderSpy'], (routeName, spyName, spy) => {
+                        if (spy.called) {
+                            callDone(new Error(`Expected mount spy "${routeName}.${spyName}" to not have been called. Perhaps you forgot to add it to the test config? Destinations: ${JSON.stringify(dests)}.`));
+                        }
+                    });
+                    onAllSpyFnsBySpyNames(cMountSpies, ['prerenderSpy', 'renderSpy'], (routeName, spyName, spy) => {
+                        if (spy.called) {
+                            callDone(new Error(`Expected cMount spy "${routeName}.${spyName}" to not have been called. Perhaps you forgot to add it to the test config? Destinations: ${JSON.stringify(dests)}.`));
+                        }
+                    });
+                    callDone();
                 }).catch(err => {
                     // if test fails, pass error to Mocha
-                    done(err);
+                    callDone(err);
                 });
             }
 
@@ -301,6 +330,7 @@ describe('Acceptance Tests', () => {
                     ['/'],
                     null, null,
                     [
+                        ['RootRootRoute', null, null],
                         ['RootAllConditionalRoute', null, null],
                         ['RootConditionalRoute', null, null],
                     ],
@@ -309,6 +339,7 @@ describe('Acceptance Tests', () => {
                     ['/?sort=true&sort_type=asc&idx=1'],
                     null, freeze({sort: true, sort_type: 'asc', idx: 1}),
                     [
+                        ['RootRootRoute', null, null],
                         ['RootAllConditionalRoute', null, null],
                         ['RootConditionalRoute', null, null],
                     ],
@@ -317,6 +348,7 @@ describe('Acceptance Tests', () => {
                     ['/news/story?'],
                     null, null,
                     [
+                        ['RootNewsRoute', null, null],
                         ['RootAllConditionalRoute', null, null],
                         ['RootNewsConditionalRoute', null, freeze({news: 'story'})],
                     ],
@@ -325,6 +357,7 @@ describe('Acceptance Tests', () => {
                     ['/news/story?idx=3'],
                     null, freeze({idx: 3}),
                     [
+                        ['RootNewsRoute', null, null],
                         ['RootAllConditionalRoute', null, null],
                         ['RootNewsConditionalRoute', null, freeze({news: 'story'})],
                     ],
@@ -333,6 +366,7 @@ describe('Acceptance Tests', () => {
                     ['/user/1/action/go?'],
                     null, null,
                     [
+                        ['UserIdActionRoute', null, freeze({id: 1, action: 'go'})],
                         ['RootAllConditionalRoute', null, null],
                         ['RootIdConditionalRouteOne', null, freeze({id: 1})],
                         ['RootIdConditionalRouteTwo', null, freeze({id: 1})],
@@ -346,6 +380,7 @@ describe('Acceptance Tests', () => {
                     ['/user/2/menu/stats?'],
                     null, null,
                     [
+                        ['UserIdMenuRouteOne', null, freeze({id: 2, menu: 'stats'})],
                         ['RootAllConditionalRoute', null, null],
                         ['RootIdConditionalRouteOne', null, freeze({id: 2})],
                         ['RootIdConditionalRouteTwo', null, freeze({id: 2})],
@@ -358,6 +393,7 @@ describe('Acceptance Tests', () => {
                     ['/user/2/menu/stats?bestFirst=true&limit=10&order=abc'],
                     null, freeze({bestFirst: true, limit: 10, order: 'abc'}),
                     [
+                        ['UserIdMenuRouteOne', null, freeze({id: 2, menu: 'stats'})],
                         ['RootAllConditionalRoute', null, null],
                         ['RootIdConditionalRouteOne', null, freeze({id: 2})],
                         ['RootIdConditionalRouteTwo', null, freeze({id: 2})],
@@ -370,6 +406,7 @@ describe('Acceptance Tests', () => {
                     ['/user/2/menu/stats/profile'],
                     null, null,
                     [
+                        ['UserIdMenuRouteTwo', null, freeze({id: 2, menu: 'stats'})],
                         ['RootAllConditionalRoute', null, null],
                         ['RootIdConditionalRouteOne', null, freeze({id: 2})],
                         ['RootIdConditionalRouteTwo', null, freeze({id: 2})],
@@ -383,6 +420,7 @@ describe('Acceptance Tests', () => {
                     ['/user/2/menu/stats/profile?bestFirst=true&limit=10&order=abc'],
                     null, freeze({bestFirst: true, limit: 10, order: 'abc'}),
                     [
+                        ['UserIdMenuRouteTwo', null, freeze({id: 2, menu: 'stats'})],
                         ['RootAllConditionalRoute', null, null],
                         ['RootIdConditionalRouteOne', null, freeze({id: 2})],
                         ['RootIdConditionalRouteTwo', null, freeze({id: 2})],
