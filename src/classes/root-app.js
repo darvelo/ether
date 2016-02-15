@@ -5,7 +5,6 @@ import { is, isnt } from '../utils/is';
 import isNumeric from '../utils/is-numeric';
 import diffObjects from '../utils/diff-objects';
 import finalDiff from '../utils/final-diff';
-import Transition from '../utils/transition';
 
 class RootApp extends App {
     constructor(opts) {
@@ -145,38 +144,10 @@ class RootApp extends App {
     /**
      * Navigates to a new URL path on the Ether application. Called manually or, if configured to, on: popstate, page landing, or intercepted links.
      * @param {string} destination The navigation destination. Can be a URL string with or without a querystring.
-     * @return {Transition} A promise-like object that resolves if navigation succeeded, and rejects if it failed, with the details of the failure (404 or navigation error). Can be terminated early so successive calls to Transition#then() don't fire.
+     * @return {Promise} A promise that resolves if navigation succeeded, and rejects if it failed, with the details of the failure (404 or navigation error).
      */
     navigate(destination) {
-        let transition = this._transition;
-        if (transition) {
-            if (transition.isHandlingCallback()) {
-                // one of the transition's callbacks is calling navigate().
-                // instead of terminating the transition, call _navigate()
-                // and allow the promise from there to take over the
-                // transition's chain of callbacks by allowing the
-                // transiton to use it as its promise.
-                // in effect, this allows chaining calls to navigate()
-                // within the then()/catch() callbacks of a transition.
-                //
-                // NOTE: a call to navigate() within a transition's
-                //       callback, without returning the promise from
-                //       navigate() in the callback, is not supported.
-                //       multiple calls to navigate() within a callback
-                //       is also not supported.
-                return this._navigate(destination);
-            } else {
-                // navigate() was called outside of the current
-                // transition's callbacks. terminate the current
-                // transition (meaning no further then()/catch()
-                // callbacks will be called) and create a new
-                // transition for navigation to `destination`.
-                transition.terminate();
-            }
-        }
-
-        this._transition = new Transition(this._navigate(destination));
-        return this._transition;
+        return this._navigate(destination);
     }
 
     /**
@@ -185,7 +156,7 @@ class RootApp extends App {
      * @param {string} destination The navigation destination. Can be a URL string with or without a querystring.
      * @return {Promise} A promise that resolves if navigation succeeded, and rejects if it failed, with the details of the failure (404 or navigation error).
      */
-    navigate(destination) {
+    _navigate(destination) {
         let [ path, queryString='' ] = destination.split('?');
         let queryParams = this.parseQueryString(queryString);
         let queryParamsDiff = null;
