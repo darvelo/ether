@@ -18,6 +18,7 @@ class RootApp extends App {
         super(opts);
         this._opts = {
             stripTrailingSlash: !!opts.stripTrailingSlash || false,
+            addTrailingSlash: !!opts.addTrailingSlash || false,
         };
         // the last URL that was navigated to successfully
         this._fullUrl = undefined;
@@ -193,6 +194,13 @@ class RootApp extends App {
             let regex = /\/+$/;
             if (regex.test(path)) {
                 path = path.replace(regex, '');
+            }
+        }
+
+        if (this._opts.addTrailingSlash === true) {
+            let regex = /\/+$/;
+            if (!regex.test(path)) {
+                path += '/';
             }
         }
 
