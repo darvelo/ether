@@ -1,5 +1,6 @@
 import App from './app';
 import Route from './route';
+import Transition from './transition';
 import ctorName from '../utils/ctor-name';
 import { is, isnt } from '../utils/is';
 import isNumeric from '../utils/is-numeric';
@@ -15,19 +16,28 @@ class RootApp extends App {
             opts.params = [];
         }
         super(opts);
-        this._opts = {
+        this._config = Object.freeze({
             stripTrailingSlash: !!opts.stripTrailingSlash || false,
             addTrailingSlash: !!opts.addTrailingSlash || false,
-        };
+            // @TODO: figure out how to make this work elegantly
+            transitionImmediately: false,
+        });
         // the last URL that was navigated to successfully
         this._fullUrl = undefined;
         // the querystring params parsed from the
         // last URL that was navigated to successfully
         this._lastQueryParams = null;
+        // transition-related data
+        this._transitionQueue = [];
+        this._currentTransition = null;
     }
 
     fullUrl() {
         return this._fullUrl;
+    }
+
+    getCurrentTransition() {
+        return this._currentTransition;
     }
 
     expectedAddresses() {
@@ -141,13 +151,33 @@ class RootApp extends App {
         }, {});
     }
 
+    _triggerNextTransition() {
+        this._currentTransition = this._transitionQueue.shift();
+        return this._currentTransition.start();
+    }
+
     /**
      * Navigates to a new URL path on the Ether application. Called manually or, if configured to, on: popstate, page landing, or intercepted links.
      * @param {string} destination The navigation destination. Can be a URL string with or without a querystring.
      * @return {Promise} A promise that resolves if navigation succeeded, and rejects if it failed, with the details of the failure (404 or navigation error).
      */
     navigate(destination) {
-        return this._navigate(destination);
+        let currentTransition = this.getCurrentTransition();
+        let nextTransition = new Transition(destination, this._navigate.bind(this));
+
+        if (!currentTransition) {
+            this._currentTransition = nextTransition;
+            return nextTransition.start();
+        }
+
+        if (this._config.transitionImmediately === false) {
+            this._transitionQueue.push(nextTransition);
+
+            return currentTransition.promise.then(
+                this._triggerNextTransition.bind(this),
+                this._triggerNextTransition.bind(this)
+            );
+        }
     }
 
     /**
@@ -161,14 +191,14 @@ class RootApp extends App {
         let queryParams = this.parseQueryString(queryString);
         let queryParamsDiff = null;
 
-        if (this._opts.stripTrailingSlash === true) {
+        if (this._config.stripTrailingSlash === true) {
             let regex = /\/+$/;
             if (regex.test(path)) {
                 path = path.replace(regex, '');
             }
         }
 
-        if (this._opts.addTrailingSlash === true) {
+        if (this._config.addTrailingSlash === true) {
             let regex = /\/+$/;
             if (!regex.test(path)) {
                 path += '/';
@@ -476,7 +506,7 @@ class RootApp extends App {
      * @param {array} expectedParams A list of all the param names expected by the App/Route that need to be plucked from the `accumulatedParams`.
      * @param {object} lastParams The params sent to the App/Route on the last successful navigation.
      * @param {object} queryParamsDiff A diff of the current querystring parameters in the URL against the querystring params available in the URL of the last successful navigation.
-     * @return {{params: object, diff: Diff}} The combination of: the params for this App/Route; and a combination of both the diff for both the params for this App/Route vs. those sent in the last navigation, and the diff of the global querystring params in the URL vs those in the last successful navigation. `Null` if neither the params nor queryParams diffs were different than what they were on last navigation.
+     * @return {params: object, diff: Diff}} The combination of: the params for this App/Route; and a combination of both the diff for both the params for this App/Route vs. those sent in the last navigation, and the diff of the global querystring params in the URL vs those in the last successful navigation. `Null` if neither the params nor queryParams diffs were different than what they were on last navigation.
      */
     _buildRenderData(accumulatedParams, expectedParams, lastParams, queryParamsDiff) {
         let params = expectedParams.reduce((memo, paramName) => {

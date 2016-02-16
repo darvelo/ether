@@ -1,5 +1,4 @@
 import RootApp from '../../src/classes/root-app';
-import App from '../../src/classes/app';
 import Route from '../../src/classes/route';
 
 class TestRoute extends Route {
@@ -8,7 +7,7 @@ class TestRoute extends Route {
     }
 }
 
-describe.only('RootApp Options', () => {
+describe('RootApp Options', () => {
     describe('stripTrailingSlash', () => {
         class MyRootApp extends RootApp {
             expectedOutlets() {
@@ -89,6 +88,100 @@ describe.only('RootApp Options', () => {
             }).catch(() => {
                 done(new Error('expected the trailing slash to be added/kept, making navigation a success'));
             });
+        });
+    });
+
+    describe('transitionImmediately', () => {
+        class MyRootApp extends RootApp {
+            expectedOutlets() {
+                return [];
+            }
+            mount() {
+                return {
+                    'first' : TestRoute,
+                    'second' : TestRoute,
+                };
+            }
+        }
+
+        describe('defaulting to false', () => {
+            it('queues transitions', done => {
+                let rootApp = new MyRootApp({});
+                let firstTransition, secondTransition;
+
+                expect(rootApp.getCurrentTransition()).to.be.null;
+                expect(rootApp._transitionQueue).to.be.an('array');
+                expect(rootApp._transitionQueue).to.be.empty;
+
+                rootApp.navigate('first?x=1').then(() => {
+                    expect(firstTransition).to.be.ok;
+                    expect(firstTransition.state).to.equal('succeeded');
+                }).catch(() => {
+                    done(new Error('expected first navigation to succeed'));
+                });
+
+                firstTransition = rootApp.getCurrentTransition();
+                expect(firstTransition.url).to.equal('first?x=1');
+                expect(firstTransition.state).to.equal('started');
+                expect(rootApp._transitionQueue).to.be.empty;
+
+                rootApp.navigate('second').then(() => {
+                    expect(firstTransition).to.be.ok;
+                    expect(firstTransition.state).to.equal('succeeded');
+                    expect(rootApp.getCurrentTransition()).to.equal(secondTransition);
+                    expect(secondTransition.state).to.equal('succeeded');
+                    done();
+                }).catch(() => {
+                    done(new Error('expected second navigation to succeed'));
+                });
+
+                expect(rootApp._transitionQueue).to.have.length(1);
+                secondTransition = rootApp._transitionQueue[0];
+                expect(secondTransition.url).to.equal('second');
+                expect(secondTransition.state).to.equal('pending');
+                expect(secondTransition).to.not.equal(firstTransition);
+            });
+
+            it('continues transition queue even if some fail', done => {
+                let rootApp = new MyRootApp({});
+                let firstTransition, secondTransition;
+
+                expect(rootApp.getCurrentTransition()).to.be.null;
+                expect(rootApp._transitionQueue).to.be.an('array');
+                expect(rootApp._transitionQueue).to.be.empty;
+
+                rootApp.navigate('non-existent-url').then(() => {
+                    done(new Error('expected first navigation to fail'));
+                }).catch(() => {
+                    expect(firstTransition).to.be.ok;
+                    expect(firstTransition.state).to.equal('failed');
+                });
+
+                firstTransition = rootApp.getCurrentTransition();
+                expect(firstTransition.url).to.equal('non-existent-url');
+                expect(firstTransition.state).to.equal('started');
+                expect(rootApp._transitionQueue).to.be.empty;
+
+                rootApp.navigate('second').then(() => {
+                    expect(firstTransition).to.be.ok;
+                    expect(firstTransition.state).to.equal('failed');
+                    expect(rootApp.getCurrentTransition()).to.equal(secondTransition);
+                    expect(secondTransition.state).to.equal('succeeded');
+                    done();
+                }).catch(() => {
+                    done(new Error('expected second navigation to succeed'));
+                });
+
+                expect(rootApp._transitionQueue).to.have.length(1);
+                secondTransition = rootApp._transitionQueue[0];
+                expect(secondTransition.url).to.equal('second');
+                expect(secondTransition.state).to.equal('pending');
+                expect(secondTransition).to.not.equal(firstTransition);
+            });
+        });
+
+        describe.skip('set to true', () => {
+            it('cancels the current transition and begins the new navigate() call immediately');
         });
     });
 });
