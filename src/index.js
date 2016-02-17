@@ -5,6 +5,15 @@ import Outlet from './classes/outlet';
 import MutableOutlet from './classes/mutable-outlet';
 import View from './classes/view';
 
+export {
+    RootApp,
+    App,
+    Route,
+    Outlet,
+    MutableOutlet,
+    View
+};
+
 export default {
     RootApp,
     App,
