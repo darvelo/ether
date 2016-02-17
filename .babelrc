@@ -1,3 +1,10 @@
 {
-  "presets": ["es2015-rollup"]
+    "env": {
+        "build": {
+            "presets": ["es2015-rollup"]
+        },
+        "test": {
+            "presets": ["es2015"]
+        }
+    }
 }
