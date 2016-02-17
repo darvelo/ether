@@ -23,6 +23,7 @@
     "white": true,
     "quotmark": "single",
     "globals": {
+        "window": true,
         "Element": true
     }
 }

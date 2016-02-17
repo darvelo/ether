@@ -29,15 +29,18 @@ export class Eventable {
             evtList.splice(idx, 1);
         }
     }
+    clearListeners() {
+        this._events = {};
+    }
 }
 
 export var window = {
-    __proto__: Eventable,
+    __proto__: Eventable.prototype,
     EtherTestEnvironment: true,
 };
 
 export var document = {
-    __proto__: Eventable,
+    __proto__: Eventable.prototype,
 
     createElement() {
         return new Element();

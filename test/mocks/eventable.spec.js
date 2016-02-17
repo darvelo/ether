@@ -48,4 +48,17 @@ describe('Eventable mock helper', () => {
             spy2.should.have.been.calledOnce;
         });
     });
+
+    describe('clearListeners', () => {
+        it('fires callback on eventable.fire(evtName)', () => {
+            let spy = sinon.spy();
+            eventable.addEventListener('click', spy);
+            spy.should.not.have.been.called;
+            eventable.fire('click');
+            spy.should.have.been.calledOnce;
+            eventable.clearListeners();
+            eventable.fire('click');
+            spy.should.have.been.calledOnce;
+        });
+    });
 });

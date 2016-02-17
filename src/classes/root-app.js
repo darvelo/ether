@@ -19,6 +19,8 @@ class RootApp extends App {
         this._config = Object.freeze({
             stripTrailingSlash: !!opts.stripTrailingSlash || false,
             addTrailingSlash: !!opts.addTrailingSlash || false,
+            basePath: !!opts.basePath ? opts.basePath.replace(/^(\/[^/]*)$/, '$1/') : '/',
+            navOnWindowLoad: opts.navOnWindowLoad === false ? opts.navOnWindowLoad : true,
             // @TODO: figure out how to make this work elegantly
             transitionImmediately: false,
         });
@@ -104,21 +106,39 @@ class RootApp extends App {
         return this._addresses[name];
     }
 
-    start() {
-        window.addEventListener('popstate', this.popstate.bind(this), false);
-        window.addEventListener('click', this.interceptLinks.bind(this), false);
-        let state = window.history.state;
-        if (state) {
-            // we've loaded the page and it had previous state
-            // perform initial routing
-            // this should use the same function as this.popstate
-        }
+    _popstate(event) {
+
     }
 
-    interceptLinks(event) {
+    _interceptLinks(event) {
         // delegate to all links that have same origin (and basePath?)
         // and descend from this.rootURL, then preventDefault()
         // also should pushState()
+    }
+
+    start() {
+        if (this._config.navOnWindowLoad) {
+            let pathname = window.location.pathname;
+            if (pathname.indexOf(this._config.basePath) === 0) {
+                pathname = pathname.slice(this._config.basePath.length);
+                let loadHandler = () => {
+                    this.navigate(pathname);
+                    window.removeEventListener('load', loadHandler);
+                };
+                window.addEventListener('load', loadHandler, false);
+            }
+        }
+
+        // if (this._config.history) {
+        //     window.addEventListener('popstate', this._popstate.bind(this), false);
+        // }
+        // window.addEventListener('click', this.interceptLinks.bind(this), false);
+        // let state = window.history.state;
+        // if (state) {
+        //     // we've loaded the page and it had previous state
+        //     // perform initial routing
+        //     // this should use the same function as this.popstate
+        // }
     }
 
     /**

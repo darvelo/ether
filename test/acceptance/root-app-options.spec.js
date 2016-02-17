@@ -184,4 +184,56 @@ describe('RootApp Options', () => {
             it('cancels the current transition and begins the new navigate() call immediately');
         });
     });
+
+    describe('navOnWindowLoad', () => {
+        class MyRootApp extends RootApp {
+            expectedOutlets() {
+                return [];
+            }
+            mount() {
+                return {
+                    'first': TestRoute,
+                };
+            }
+        }
+
+        if (!window.EtherTestEnvironment) {
+            it.skip('defaults to true, navigates to destination in URL');
+            it.skip('defaults to true, navigates to destination in URL, respecting `basePath` config option');
+        } else {
+            it('defaults to true, navigates to destination in URL', () => {
+                let pathname = '/first';
+                let effectivePath = 'first';
+                let oldLocation = window.location;
+                window.location = {pathname};
+                let rootApp = new MyRootApp({});
+                rootApp.start();
+                expect(rootApp.getCurrentTransition()).to.be.null;
+                window.fire('load');
+                let transition = rootApp.getCurrentTransition();
+                expect(transition).to.be.ok;
+                expect(transition.url).to.equal(effectivePath);
+                expect(transition.state).to.equal('started');
+                window.location = oldLocation;
+                window.clearListeners();
+            });
+
+            it('defaults to true, navigates to destination in URL, respecting `basePath` config option', () => {
+                let pathname = '/basepath/first';
+                let effectivePath = 'first';
+                let oldLocation = window.location;
+                window.location = {pathname};
+                let rootApp = new MyRootApp({basePath: '/basepath'});
+                rootApp.start();
+                expect(rootApp.getCurrentTransition()).to.be.null;
+                window.fire('load');
+                let transition = rootApp.getCurrentTransition();
+                expect(transition).to.be.ok;
+                expect(transition.url).to.equal(effectivePath);
+                expect(transition.state).to.equal('started');
+                window.location = oldLocation;
+                window.clearListeners();
+            });
+        }
+    });
 });
