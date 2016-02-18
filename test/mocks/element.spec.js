@@ -4,7 +4,12 @@ describe('Element Mock', () => {
     let element;
 
     beforeEach(() => {
-        element = new Element();
+        element = new Element('div');
+    });
+
+    it('sets nodeName property from constructor', () => {
+        element = new Element('section');
+        expect(element.nodeName).to.equal('SECTION');
     });
 
     it('fires "click" event listeners on click()', () => {
@@ -79,15 +84,15 @@ describe('Element Mock', () => {
 
         it('can set innerHTML to empty string to clear children', () => {
             element.children.should.have.length(0);
-            element.appendChild(new Element());
-            element.appendChild(new Element());
+            element.appendChild(new Element('div'));
+            element.appendChild(new Element('div'));
             element.children.should.have.length(2);
             element.innerHTML = '';
             element.children.should.have.length(0);
         });
 
         it('throws when setting innerHTML when element has children', () => {
-            element.appendChild(new Element());
+            element.appendChild(new Element('div'));
             expect(() => element.innerHTML = '<div></div>').to.throw(Error, 'Element#innerHTML set not implemented for when element has children and the string is not empty.');
         });
 
@@ -99,7 +104,7 @@ describe('Element Mock', () => {
         });
 
         it('throws when getting innerHTML when element has children', () => {
-            element.appendChild(new Element());
+            element.appendChild(new Element('div'));
             expect(() => element.innerHTML).to.throw('Element#innerHTML get not implemented for when element has children.');
         });
     });
@@ -110,13 +115,13 @@ describe('Element Mock', () => {
         });
 
         it('appends a child element', () => {
-            let child = new Element();
+            let child = new Element('div');
             element.appendChild(child);
             expect(element.children).to.deep.equal([child]);
         });
 
         it('when appending, sets child.parentNode to itself', () => {
-            let child = new Element();
+            let child = new Element('div');
             expect(child.parentNode).to.not.equal(element);
             element.appendChild(child);
             expect(child.parentNode).to.equal(element);
@@ -129,11 +134,11 @@ describe('Element Mock', () => {
         });
 
         it('throws when child is not found', () => {
-            expect(() => element.removeChild(new Element())).to.throw();
+            expect(() => element.removeChild(new Element('div'))).to.throw();
         });
 
         it('removes a child element', () => {
-            let child = new Element();
+            let child = new Element('div');
             element.appendChild(child);
             expect(element.children).to.deep.equal([child]);
             element.removeChild(child);

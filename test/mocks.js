@@ -42,8 +42,8 @@ export var window = {
 export var document = {
     __proto__: Eventable.prototype,
 
-    createElement() {
-        return new Element();
+    createElement(tagName) {
+        return new Element(tagName);
     },
 
     querySelector() {
@@ -76,8 +76,11 @@ class ClassList {
 }
 
 export class Element extends Eventable {
-    constructor(...args) {
-        super(...args);
+    constructor(tagName) {
+        super();
+        // if (tagName) {
+            this.nodeName = tagName.toUpperCase();
+        // }
         this._innerHTML = '';
     }
     click() {
@@ -113,7 +116,7 @@ export class Element extends Eventable {
     }
     get parentNode() {
         if (!this._parentNode) {
-            this._parentNode = new Element();
+            this._parentNode = new Element('div');
             this._parentNode.children = [this];
         }
         return this._parentNode;
