@@ -3,6 +3,7 @@ var babel = require('rollup-plugin-babel');
 var uglify = require('rollup-plugin-uglify');
 
 var dest = 'dist/';
+var version = require('./package.json').version;
 
 rollup.rollup({
     entry: 'src/index.js',
@@ -11,7 +12,6 @@ rollup.rollup({
         uglify(),
     ],
 }).then(function (bundle) {
-    var version = 0.1;
     var banner = '/* Ether version ' + version + ' */';
     return Promise.all([
         bundle.write({
