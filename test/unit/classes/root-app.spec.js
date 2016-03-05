@@ -211,4 +211,11 @@ describe('RootApp', () => {
             });
         });
     });
+
+    describe('start()', () => {
+        it('returns this', () => {
+            let rootApp = new RootApp(defaultOpts).start();
+            expect(rootApp).to.be.an.instanceof(RootApp);
+        });
+    });
 });

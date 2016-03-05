@@ -139,6 +139,7 @@ class RootApp extends App {
         //     // perform initial routing
         //     // this should use the same function as this.popstate
         // }
+        return this;
     }
 
     /**
