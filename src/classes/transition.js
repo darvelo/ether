@@ -4,11 +4,6 @@ class Transition {
         this._navigateFn = navigateFn;
         this._state = 'pending';
         this._promise = null;
-        // @TODO: use this for rootapp config transitionImmediately
-        // this._reject = null;
-        // this._promise = new Promise((resolve, reject) => {
-        //     this._reject = reject;
-        // });
     }
 
     get url() { return this._url; }

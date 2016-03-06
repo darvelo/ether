@@ -21,8 +21,6 @@ class RootApp extends App {
             addTrailingSlash: !!opts.addTrailingSlash || false,
             basePath: !!opts.basePath ? opts.basePath.replace(/^(\/[^/]*)$/, '$1/') : '/',
             navOnWindowLoad: opts.navOnWindowLoad === false ? opts.navOnWindowLoad : true,
-            // @TODO: figure out how to make this work elegantly
-            transitionImmediately: false,
         });
         // the last URL that was navigated to successfully
         this._fullUrl = undefined;
@@ -189,16 +187,14 @@ class RootApp extends App {
         if (!currentTransition) {
             this._currentTransition = nextTransition;
             return nextTransition.start();
-        }
-
-        if (this._config.transitionImmediately === false) {
+        } else {
             this._transitionQueue.push(nextTransition);
-
             return currentTransition.promise.then(
                 this._triggerNextTransition.bind(this),
                 this._triggerNextTransition.bind(this)
             );
         }
+
     }
 
     /**
