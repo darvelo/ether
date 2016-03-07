@@ -8,6 +8,7 @@ import View from './classes/view';
 
 // utils
 import makeOutlet from './utils/make-outlet';
+import objectAssignPolyfill from './utils/object-assign-polyfill';
 
 export {
     // classes
