@@ -169,8 +169,7 @@ class MountMapper extends BaseMountMapper {
             expectedParams = mount.prototype.expectedParams();
         }
 
-        for (let i = 0, len = mountParams.length; i < len; ++i) {
-            let mountParam = mountParams[i];
+        mountParams.forEach(mountParam => {
             if (parentParams[mountParam]) {
                 conflictingParams.push(mountParam);
             }
@@ -184,7 +183,7 @@ class MountMapper extends BaseMountMapper {
             // if parentParams doesn't have one of the params we expect,
             // we'll know when an error is raised in the mount's constructor
             totalParams.push(mountParam);
-        }
+        });
 
         // throw if mount's params overlap given params
         if (conflictingParams.length) {
@@ -198,14 +197,13 @@ class MountMapper extends BaseMountMapper {
             ].join(''));
         }
 
-        for (let i = 0, len = expectedParams.length; i < len; ++i) {
-            let expectedParam = expectedParams[i];
+        expectedParams.forEach(expectedParam => {
             // search for the param in the parent App's
             // (inherited) params and the mount's own params
             if (!parentParams[expectedParam] && !mountParamsObj[expectedParam]) {
                 missingParams.push(expectedParam);
             }
-        }
+        });
 
         if (missingParams.length) {
             missingParams.sort();
@@ -293,11 +291,9 @@ class MountMapper extends BaseMountMapper {
                 slashes: parseResult.slashes,
             };
             if (crumbData.addresses) {
-                let addresses = crumbData.addresses;
-                for (let i = 0, len = addresses.length; i < len; ++i) {
-                    let addr = addresses[i];
+                crumbData.addresses.forEach(addr => {
                     allAddresses[addr] = true;
-                }
+                });
             }
             this._sortedCrumbs.push(crumbData);
             this._crumbMap[crumb] = crumbData;
@@ -387,12 +383,11 @@ class MountMapper extends BaseMountMapper {
         }
 
         let expectedParams = crumbData.mount.expectedParams();
-        for (let i = 0, len = expectedParams.length; i < len; ++i) {
-            let expectedParam = expectedParams[i];
+        expectedParams.forEach(expectedParam => {
             if (!params.hasOwnProperty(expectedParam)) {
                 throw new Error(`MountMapper#setCurrentMount(): The params given for breadcrumb "${crumb}" did not match its expected params.`);
             }
-        }
+        });
         if (expectedParams.length !== Object.keys(params).length) {
             throw new Error(`MountMapper#setCurrentMount(): The params given for breadcrumb "${crumb}" exceeded its expected params.`);
         }

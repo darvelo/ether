@@ -88,15 +88,14 @@ class Expectable {
         }
         let nonExistentMemberFns = [];
         let nonFns = [];
-        for (let i = 0, len = handlers.length; i < len; ++i) {
-            let h = handlers[i];
+        handlers.forEach(h => {
             if (is(h, 'String') && isnt(this[h], 'Function')) {
                 nonExistentMemberFns.push(h);
             }
             if (isnt(h, 'String') && isnt(h, 'Function')) {
                 nonFns.push(h);
             }
-        }
+        });
         if (nonExistentMemberFns.length) {
             throw new Error([
                 ctorName(this),
@@ -168,12 +167,11 @@ class Expectable {
         }
 
         let nonOutlets = [];
-        for (let i = 0, len = outletsKeys.length; i < len; ++i) {
-            let name = outletsKeys[i];
+        outletsKeys.forEach(name => {
             if (!(outlets[name] instanceof Outlet)) {
                 nonOutlets.push(name);
             }
-        }
+        });
         if (nonOutlets.length) {
             throw new TypeError([
                 ctorName(this),

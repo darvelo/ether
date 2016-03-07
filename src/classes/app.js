@@ -109,14 +109,13 @@ class App extends Modifiable {
         if (!this.state.hasOwnProperty(state)) {
             throw new Error(`${ctorName(this)}#_setState(): Tried to set app state to an unsupported value: ${JSON.stringify(state)}.`);
         }
-        for (let i = 0, len = possibleAppStates.length; i < len; ++i) {
-            let possibleState = possibleAppStates[i];
+        possibleAppStates.forEach(possibleState => {
             if (state === possibleState) {
                 this.state[possibleState] = true;
             } else {
                 this.state[possibleState] = false;
             }
-        }
+        });
     }
 
     _instantiateMounts(params) {

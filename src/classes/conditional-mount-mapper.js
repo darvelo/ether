@@ -146,8 +146,7 @@ class ConditionalMountMapper extends BaseMountMapper {
             expectedParams = mount.prototype.expectedParams();
         }
 
-        for (let i = 0, len = expectedParams.length; i < len; ++i) {
-            let expectedParam = expectedParams[i];
+        expectedParams.forEach(expectedParam => {
             // search for the param in the parent App's (inherited) params
             if (parentParams[expectedParam]) {
                 totalParams.push(expectedParam);
@@ -157,7 +156,7 @@ class ConditionalMountMapper extends BaseMountMapper {
             } else {
                 missingParams.push(expectedParam);
             }
-        }
+        });
 
         if (missingParams.length) {
             missingParams.sort();
@@ -254,11 +253,9 @@ class ConditionalMountMapper extends BaseMountMapper {
                 crumbData.paramNames.forEach(paramName => params[paramName] = true);
             }
             if (crumbData.addresses) {
-                let addresses = crumbData.addresses;
-                for (let i = 0, len = addresses.length; i < len; ++i) {
-                    let addr = addresses[i];
+                crumbData.addresses.forEach(addr => {
                     memo[addr] = params;
-                }
+                });
             }
             return memo;
         }, {});
@@ -319,8 +316,7 @@ class ConditionalMountMapper extends BaseMountMapper {
             if (!addresses.length) {
                 addresses = [''];
             }
-            for (let i = 0, len = addresses.length; i < len; ++i) {
-                let address = addresses[i];
+            addresses.forEach(address => {
                 switch (operator) {
                     // * is always added to the list
                     case '*':
@@ -350,7 +346,7 @@ class ConditionalMountMapper extends BaseMountMapper {
                     default:
                         break;
                 }
-            }
+            });
         }
         // remove those that were marked for removal by `!`
         for (let logic in matched) {
@@ -426,12 +422,11 @@ class ConditionalMountMapper extends BaseMountMapper {
             routes.forEach((route, idx) => {
                 let givenParams = logicsToParams[logic][idx];
                 let expectedParams = route.expectedParams();
-                for (let i = 0, len = expectedParams.length; i < len; ++i) {
-                    let expectedParam = expectedParams[i];
+                expectedParams.forEach(expectedParam => {
                     if (!givenParams.hasOwnProperty(expectedParam)) {
                         throw new Error(`ConditionalMountMapper#setCurrentMounts(): The params given for ${ctorName(route)} (${JSON.stringify(givenParams)}) did not match its expected params: ${JSON.stringify(expectedParams.sort())}.`);
                     }
-                }
+                });
                 if (expectedParams.length !== Object.keys(givenParams).length) {
                     throw new Error(`ConditionalMountMapper#setCurrentMounts(): The params given for ${ctorName(route)} (${JSON.stringify(givenParams)}) exceeded its expected params: ${JSON.stringify(expectedParams.sort())}.`);
                 }

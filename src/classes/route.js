@@ -97,14 +97,13 @@ class Route extends Modifiable {
         default:
             break;
         }
-        for (let i = 0, len = possibleRouteStates.length; i < len; ++i) {
-            let possibleState = possibleRouteStates[i];
+        possibleRouteStates.forEach(possibleState => {
             if (state === possibleState) {
                 this.state[possibleState] = true;
             } else {
                 this.state[possibleState] = false;
             }
-        }
+        });
         if (keepRendered) {
             this.state.rendered = true;
         }
