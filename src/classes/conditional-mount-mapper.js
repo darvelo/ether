@@ -103,7 +103,8 @@ class ConditionalMountMapper extends BaseMountMapper {
             // + operator requires expected param to be in every mount
             // listed on the `+` list (if not already in parentApp params)
             case '+':
-                for (let addr of addresses) {
+                for (let i = 0, len = addresses.length; i < len; ++i) {
+                    let addr = addresses[i];
                     if (!addressesParams[addr][expectedParam]) {
                         return false;
                     }
@@ -145,7 +146,8 @@ class ConditionalMountMapper extends BaseMountMapper {
             expectedParams = mount.prototype.expectedParams();
         }
 
-        for (let expectedParam of expectedParams) {
+        for (let i = 0, len = expectedParams.length; i < len; ++i) {
+            let expectedParam = expectedParams[i];
             // search for the param in the parent App's (inherited) params
             if (parentParams[expectedParam]) {
                 totalParams.push(expectedParam);
@@ -252,7 +254,9 @@ class ConditionalMountMapper extends BaseMountMapper {
                 crumbData.paramNames.forEach(paramName => params[paramName] = true);
             }
             if (crumbData.addresses) {
-                for (let addr of crumbData.addresses) {
+                let addresses = crumbData.addresses;
+                for (let i = 0, len = addresses.length; i < len; ++i) {
+                    let addr = addresses[i];
                     memo[addr] = params;
                 }
             }
@@ -315,7 +319,8 @@ class ConditionalMountMapper extends BaseMountMapper {
             if (!addresses.length) {
                 addresses = [''];
             }
-            for (let address of addresses) {
+            for (let i = 0, len = addresses.length; i < len; ++i) {
+                let address = addresses[i];
                 switch (operator) {
                     // * is always added to the list
                     case '*':
@@ -421,7 +426,8 @@ class ConditionalMountMapper extends BaseMountMapper {
             routes.forEach((route, idx) => {
                 let givenParams = logicsToParams[logic][idx];
                 let expectedParams = route.expectedParams();
-                for (let expectedParam of expectedParams) {
+                for (let i = 0, len = expectedParams.length; i < len; ++i) {
+                    let expectedParam = expectedParams[i];
                     if (!givenParams.hasOwnProperty(expectedParam)) {
                         throw new Error(`ConditionalMountMapper#setCurrentMounts(): The params given for ${ctorName(route)} (${JSON.stringify(givenParams)}) did not match its expected params: ${JSON.stringify(expectedParams.sort())}.`);
                     }

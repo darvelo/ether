@@ -169,7 +169,8 @@ class MountMapper extends BaseMountMapper {
             expectedParams = mount.prototype.expectedParams();
         }
 
-        for (let mountParam of mountParams) {
+        for (let i = 0, len = mountParams.length; i < len; ++i) {
+            let mountParam = mountParams[i];
             if (parentParams[mountParam]) {
                 conflictingParams.push(mountParam);
             }
@@ -197,7 +198,8 @@ class MountMapper extends BaseMountMapper {
             ].join(''));
         }
 
-        for (let expectedParam of expectedParams) {
+        for (let i = 0, len = expectedParams.length; i < len; ++i) {
+            let expectedParam = expectedParams[i];
             // search for the param in the parent App's
             // (inherited) params and the mount's own params
             if (!parentParams[expectedParam] && !mountParamsObj[expectedParam]) {
@@ -291,7 +293,9 @@ class MountMapper extends BaseMountMapper {
                 slashes: parseResult.slashes,
             };
             if (crumbData.addresses) {
-                for (let addr of crumbData.addresses) {
+                let addresses = crumbData.addresses;
+                for (let i = 0, len = addresses.length; i < len; ++i) {
+                    let addr = addresses[i];
                     allAddresses[addr] = true;
                 }
             }
@@ -306,9 +310,11 @@ class MountMapper extends BaseMountMapper {
     }
 
     match(path) {
+        let sortedCrumbs = this._sortedCrumbs;
         let crumbData, regexMatch, rest, len;
 
-        for (crumbData of this._sortedCrumbs) {
+        for (let i = 0, len = sortedCrumbs.length; i < len; ++i) {
+            crumbData = sortedCrumbs[i];
             regexMatch = crumbData.regex.exec(path);
             if (regexMatch) {
                 len = regexMatch.length;
@@ -381,7 +387,8 @@ class MountMapper extends BaseMountMapper {
         }
 
         let expectedParams = crumbData.mount.expectedParams();
-        for (let expectedParam of expectedParams) {
+        for (let i = 0, len = expectedParams.length; i < len; ++i) {
+            let expectedParam = expectedParams[i];
             if (!params.hasOwnProperty(expectedParam)) {
                 throw new Error(`MountMapper#setCurrentMount(): The params given for breadcrumb "${crumb}" did not match its expected params.`);
             }

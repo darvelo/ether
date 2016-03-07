@@ -61,7 +61,8 @@ class Expectable {
                 memo[val] = true;
                 return memo;
             }, {});
-            for (let val of expected) {
+            for (let i = 0, len = expected.length; i < len; ++i) {
+                let val = expected[i];
                 if (!given[val]) {
                     return EXPECTED_NOT_MET;
                 }
@@ -87,7 +88,8 @@ class Expectable {
         }
         let nonExistentMemberFns = [];
         let nonFns = [];
-        for (let h of handlers) {
+        for (let i = 0, len = handlers.length; i < len; ++i) {
+            let h = handlers[i];
             if (is(h, 'String') && isnt(this[h], 'Function')) {
                 nonExistentMemberFns.push(h);
             }
@@ -166,7 +168,8 @@ class Expectable {
         }
 
         let nonOutlets = [];
-        for (let name of outletsKeys) {
+        for (let i = 0, len = outletsKeys.length; i < len; ++i) {
+            let name = outletsKeys[i];
             if (!(outlets[name] instanceof Outlet)) {
                 nonOutlets.push(name);
             }
