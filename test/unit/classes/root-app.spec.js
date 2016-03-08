@@ -44,6 +44,15 @@ describe('RootApp', () => {
             expect(new RootApp(defaultOpts)).to.be.an.instanceof(Expectable);
         });
 
+        it('runs without an object passed in', () => {
+            class MyRootApp extends RootApp {
+                expectedOutlets() { return []; }
+            }
+            let rootApp;
+            expect(() => rootApp = new MyRootApp()).to.not.throw();
+            expect(rootApp).to.be.an.instanceof(RootApp);
+        });
+
         it('adds itself to the RootApp\'s address registry', () => {
             class RootAppWithAddresses extends RootApp {
                 expectedAddresses() {

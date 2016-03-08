@@ -9,12 +9,13 @@ import finalDiff from '../utils/final-diff';
 
 class RootApp extends App {
     constructor(opts) {
-        if (is(opts, 'Object')) {
-            opts.rootApp = true;
-            opts.addresses = opts.addresses || [];
-            opts.outlets = opts.outlets || {};
-            opts.params = [];
+        if (isnt(opts, 'Object')) {
+            opts = {};
         }
+        opts.rootApp = true;
+        opts.addresses = opts.addresses || [];
+        opts.outlets = opts.outlets || {};
+        opts.params = [];
         super(opts);
         this._config = Object.freeze({
             stripTrailingSlash: !!opts.stripTrailingSlash || false,
