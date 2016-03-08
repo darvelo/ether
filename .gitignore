@@ -31,3 +31,8 @@ Session.vim
 *.sqlite3
 
 # this project
+!casper-tests/public
+casper-tests/public/**/[._]*.s[a-w][a-z]
+casper-tests/public/**/[._]s[a-w][a-z]
+casper-tests/public/app.js
+casper-tests/public/ether*

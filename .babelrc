@@ -3,6 +3,9 @@
         "build": {
             "presets": ["es2015-rollup"]
         },
+        "casperTest": {
+            "presets": ["es2015-rollup"]
+        },
         "test": {
             "presets": ["es2015"]
         }

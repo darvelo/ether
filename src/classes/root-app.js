@@ -16,12 +16,29 @@ class RootApp extends App {
         opts.addresses = opts.addresses || [];
         opts.outlets = opts.outlets || {};
         opts.params = [];
+
+        // enclose basePath between slashes
+        if (is(opts.basePath, 'String') && opts.basePath.length) {
+            let len = opts.basePath.length;
+            let finalBasePath = [];
+            if (opts.basePath[0] !== '/') {
+                finalBasePath.push('/');
+            }
+            finalBasePath.push(opts.basePath);
+            if (len !== 1 && opts.basePath[len-1] !== '/') {
+                finalBasePath.push('/');
+            }
+            opts.basePath = finalBasePath.join('');
+        } else {
+            opts.basePath = '/';
+        }
+
         super(opts);
         this._config = Object.freeze({
             stripTrailingSlash: !!opts.stripTrailingSlash || false,
             addTrailingSlash: !!opts.addTrailingSlash || false,
-            basePath: !!opts.basePath ? opts.basePath.replace(/^(\/[^/]*)$/, '$1/') : '/',
-            navOnWindowLoad: opts.navOnWindowLoad === false ? opts.navOnWindowLoad : true,
+            basePath: opts.basePath,
+            windowLoad: opts.windowLoad || false,
         });
         // the last URL that was navigated to successfully
         this._fullUrl = undefined;
@@ -105,7 +122,24 @@ class RootApp extends App {
         return this._addresses[name];
     }
 
-    _popstate(event) {
+    _getURLBasepath() {
+        return window.location.origin + this._config.basePath;
+    }
+
+    /**
+     * Determine if the URL passed in has the same origin and its pathname matches the RootApp's configured `basePath`.
+     * @param {string} url The complete URL to be tested.
+     * @return {?string} The path in the URL that can be used for navigation: `url` minus the origin and RootApp's `basePath`. `Null` if the origin and basePath didn't match the URL.
+     */
+    _getNavigationPath(url) {
+        let base = this._getURLBasepath(url);
+        if (url.indexOf(base) === 0) {
+            // slice base.length-1 so we can keep the leading slash
+            return url.slice(base.length-1);
+        } else {
+            return null;
+        }
+    }
 
     }
 
@@ -116,28 +150,19 @@ class RootApp extends App {
     }
 
     start() {
-        if (this._config.navOnWindowLoad) {
-            let pathname = window.location.pathname;
-            if (pathname.indexOf(this._config.basePath) === 0) {
-                pathname = pathname.slice(this._config.basePath.length);
-                let loadHandler = () => {
-                    this.navigate(pathname);
-                    window.removeEventListener('load', loadHandler);
-                };
-                window.addEventListener('load', loadHandler, false);
+        if (this._config.windowLoad) {
+            let path = this._getNavigationPath(window.location.href);
+            if (path) {
+                window.addEventListener('load', () => {
+                    let promise = this.navigate(path);
+                    let handler = this._config.windowLoad;
+                    if (is(handler, 'Function')) {
+                        handler.call(this, promise);
+                    }
+                }, false);
             }
         }
 
-        // if (this._config.history) {
-        //     window.addEventListener('popstate', this._popstate.bind(this), false);
-        // }
-        // window.addEventListener('click', this.interceptLinks.bind(this), false);
-        // let state = window.history.state;
-        // if (state) {
-        //     // we've loaded the page and it had previous state
-        //     // perform initial routing
-        //     // this should use the same function as this.popstate
-        // }
         return this;
     }
 

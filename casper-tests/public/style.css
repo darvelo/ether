@@ -1,0 +1,10 @@
+.ether-prerendering,
+.ether-prerendered,
+.ether-rendering,
+.ether-deactivated {
+    display: none;
+}
+
+.ether-rendered {
+    display: block;
+}
