@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <title>History Tests</title>
+    <link href="/style.css" rel="stylesheet" />
+  </head>
+  <body>
+    <div id="main"></div>
+    <p><a id="basepath-link-root" href="/base/">Link to basePath RootRoute</a></p>
+    <p><a id="basepath-link-alternate" href="/base/alternate">Link to basePath AlternateRoute</a></p>
+
+    <script src="/es6-promise.min.js"></script>
+    <script src="/ether.global.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/app.js"></script>
+    <script>
+      var historyHandler = true;
+      if (/callback=true/.test(window.location.href)) {
+          var callbackCalled = false;
+          historyHandler = function(promise) {
+              if (callbackCalled) {
+                  return;
+              }
+              callbackCalled = true;
+              promise.then(function() {
+                  var div = document.createElement('div');
+                  div.id = 'load-callback';
+                  div.textContent = 'callback called!';
+                  document.body.appendChild(div);
+              });
+          };
+      }
+
+      var basePath = '/';
+      if (/basepath=true/.test(window.location.href)) {
+          basePath = '/base/'
+      }
+
+      var myApp = new MyRootApp({
+          history: historyHandler,
+          interceptLinks: 'all',
+          basePath: basePath,
+          stripTrailingSlash: true,
+          outlets: {
+              main: new Ether.MutableOutlet(document.getElementById('main')),
+          },
+      }).start();
+      myApp.navigate('/alternate');
+    </script>
+  </body>
+</html>

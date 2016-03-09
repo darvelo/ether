@@ -39,6 +39,7 @@ class RootApp extends App {
             addTrailingSlash: !!opts.addTrailingSlash || false,
             basePath: opts.basePath,
             windowLoad: opts.windowLoad || false,
+            history: opts.history || false,
             interceptLinks: opts.interceptLinks || 'none',
         });
         // the last URL that was navigated to successfully
@@ -127,6 +128,13 @@ class RootApp extends App {
         return window.location.origin + this._config.basePath;
     }
 
+    _joinBasepathTo(destination) {
+        if (destination[0] === '/') {
+            destination = destination.slice(1);
+        }
+        return this._config.basePath + destination;
+    }
+
     /**
      * Determine if the URL passed in has the same origin and its pathname matches the RootApp's configured `basePath`.
      * @param {string} url The complete URL to be tested.
@@ -139,6 +147,17 @@ class RootApp extends App {
             return url.slice(base.length-1);
         } else {
             return null;
+        }
+    }
+
+    _popstate() {
+        let path = this._getNavigationPath(window.location.href);
+        if (path) {
+            let promise = this.navigate(path);
+            let handler = this._config.history;
+            if (is(handler, 'Function')) {
+                handler.call(this, promise);
+            }
         }
     }
 
@@ -191,6 +210,10 @@ class RootApp extends App {
                     }
                 }, false);
             }
+        }
+
+        if (this._config.history) {
+            window.addEventListener('popstate', this._popstate.bind(this), false);
         }
 
         let clickHandler = this._linksClickDelegatedHandler.bind(this);
@@ -312,6 +335,16 @@ class RootApp extends App {
             return this._constructState(routingTrace, queryParams, queryParamsDiff).then(() => {
                 this._fullUrl = destination;
                 this._lastQueryParams = queryParams;
+                if (this._config.history) {
+                    let urlPath = window.location.href.slice(this._getBasepathHref().length-1);
+                    // if this navigation was the result of a popstate event,
+                    // or the result of the window's `load` event, the URL will
+                    // have already been changed, and pushState isn't necessary
+                    if (destination !== urlPath) {
+                        destination = this._joinBasepathTo(destination);
+                        window.history.pushState({}, '', destination);
+                    }
+                }
             });
         } else {
             throw new TypeError(`${ctorName(this)}#navigate(): routingTrace had in invalid value: ${JSON.stringify(routingTrace.result)}.`);
