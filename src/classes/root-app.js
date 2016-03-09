@@ -39,6 +39,7 @@ class RootApp extends App {
             addTrailingSlash: !!opts.addTrailingSlash || false,
             basePath: opts.basePath,
             windowLoad: opts.windowLoad || false,
+            interceptLinks: opts.interceptLinks || 'none',
         });
         // the last URL that was navigated to successfully
         this._fullUrl = undefined;
@@ -122,7 +123,7 @@ class RootApp extends App {
         return this._addresses[name];
     }
 
-    _getURLBasepath() {
+    _getBasepathHref() {
         return window.location.origin + this._config.basePath;
     }
 
@@ -132,7 +133,7 @@ class RootApp extends App {
      * @return {?string} The path in the URL that can be used for navigation: `url` minus the origin and RootApp's `basePath`. `Null` if the origin and basePath didn't match the URL.
      */
     _getNavigationPath(url) {
-        let base = this._getURLBasepath(url);
+        let base = this._getBasepathHref(url);
         if (url.indexOf(base) === 0) {
             // slice base.length-1 so we can keep the leading slash
             return url.slice(base.length-1);
@@ -141,12 +142,41 @@ class RootApp extends App {
         }
     }
 
+    _linksClickDelegatedHandler(event) {
+        let target = event.target;
+        if (target.nodeName !== 'A') {
+            return;
+        }
+        let path = this._getNavigationPath(target.href);
+        if (path) {
+            event.stopPropagation();
+            event.preventDefault();
+            let promise = this.navigate(path);
+            let handler = this._config.interceptLinks;
+            if (is(handler, 'Function')) {
+                handler.call(this, promise);
+            }
+        }
     }
 
-    _interceptLinks(event) {
-        // delegate to all links that have same origin (and basePath?)
-        // and descend from this.rootURL, then preventDefault()
-        // also should pushState()
+    /**
+     * Add a delegated link click handler function on all outlets for all Apps recursively.
+     * @private
+     * @param {App} app The app on whose outlets the click handler will be bound.
+     * @param {Function} clickHandler The click handler whose `this` has already been bound to the RootApp.
+     */
+    _interceptOutletsLinks(app, clickHandler) {
+        let rootApp = app._rootApp;
+        let mountMapper = app._mountMapper;
+        let apps = mountMapper.allMounts().filter(mount => mount instanceof App);
+
+        apps.forEach(app => rootApp._interceptOutletsLinks(app, clickHandler));
+
+        let outlets = app.outlets;
+        Object.keys(outlets).forEach(name => {
+            let element = outlets[name]._element;
+            element.addEventListener('click', clickHandler, false);
+        });
     }
 
     start() {
@@ -161,6 +191,17 @@ class RootApp extends App {
                     }
                 }, false);
             }
+        }
+
+        let clickHandler = this._linksClickDelegatedHandler.bind(this);
+        let type = this._config.interceptLinks;
+        if (is(type, 'Function')) {
+            type = type.name;
+        }
+        if (type === 'all') {
+            document.addEventListener('click', clickHandler, false);
+        } else if (type === 'outlets') {
+            this._interceptOutletsLinks(this, clickHandler);
         }
 
         return this;
@@ -233,17 +274,16 @@ class RootApp extends App {
         let [ path, queryString='' ] = destination.split('?');
         let queryParams = this.parseQueryString(queryString);
         let queryParamsDiff = null;
+        let trailingSlashRegex = /\/+$/;
 
         if (this._config.stripTrailingSlash === true) {
-            let regex = /\/+$/;
-            if (regex.test(path)) {
-                path = path.replace(regex, '');
+            if (trailingSlashRegex.test(path)) {
+                path = path.replace(trailingSlashRegex, '');
             }
         }
 
         if (this._config.addTrailingSlash === true) {
-            let regex = /\/+$/;
-            if (!regex.test(path)) {
+            if (!trailingSlashRegex.test(path)) {
                 path += '/';
             }
         }

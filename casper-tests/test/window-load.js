@@ -20,8 +20,8 @@ casper.test.begin('Window Load', 2, function suite(test) {
 });
 
 casper.test.begin('Window Load with Callback', 3, function suite(test) {
+    var selector = '#load-callback';
     casper.start(path + '?callback=true', function() {
-        var selector = '#load-callback';
         test.assertExists(selector);
         test.assertVisible(selector);
         test.assertSelectorHasText(selector, 'callback called!');

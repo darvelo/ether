@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <title>interceptLinks Tests</title>
+    <link href="/style.css" rel="stylesheet" />
+  </head>
+  <body>
+    <div id="main"></div>
+    <p><a id="outside-link-root" href="/">Outside link to RootRoute</a></p>
+    <p><a id="outside-link-alternate" href="/alternate">Outside link to AlternateRoute</a></p>
+    <p><a id="basepath-link-root" href="/base/">Outside link to basePath RootRoute</a></p>
+    <p><a id="basepath-link-alternate" href="/base/alternate">Outside link to basePath AlternateRoute</a></p>
+
+    <script src="/es6-promise.min.js"></script>
+    <script src="/ether.global.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/app.js"></script>
+    <script>
+      var interceptType = /intercept_type=(all|outlets|none)/.exec(window.location.href);
+      var interceptHandler;
+
+      if (!interceptType) {
+          throw new Error('bad intercept type');
+      } else {
+          interceptHandler = interceptType[1];
+      }
+
+      if (/callback=true/.test(window.location.href)) {
+          function callback(promise) {
+              promise.then(function() {
+                  var div = document.createElement('div');
+                  div.className = 'load-callback';
+                  div.textContent = 'callback called!';
+                  document.body.appendChild(div);
+              });
+          }
+          switch(interceptHandler) {
+          case 'all':
+              interceptHandler = function all(promise) {
+                  callback(promise);
+              };
+              break;
+          case 'outlets':
+              interceptHandler = function outlets(promise) {
+                  callback(promise);
+              };
+              break;
+          default:
+              throw new Error('bad intercept type for callback');
+              break;
+          }
+      }
+
+      var basePath = '/';
+      if (/basepath=true/.test(window.location.href)) {
+          basePath = '/base/'
+      }
+
+      var myApp = new MyRootApp({
+          history: true,
+          interceptLinks: interceptHandler,
+          basePath: basePath,
+          stripTrailingSlash: true,
+          outlets: {
+              main: new Ether.MutableOutlet(document.getElementById('main')),
+          },
+      }).start();
+      myApp.navigate('/alternate');
+    </script>
+  </body>
+</html>

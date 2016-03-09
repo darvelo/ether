@@ -7,7 +7,6 @@
   </head>
   <body>
     <div id="main"></div>
-    <p><a href="/somewhere">Link to Somewhere</a></p>
 
     <script src="/es6-promise.min.js"></script>
     <script src="/ether.global.js" type="text/javascript" charset="utf-8"></script>
@@ -27,7 +26,7 @@
 
       var basePath = '/';
       if (/basepath=true/.test(window.location.href)) {
-        basePath = '/base/'
+          basePath = '/base/'
       }
 
       var myApp = new MyRootApp({

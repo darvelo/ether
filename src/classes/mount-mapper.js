@@ -307,15 +307,15 @@ class MountMapper extends BaseMountMapper {
 
     match(path) {
         let sortedCrumbs = this._sortedCrumbs;
-        let crumbData, regexMatch, rest, len;
+        let crumbData, regexMatch, rest, matchLen;
 
         for (let i = 0, len = sortedCrumbs.length; i < len; ++i) {
             crumbData = sortedCrumbs[i];
             regexMatch = crumbData.regex.exec(path);
             if (regexMatch) {
-                len = regexMatch.length;
+                matchLen = regexMatch.length;
                 // turn the empty string into null
-                rest = regexMatch[len-1] || null;
+                rest = regexMatch[matchLen-1] || null;
                 // only Apps can have non-null `rest`
                 // (extra chars to match sub-mounts in the tree)
                 if (rest && (crumbData.mount instanceof Route)) {
@@ -334,7 +334,7 @@ class MountMapper extends BaseMountMapper {
         let namesLen = paramNames ? paramNames.length : 0;
         let crumb = crumbData.crumb;
 
-        if (len-namesLen > 2) {
+        if (matchLen-namesLen > 2) {
             // somehow we have more params than expected,
             // even though we took match's first array val
             // and the captured value of the "rest of path" into account

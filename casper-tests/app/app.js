@@ -1,6 +1,7 @@
 import { RootApp, makeOutlet } from 'ether';
 
 import RootRoute from './root-route';
+import AlternateRoute from './alternate-route';
 import WindowLoadRoute from './window-load-route';
 import LinkRoute from './link-route';
 import LoadingRoute from './loading-route';
@@ -13,6 +14,10 @@ class MyRootApp extends RootApp {
                 outlets.root = makeOutlet({
                     tagName: 'section',
                     classNames: ['root'],
+                }),
+                outlets.alternate = makeOutlet({
+                    tagName: 'section',
+                    classNames: ['alternate'],
                 }),
                 outlets.windowLoad = makeOutlet({
                     tagName: 'section',
@@ -33,6 +38,7 @@ class MyRootApp extends RootApp {
     mount() {
         return {
             '': RootRoute.outlets('root'),
+            'alternate': AlternateRoute.outlets('alternate'),
             'window-load': WindowLoadRoute.outlets('windowLoad'),
         };
     }
