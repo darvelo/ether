@@ -184,6 +184,7 @@ describe('MountMapper', () => {
             opts.params.sort();
             opts.should.deep.equal({
                 rootApp,
+                parentApp: rootApp,
                 addresses: [],
                 outlets: {},
                 params: ['action', 'id'],
@@ -202,6 +203,7 @@ describe('MountMapper', () => {
             opts.params.sort();
             opts.should.deep.equal({
                 rootApp,
+                parentApp: rootApp,
                 addresses: [],
                 outlets: {},
                 params: ['action', 'id'],
@@ -220,6 +222,7 @@ describe('MountMapper', () => {
             opts.params.sort();
             opts.should.deep.equal({
                 rootApp,
+                parentApp: rootApp,
                 addresses: ['addressRoute'],
                 outlets: {},
                 params: ['action', 'id'],
@@ -238,6 +241,7 @@ describe('MountMapper', () => {
             opts.params.sort();
             opts.should.deep.equal({
                 rootApp,
+                parentApp: rootApp,
                 addresses: [],
                 outlets: {
                     first: parentData.outlets.first,
@@ -259,6 +263,7 @@ describe('MountMapper', () => {
             opts.params.sort();
             opts.should.deep.equal({
                 rootApp,
+                parentApp: rootApp,
                 addresses: [],
                 outlets: {},
                 params: ['action', 'id'],

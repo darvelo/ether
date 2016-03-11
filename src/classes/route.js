@@ -14,9 +14,13 @@ const possibleRouteStates = Object.freeze([
 class Route extends Modifiable {
     constructor(opts) {
         super(opts);
-        this._rootApp = opts.rootApp;
-        registerAddresses(this, opts.addresses);
-        this.outlets = opts.outlets;
+
+        if (!opts.rootApp) {
+            throw new TypeError(ctorName(this) + ' constructor was not given a reference to the Ether RootApp.');
+        }
+        if (!opts.parentApp) {
+            throw new TypeError(ctorName(this) + ' constructor was not given a reference to its parentApp.');
+        }
 
         Object.defineProperty(this, 'state', {
             value: {},
@@ -33,8 +37,12 @@ class Route extends Modifiable {
             return memo;
         }, {}));
         Object.seal(this.state);
-        this._setState('deactivated');
 
+        this._rootApp = opts.rootApp;
+        this._parentApp = opts.parentApp;
+        registerAddresses(this, opts.addresses);
+        this.outlets = opts.outlets;
+        this._setState('deactivated');
         this.init(opts.setup);
     }
 

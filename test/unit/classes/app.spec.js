@@ -14,12 +14,14 @@ describe('App', function() {
     let defaultOpts;
 
     beforeEach(() => {
+        let rootApp = new RootApp({
+            outlets: {
+                main: new MutableOutlet(document.createElement('div')),
+            },
+        });
         defaultOpts = {
-            rootApp: new RootApp({
-                outlets: {
-                    main: new MutableOutlet(document.createElement('div')),
-                },
-            }),
+            rootApp,
+            parentApp: rootApp,
             addresses: [],
             outlets: {},
             params: [],
@@ -33,7 +35,12 @@ describe('App', function() {
 
         it('throws if not given a rootApp', () => {
             delete defaultOpts.rootApp;
-            expect(() => new TestApp(defaultOpts)).to.throw(TypeError, 'App constructor was not given a reference to the Ether RootApp.');
+            expect(() => new TestApp(defaultOpts)).to.throw(TypeError, 'TestApp constructor was not given a reference to the Ether RootApp.');
+        });
+
+        it('throws if not given a parentApp', () => {
+            delete defaultOpts.parentApp;
+            expect(() => new TestApp(defaultOpts)).to.throw(TypeError, 'TestApp constructor was not given a reference to its parentApp.');
         });
 
         it('adds itself to the RootApp\'s address registry', () => {

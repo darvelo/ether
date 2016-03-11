@@ -36,3 +36,4 @@ casper-tests/public/**/[._]*.s[a-w][a-z]
 casper-tests/public/**/[._]s[a-w][a-z]
 casper-tests/public/app.js
 casper-tests/public/ether*
+notes.md

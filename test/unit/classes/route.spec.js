@@ -14,12 +14,14 @@ describe('Route', () => {
     let defaultOpts;
 
     beforeEach(() => {
+        let rootApp = new RootApp({
+            outlets: {
+                main: new MutableOutlet(document.createElement('div')),
+            },
+        });
         defaultOpts = {
-            rootApp: new RootApp({
-                outlets: {
-                    main: new MutableOutlet(document.createElement('div')),
-                },
-            }),
+            rootApp,
+            parentApp: rootApp,
             addresses: [],
             outlets: {},
             params: [],
@@ -29,6 +31,16 @@ describe('Route', () => {
     describe('Constructor', () => {
         it('Route is an instance of Expectable', () => {
             expect(new TestRoute(defaultOpts)).to.be.an.instanceof(Expectable);
+        });
+
+        it('throws if not given a rootApp', () => {
+            delete defaultOpts.rootApp;
+            expect(() => new TestRoute(defaultOpts)).to.throw(TypeError, 'TestRoute constructor was not given a reference to the Ether RootApp.');
+        });
+
+        it('throws if not given a parentApp', () => {
+            delete defaultOpts.parentApp;
+            expect(() => new TestRoute(defaultOpts)).to.throw(TypeError, 'TestRoute constructor was not given a reference to its parentApp.');
         });
 
         it('adds itself to the RootApp\'s address registry', () => {

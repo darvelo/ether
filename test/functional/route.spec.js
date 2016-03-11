@@ -12,12 +12,14 @@ describe('Route Functional Tests', () => {
     let defaultOpts;
 
     beforeEach(() => {
+        let rootApp = new RootApp({
+            outlets: {
+                main: new MutableOutlet(document.createElement('div')),
+            },
+        });
         defaultOpts = {
-            rootApp: new RootApp({
-                outlets: {
-                    main: new MutableOutlet(document.createElement('div')),
-                },
-            }),
+            rootApp,
+            parentApp: rootApp,
             addresses: [],
             outlets: {},
             params: [],

@@ -228,6 +228,7 @@ class MountMapper extends BaseMountMapper {
 
         let opts = {
             rootApp: parentData.rootApp,
+            parentApp: parentData.parentApp,
             addresses: this._compileMountAddresses(mount),
             outlets: this._compileMountOutlets(mount, crumb, passedOutlets, parentData),
             setup: this._compileMountSetupFns(mount),

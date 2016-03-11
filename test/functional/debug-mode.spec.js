@@ -33,6 +33,7 @@ describe('Debug Mode', () => {
         stub.should.have.been.calledOnce;
         stub.should.have.been.calledWith('TestRootApp#mount() returned an empty object.');
         childOpts.rootApp = rootApp;
+        childOpts.parentApp = rootApp;
         let app = new TestApp(childOpts);
         stub.should.have.been.calledTwice;
         stub.should.have.been.calledWith('TestApp#mount() returned an empty object.');

@@ -116,6 +116,7 @@ describe('ConditionalMountMapper', () => {
             expect(opts.params).to.not.equal(parentData.params);
             opts.should.deep.equal({
                 rootApp,
+                parentApp: rootApp,
                 addresses: [],
                 outlets: {},
                 params: ['action'],
@@ -133,6 +134,7 @@ describe('ConditionalMountMapper', () => {
             expect(opts.params).to.not.equal(parentData.params);
             opts.should.deep.equal({
                 rootApp,
+                parentApp: rootApp,
                 addresses: [],
                 outlets: {},
                 params: ['id', 'action'],
@@ -150,6 +152,7 @@ describe('ConditionalMountMapper', () => {
             expect(opts.params).to.not.equal(parentData.params);
             opts.should.deep.equal({
                 rootApp,
+                parentApp: rootApp,
                 addresses: ['fourth'],
                 outlets: {},
                 params: ['id', 'action'],
@@ -167,6 +170,7 @@ describe('ConditionalMountMapper', () => {
             expect(opts.params).to.not.equal(parentData.params);
             opts.should.deep.equal({
                 rootApp,
+                parentApp: rootApp,
                 addresses: [],
                 outlets: {
                     fourth: parentData.outlets.fourth,
@@ -187,6 +191,7 @@ describe('ConditionalMountMapper', () => {
             expect(opts.params).to.not.equal(parentData.params);
             opts.should.deep.equal({
                 rootApp,
+                parentApp: rootApp,
                 addresses: [],
                 outlets: {},
                 params: ['id', 'action'],

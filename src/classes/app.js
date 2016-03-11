@@ -23,6 +23,9 @@ class App extends Modifiable {
         if (!opts.rootApp) {
             throw new TypeError(ctorName(this) + ' constructor was not given a reference to the Ether RootApp.');
         }
+        if (opts.rootApp !== this && !opts.parentApp) {
+            throw new TypeError(ctorName(this) + ' constructor was not given a reference to its parentApp.');
+        }
 
         Object.defineProperty(this, 'state', {
             value: {},
@@ -42,6 +45,7 @@ class App extends Modifiable {
         this._setState('inactive');
 
         this._rootApp = opts.rootApp;
+        this._parentApp = opts.parentApp;
         registerAddresses(this, opts.addresses);
         if (this !== this._rootApp) {
             // only the creator of a MutableOutlet

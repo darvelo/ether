@@ -141,6 +141,7 @@ describe('RootApp', () => {
         it('registers adresses on itself', () => {
             let rootApp = new RootApp(defaultOpts);
             childOpts.rootApp = rootApp;
+            childOpts.parentApp = rootApp;
             let route = new TestRoute(childOpts);
             expect(rootApp._atAddress('hello')).to.not.be.ok;
             rootApp._registerAddress('hello', route);
@@ -150,6 +151,7 @@ describe('RootApp', () => {
         it('throws if an address contains a comma', () => {
             let rootApp = new RootApp(defaultOpts);
             childOpts.rootApp = rootApp;
+            childOpts.parentApp = rootApp;
             expect(() => rootApp._registerAddress('hello,', new TestApp(childOpts))).to.throw(Error, 'Addresses cannot contain a comma: "hello,".');
             expect(() => rootApp._registerAddress(',hello', new TestApp(childOpts))).to.throw(Error, 'Addresses cannot contain a comma: ",hello".');
             expect(() => rootApp._registerAddress('he,llo', new TestApp(childOpts))).to.throw(Error, 'Addresses cannot contain a comma: "he,llo".');
@@ -158,6 +160,7 @@ describe('RootApp', () => {
         it('throws on registering an address that is already taken', () => {
             let rootApp = new RootApp(defaultOpts);
             childOpts.rootApp = rootApp;
+            childOpts.parentApp = rootApp;
             rootApp._registerAddress('hello', new TestApp(childOpts));
             expect(() => rootApp._registerAddress('hello', new TestRoute(childOpts))).to.throw(Error, 'RootApp address "hello" already taken. Could not register the address for TestRoute');
         });
@@ -165,6 +168,7 @@ describe('RootApp', () => {
         it('throws on registering an address if the dest is not an App or Route instance', () => {
             let rootApp = new RootApp(defaultOpts);
             childOpts.rootApp = rootApp;
+            childOpts.parentApp = rootApp;
             expect(() => rootApp._registerAddress('hello', {})).to.throw(TypeError, 'RootApp cannot register an address for a non-App/non-Route instance, Object.');
             expect(() => rootApp._registerAddress('hello', new TestApp(childOpts))).to.not.throw();
             expect(() => rootApp._registerAddress('hello2', new TestRoute(childOpts))).to.not.throw();
