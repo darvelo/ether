@@ -21,7 +21,7 @@ import {
 
 let freeze = Object.freeze;
 
-describe('Acceptance Tests', () => {
+describe('Navigation Acceptance Tests', () => {
     let defaultOpts;
 
     beforeEach(() => {
@@ -33,7 +33,56 @@ describe('Acceptance Tests', () => {
         };
     });
 
-    describe('Navigation', () => {
+    describe('canNavigateTo', () => {
+        let rootApp;
+
+        beforeEach(() => {
+            rootApp = new MyRootApp(defaultOpts);
+        });
+
+        it('succeeds when it maches a path in the app hierarchy', () => {
+            expect(rootApp.canNavigateTo('')).to.be.true;
+            expect(rootApp.canNavigateTo('/')).to.be.true;
+            expect(rootApp.canNavigateTo('/news/story')).to.be.true;
+            expect(rootApp.canNavigateTo('news/story')).to.be.true;
+            expect(rootApp.canNavigateTo('/todos/1/list')).to.be.true;
+            expect(rootApp.canNavigateTo('todos/1/list')).to.be.true;
+            expect(rootApp.canNavigateTo('/user/1/action/go')).to.be.true;
+            expect(rootApp.canNavigateTo('user/1/action/go')).to.be.true;
+        });
+
+        it('fails when a pathway can\'t be found', () => {
+            expect(rootApp.canNavigateTo('/nope')).to.be.false;
+            expect(rootApp.canNavigateTo('nope')).to.be.false;
+            expect(rootApp.canNavigateTo('/news/-')).to.be.false;
+            expect(rootApp.canNavigateTo('/newss/story')).to.be.false;
+            expect(rootApp.canNavigateTo('news/-')).to.be.false;
+            expect(rootApp.canNavigateTo('newss/story')).to.be.false;
+            expect(rootApp.canNavigateTo('/todos/hi/list')).to.be.false;
+            expect(rootApp.canNavigateTo('/todos/1/-')).to.be.false;
+            expect(rootApp.canNavigateTo('todos/hi/list')).to.be.false;
+            expect(rootApp.canNavigateTo('todos/1/-')).to.be.false;
+            expect(rootApp.canNavigateTo('/user/hi/action/go')).to.be.false;
+            expect(rootApp.canNavigateTo('/user/1/actions/go')).to.be.false;
+            expect(rootApp.canNavigateTo('/user/1/actions/-')).to.be.false;
+            expect(rootApp.canNavigateTo('user/hi/action/go')).to.be.false;
+            expect(rootApp.canNavigateTo('user/1/actions/go')).to.be.false;
+            expect(rootApp.canNavigateTo('user/1/action/-')).to.be.false;
+        });
+
+        it('succeeds with a queryString', () => {
+            expect(rootApp.canNavigateTo('?hello=true')).to.be.true;
+            expect(rootApp.canNavigateTo('/?hello=true')).to.be.true;
+            expect(rootApp.canNavigateTo('/news/story?hello=true')).to.be.true;
+            expect(rootApp.canNavigateTo('news/story?hello=true')).to.be.true;
+            expect(rootApp.canNavigateTo('/todos/1/list?hello=true')).to.be.true;
+            expect(rootApp.canNavigateTo('todos/1/list?hello=true')).to.be.true;
+            expect(rootApp.canNavigateTo('/user/1/action/go?hello=true')).to.be.true;
+            expect(rootApp.canNavigateTo('user/1/action/go?hello=true')).to.be.true;
+        });
+    });
+
+    describe('Performing Navigation', () => {
         describe('Basic Tests', () => {
             genTest('resolves a Promise on successful navigation', [
                 '/',

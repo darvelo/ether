@@ -290,7 +290,7 @@ class RootApp extends App {
     /**
      * Performs the navigation that was scheduled with a call to the non-private version of this function, `navigate()`.
      * @private
-     * @param {string} destination The navigation destination. Can be a URL string with or without a querystring.
+     * @param {string} destination The navigation destination. A URL path with or without a querystring.
      * @return {Promise} A promise that resolves if navigation succeeded, and rejects if it failed, with the details of the failure (404 or navigation error).
      */
     _navigate(destination) {
@@ -349,6 +349,19 @@ class RootApp extends App {
         } else {
             throw new TypeError(`${ctorName(this)}#navigate(): routingTrace had in invalid value: ${JSON.stringify(routingTrace.result)}.`);
         }
+    }
+
+    /**
+     * Returns whether the path given results in a successful trace
+     * through the app hierarchy down to the target route, found by
+     * parsing the URL.
+     * @private
+     * @param {string} destination The navigation destination. A URL path with or without a querystring.
+     * @return {boolean} Whether the navigation would be successful or result in a 404.
+     */
+    canNavigateTo(destination) {
+        let [ path, queryString ] = destination.split('?');
+        return this._buildPath(path).result === 'success';
     }
 
     /**
@@ -430,7 +443,7 @@ class RootApp extends App {
      */
 
     /**
-     * Builds an object representing a trace through the app hierarchy down to the target route found by parsing the URL (querystring included).
+     * Builds an object representing a trace through the app hierarchy down to the target route found by parsing the URL (querystring not included).
      * @private
      * @param {string} path The URL to parse, minus the querystring.
      * @return {RoutingTrace} An object that can be used to construct app state. Informs whether the navigation would be successful or result in a 404.
