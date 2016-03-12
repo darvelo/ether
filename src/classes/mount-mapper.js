@@ -100,7 +100,7 @@ class MountMapper extends BaseMountMapper {
                 if (c === '=') {
                     mode = PARAM_VALUE_MODE;
                     let name = crumb.slice(leftBound, cursor);
-                    if (existingParamNames[name]) {
+                    if (existingParamNames.hasOwnProperty(name)) {
                         throw new RangeError('MountMapper: Parameter name "' + name + '" was given more than once in breadcrumb ' + crumb);
                     }
                     existingParamNames[name] = true;
@@ -439,6 +439,10 @@ class MountMapper extends BaseMountMapper {
     slashesFor(crumb) {
         let mapped = this._crumbMap[crumb];
         return mapped && mapped.slashes;
+    }
+
+    _crumbDataFor(mount) {
+        return this._sortedCrumbs.find(crumbData => crumbData.mount === mount);
     }
 }
 
