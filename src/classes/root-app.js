@@ -31,6 +31,7 @@ class RootApp extends App {
         } else {
             opts.basePath = '/';
         }
+        opts.basePath = encodeURI(opts.basePath);
 
         super(opts);
         this._config = Object.freeze({

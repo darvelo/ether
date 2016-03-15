@@ -7,12 +7,22 @@ class TestRoute extends Route {
     }
 }
 
+class TestRootApp extends RootApp {
+    expectedOutlets() {
+        return [];
+    }
+}
+
 describe('RootApp Options', () => {
+    describe('basePath', () => {
+        it('has encodeURI() called on it', () => {
+            let rootApp = new TestRootApp({basePath: '/hello world/'});
+            expect(rootApp._config.basePath).to.equal('/hello%20world/');
+        });
+    });
+
     describe('stripTrailingSlash', () => {
-        class MyRootApp extends RootApp {
-            expectedOutlets() {
-                return [];
-            }
+        class MyRootApp extends TestRootApp {
             mount() {
                 return {
                     'hasSlash/' : TestRoute,
@@ -44,10 +54,7 @@ describe('RootApp Options', () => {
     });
 
     describe('addTrailingSlash', () => {
-        class MyRootApp extends RootApp {
-            expectedOutlets() {
-                return [];
-            }
+        class MyRootApp extends TestRootApp {
             mount() {
                 return {
                     'hasSlash/' : TestRoute,
@@ -92,10 +99,7 @@ describe('RootApp Options', () => {
     });
 
     describe('Transition Queueing', () => {
-        class MyRootApp extends RootApp {
-            expectedOutlets() {
-                return [];
-            }
+        class MyRootApp extends TestRootApp {
             mount() {
                 return {
                     'first' : TestRoute,
