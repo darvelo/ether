@@ -2,9 +2,12 @@ import ctorName from '../utils/ctor-name';
 import { isnt } from '../utils/is';
 
 class View {
-    constructor() {
+    constructor(...args) {
         this._events = {};
+        this.init(...args);
     }
+
+    init() { }
 
     DOMListen(element, evtName, callback, context) {
         if (!(element instanceof Element)) {

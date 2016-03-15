@@ -1,6 +1,19 @@
 import View from '../../../src/classes/view';
 
 describe('View', () => {
+    describe('Constructor', () => {
+        it('calls init() with arguments', () => {
+            let spy = sinon.spy();
+            class TestView extends View {
+                init(...args) {
+                    spy(...args);
+                }
+            }
+            let view = new TestView(1,2,3);
+            spy.should.have.been.calledWith(1,2,3);
+        });
+    });
+
     describe('DOMEvents', () => {
         describe('DOMListen', () => {
             it('throws when not given an Element instance', () => {
