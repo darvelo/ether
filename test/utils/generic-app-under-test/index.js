@@ -5,6 +5,7 @@ import MutableOutlet from '../../../src/classes/mutable-outlet';
 
 export let routeAddress            = 'myroute';
 export let rootRouteAddress        = 'rootroute';
+export let anythingRouteAddress    = 'anythingroute';
 export let conditionalRouteAddress = 'myconditionalroute';
 export let appAddress              = 'myapp';
 export let rootAppAddress          = 'myrootapp';
@@ -24,6 +25,12 @@ export class MyRoute extends Route {
 export class RootRoute extends MyRoute {
     expectedAddresses() {
         return [rootRouteAddress];
+    }
+}
+
+export class AnythingRoute extends MyRoute {
+    expectedAddresses() {
+        return [anythingRouteAddress];
     }
 }
 
@@ -68,6 +75,7 @@ export class MyRootApp extends RootApp {
     mount() {
         return {
             '': RootRoute.addresses(rootRouteAddress),
+            'a{id=\\d+}b/c{name=[^\\/]+}d/e{action=[^\\/]+}f': AnythingRoute.addresses(anythingRouteAddress),
             'abc/{id=\\d+}xyz': MyApp.addresses(appAddress),
         };
     }

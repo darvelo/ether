@@ -82,7 +82,7 @@ class Route extends Modifiable {
 
     _constructURLCrumb(crumb, params, transformer) {
         return crumb.replace(/\{([^=]+)=[^}]+\}/g, (match, group) => {
-            return params[transformer(group)];
+            return encodeURIComponent(params[transformer(group)]);
         });
     }
 
@@ -294,7 +294,7 @@ class Route extends Modifiable {
      * @param {object} diffs.queryParams The same as `diffs.params` but for querystring parameters parsed from the URL. If a query param was added since last render, the previous value (array index 0) will be `undefined`. If a query param was removed since last render, the new value (array index 1) will be `undefined`.
      * @return {Promise} A promise that, when resolved, means all render actions (e.g. AJAX data retrieval/storage, populating/showing views, etc.) have finished and navigation can continue on to completion. If the promise is rejected, the Ether app will be in an undefined state.
      */
-    render() { }
+    render(params, queryParams, diffs) { }
 }
 
 export default Route;

@@ -1,6 +1,7 @@
 import {
     routeAddress,
     rootRouteAddress,
+    anythingRouteAddress,
     conditionalRouteAddress,
     appAddress,
     rootAppAddress,
@@ -75,6 +76,21 @@ describe('linkTo', () => {
         expect(myRoute.linkTo(rootRouteAddress, params)).to.equal('/');
         expect(rootRoute.linkTo(routeAddress, params)).to.equal('/abc/10xyz/hello/dave123/go');
         expect(rootRoute.linkTo(rootRouteAddress, params)).to.equal('/');
+    });
+
+    it('escapes params with encodeURIComponent()', () => {
+        let rootApp   = new MyRootApp(defaultOpts);
+        let myRoute   = rootApp._atAddress(routeAddress);
+        let rootRoute = rootApp._atAddress(rootRouteAddress);
+        let address   = anythingRouteAddress;
+        let params = {
+            id: 10,
+            name: 'hello world',
+            action: 'go/?&+=#'
+        };
+        let expected = `/a10b/c${encodeURIComponent(params.name)}d/e${encodeURIComponent(params.action)}f`;
+        expect(myRoute.linkTo(address, params)).to.equal(expected);
+        expect(rootRoute.linkTo(address, params)).to.equal(expected);
     });
 
     it('honors basePath option', () => {
