@@ -104,7 +104,7 @@ describe('MountMapper', () => {
             expect(regexEqual(expected, result.regex)).to.be.ok;
         });
 
-        it('disallows parentheses/brackets/braces/slashes/backslashes when processing a parameter name', () => {
+        it('disallows parentheses/brackets/braces/slashes/backslashes/dots when processing a parameter name', () => {
             expect(() => mapper.parse('/user/{id(=\\d+}')).to.throw();
             expect(() => mapper.parse('/user/{id)=\\d+}')).to.throw();
             expect(() => mapper.parse('/user/{id[=\\d+}')).to.throw();
@@ -113,6 +113,10 @@ describe('MountMapper', () => {
             expect(() => mapper.parse('/user/{id}=\\d+}')).to.throw();
             expect(() => mapper.parse('/user/{id/=\\d+}')).to.throw();
             expect(() => mapper.parse('/user/{id\\=\\d+}')).to.throw();
+        });
+
+        it('disallows the dot character "." when processing a parameter value', () => {
+            expect(() => mapper.parse('/user/{id=.}')).to.throw('Ether MountMapper: The "." character is not allowed in the regex of a parameter value. Breadcrumb given was /user/{id=.}');
         });
 
         it('allows a slash character in a parameter value when it is within a negated character class', () => {
@@ -599,11 +603,12 @@ describe('MountMapper', () => {
         });
 
         it('decodes URI components', () => {
-            let crumb = '/user/{id=.*}';
+            let crumb = '/user/{id=[^/]+}';
             let result;
 
             mapper.add({[crumb]: IdParamRoute}, parentData);
 
+            console.log(mapper._sortedCrumbs);
             result = mapper.match('/user/%3Chello%3E%20there');
             expect(result).to.deep.equal({
                 crumb,
@@ -613,7 +618,7 @@ describe('MountMapper', () => {
         });
 
         it('does not coerce whitespace to the number 0', () => {
-            let crumb = '/user/{id=.*}';
+            let crumb = '/user/{id=[^/]+}';
             let result;
 
             mapper.add({[crumb]: IdParamRoute}, parentData);
@@ -627,7 +632,7 @@ describe('MountMapper', () => {
         });
 
         it('turns strings `true` and `false` into boolean true and false', () => {
-            let crumb = '/user/{id=.*}/{action=.*}';
+            let crumb = '/user/{id=[^/]+}/{action=[^/]+}';
             let result;
 
             mapper.add({[crumb]: IdActionParamRoute}, parentData);

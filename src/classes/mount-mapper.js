@@ -125,6 +125,8 @@ class MountMapper extends BaseMountMapper {
                     {
                         throw new Error('Ether MountMapper: Capturing groups are not allowed in the regex of a parameter value. Breadcrumb given was ' + crumb);
                     }
+                } else if (c === '.') {
+                    throw new Error('Ether MountMapper: The "." character is not allowed in the regex of a parameter value. Breadcrumb given was ' + crumb);
                 } else if (c === '{') {
                     bracesCount++;
                 } else if (c === '}') {
