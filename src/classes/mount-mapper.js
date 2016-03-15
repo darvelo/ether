@@ -51,6 +51,7 @@ class MountMapper extends BaseMountMapper {
         // useful for sorting mapped urls by "path length"
         // to test longer paths (those with more slashes) first
         let slashesCount = 0;
+        let withinNegatedCharacterClass = false;
         // since we're going to compile a RegExp,
         // we need to properly escape certain chars
         let escapes = {
@@ -110,8 +111,12 @@ class MountMapper extends BaseMountMapper {
                     throw new Error('Ether MountMapper: The "' + c + '" character is not allowed in a parameter name. Breadcrumb given was ' + crumb);
                 }
             } else if (mode === PARAM_VALUE_MODE) {
-                if (c === '/') {
-                    throw new Error('Ether MountMapper: The "/" character is not allowed in the regex of a parameter value. Breadcrumb given was ' + crumb);
+                if (c === '^' && crumb[cursor-1] === '[') {
+                    withinNegatedCharacterClass = true;
+                } else if (c === ']') {
+                    withinNegatedCharacterClass = false;
+                } else if (c === '/' && !withinNegatedCharacterClass) {
+                    throw new Error('Ether MountMapper: The "/" character is not allowed in the regex of a parameter value, unless it is part of a negated character class. Breadcrumb given was ' + crumb);
                 } else if (c === '(' && crumb[cursor-1] !== '\\') {
                     let token = crumb.slice(cursor, cursor+3);
                     if (token !== '(?:' &&

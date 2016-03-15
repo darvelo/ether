@@ -115,6 +115,13 @@ describe('MountMapper', () => {
             expect(() => mapper.parse('/user/{id\\=\\d+}')).to.throw();
         });
 
+        it('allows a slash character in a parameter value when it is within a negated character class', () => {
+            expect(() => mapper.parse('/user/{id=/}')).to.throw('Ether MountMapper: The "/" character is not allowed in the regex of a parameter value, unless it is part of a negated character class. Breadcrumb given was /user/{id=/}');
+            expect(() => mapper.parse('/user/{id=[^/]}')).to.not.throw();
+            expect(() => mapper.parse('/user/{id=[^a/]}')).to.not.throw();
+            expect(() => mapper.parse('/user/{id=[^/a]}')).to.not.throw();
+        });
+
         it('escapes parentheses that the user escaped with backslashes', () => {
             let crumb = '/user/{id=\\(\\d+\\)}';
             let expected = /^\/?user\/(\(\d+\))(.*)/;
