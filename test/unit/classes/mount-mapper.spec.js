@@ -608,7 +608,6 @@ describe('MountMapper', () => {
 
             mapper.add({[crumb]: IdParamRoute}, parentData);
 
-            console.log(mapper._sortedCrumbs);
             result = mapper.match('/user/%3Chello%3E%20there');
             expect(result).to.deep.equal({
                 crumb,
