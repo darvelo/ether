@@ -496,14 +496,14 @@ describe('MountMapper', () => {
             expect(result).to.deep.equal({
                 crumb,
                 rest: '/profile',
-                params: {id: 25},
+                params: {id: '25'},
             });
 
             result = mapper.match('/user/1xyz/profile');
             expect(result).to.deep.equal({
                 crumb,
                 rest: 'xyz/profile',
-                params: {id: 1},
+                params: {id: '1'},
             });
         });
 
@@ -513,12 +513,12 @@ describe('MountMapper', () => {
             expect(mapper.match('/user/1red_block')).to.deep.equal({
                 crumb,
                 rest: 'block',
-                params: {id: 1},
+                params: {id: '1'},
             });
             expect(mapper.match('/user/1red_sphere')).to.deep.equal({
                 crumb,
                 rest: 'sphere',
-                params: {id: 1},
+                params: {id: '1'},
             });
         });
 

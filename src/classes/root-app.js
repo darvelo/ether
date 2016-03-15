@@ -3,7 +3,6 @@ import Route from './route';
 import Transition from './transition';
 import ctorName from '../utils/ctor-name';
 import { is, isnt } from '../utils/is';
-import isNumeric from '../utils/is-numeric';
 import diffObjects from '../utils/diff-objects';
 import finalDiff from '../utils/final-diff';
 
@@ -248,9 +247,7 @@ class RootApp extends App {
             val = decodeURIComponent(val);
             // isNaN will coerce empty string or all spaces to 0
             // so we need to guard against that case with regex
-            if (isNumeric(val)) {
-                val = Number(val);
-            } else if (val === 'true') {
+            if (val === 'true') {
                 val = true;
             } else if (val === 'false') {
                 val = false;

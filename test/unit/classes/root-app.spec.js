@@ -185,8 +185,8 @@ describe('RootApp', () => {
         it('parses multiple query params when querystring has a question mark', () => {
             let rootApp = new RootApp(defaultOpts);
             expect(rootApp.parseQueryString('?x=10&y=20&z=hello')).to.deep.equal({
-                x: 10,
-                y: 20,
+                x: '10',
+                y: '20',
                 z: 'hello',
             });
         });
@@ -194,8 +194,8 @@ describe('RootApp', () => {
         it('parses multiple query params when querystring has no question mark', () => {
             let rootApp = new RootApp(defaultOpts);
             expect(rootApp.parseQueryString('x=10&y=20&z=hello')).to.deep.equal({
-                x: 10,
-                y: 20,
+                x: '10',
+                y: '20',
                 z: 'hello',
             });
         });

@@ -5,7 +5,6 @@ import Modified from './modified';
 import mergesort from '../utils/mergesort';
 import ctorName from '../utils/ctor-name';
 import { is, isnt } from '../utils/is';
-import isNumeric from '../utils/is-numeric';
 
 class MountMapper extends BaseMountMapper {
     constructor(...args) {
@@ -350,9 +349,7 @@ class MountMapper extends BaseMountMapper {
         for (let i = 0; i < namesLen; ++i) {
             let group = regexMatch[i+1];
             group = decodeURIComponent(group);
-            if (isNumeric(group)) {
-                group = +group;
-            } else if (group === 'true') {
+            if (group === 'true') {
                 group = true;
             } else if (group === 'false') {
                 group = false;

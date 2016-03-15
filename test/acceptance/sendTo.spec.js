@@ -94,7 +94,7 @@ describe('sendTo()', () => {
         // themselves, i'm using query params to trigger sendTo() calls
         rootApp.navigate('/?sendTo=user&val=1337').then(() => {
             spies.UserRoute.sendToSpy.should.have.been.calledOnce;
-            spies.UserRoute.sendToSpy.should.have.been.calledWith(1337);
+            spies.UserRoute.sendToSpy.should.have.been.calledWith('1337');
             delete spies.UserRoute;
             getAllSpyFns(spies).forEach(spy => spy.should.not.have.been.called);
             done();
