@@ -150,13 +150,13 @@ class RootApp extends App {
         }
     }
 
-    _popstate() {
+    _popstate(event) {
         let path = this._getNavigationPath(window.location.href);
         if (path) {
             let promise = this.navigate(path);
             let handler = this._config.history;
             if (is(handler, 'Function')) {
-                handler.call(this, promise);
+                handler.call(this, event, promise);
             }
         }
     }
@@ -173,7 +173,7 @@ class RootApp extends App {
             let promise = this.navigate(path);
             let handler = this._config.interceptLinks;
             if (is(handler, 'Function')) {
-                handler.call(this, promise);
+                handler.call(this, event, promise);
             }
         }
     }
@@ -202,11 +202,11 @@ class RootApp extends App {
         if (this._config.windowLoad) {
             let path = this._getNavigationPath(window.location.href);
             if (path) {
-                window.addEventListener('load', () => {
+                window.addEventListener('load', event => {
                     let promise = this.navigate(path);
                     let handler = this._config.windowLoad;
                     if (is(handler, 'Function')) {
-                        handler.call(this, promise);
+                        handler.call(this, event, promise);
                     }
                 }, false);
             }

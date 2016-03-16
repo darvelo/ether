@@ -17,7 +17,10 @@
       var historyHandler = true;
       if (/callback=true/.test(window.location.href)) {
           var callbackCalled = false;
-          historyHandler = function(promise) {
+          historyHandler = function(event, promise) {
+              if (!(event instanceof Event) || !(promise instanceof Promise)) {
+                  throw new Error('Arguments for historyHandler are incorrect.');
+              }
               if (callbackCalled) {
                   return;
               }

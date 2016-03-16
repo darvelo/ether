@@ -14,7 +14,10 @@
     <script>
       var loadHandler = true;
       if (/callback=true/.test(window.location.href)) {
-          loadHandler = function(promise) {
+          loadHandler = function(event, promise) {
+              if (!(event instanceof Event) || !(promise instanceof Promise)) {
+                  throw new Error('Arguments for loadHandler are incorrect.');
+              }
               promise.then(function() {
                   var div = document.createElement('div');
                   div.id = 'load-callback';

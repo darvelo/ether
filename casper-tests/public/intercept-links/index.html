@@ -26,7 +26,10 @@
       }
 
       if (/callback=true/.test(window.location.href)) {
-          function callback(promise) {
+          function callback(event, promise) {
+              if (!(event instanceof Event) || !(promise instanceof Promise)) {
+                  throw new Error('Arguments for interceptHandler are incorrect.');
+              }
               promise.then(function() {
                   var div = document.createElement('div');
                   div.className = 'load-callback';
@@ -36,13 +39,13 @@
           }
           switch(interceptHandler) {
           case 'all':
-              interceptHandler = function all(promise) {
-                  callback(promise);
+              interceptHandler = function all() {
+                  callback.apply(this, arguments);
               };
               break;
           case 'outlets':
-              interceptHandler = function outlets(promise) {
-                  callback(promise);
+              interceptHandler = function outlets() {
+                  callback.apply(this, arguments);
               };
               break;
           default:
