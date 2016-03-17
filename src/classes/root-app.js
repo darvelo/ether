@@ -34,14 +34,6 @@ class RootApp extends App {
         opts.basePath = encodeURI(opts.basePath);
 
         super(opts);
-        this._config = Object.freeze({
-            stripTrailingSlash: !!opts.stripTrailingSlash || false,
-            addTrailingSlash: !!opts.addTrailingSlash || false,
-            basePath: opts.basePath,
-            windowLoad: opts.windowLoad || false,
-            history: opts.history || false,
-            interceptLinks: opts.interceptLinks || 'none',
-        });
         // the last URL that was navigated to successfully
         this._fullUrl = undefined;
         // the querystring params parsed from the

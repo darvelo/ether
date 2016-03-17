@@ -15,9 +15,15 @@ class App extends Modifiable {
 
         if (opts.rootApp === true) {
             opts.rootApp = this;
-            if (opts.debug === true) {
-                this._debugMode = true;
-            }
+            this._config = Object.freeze({
+                stripTrailingSlash: !!opts.stripTrailingSlash || false,
+                addTrailingSlash: !!opts.addTrailingSlash || false,
+                basePath: opts.basePath,
+                windowLoad: opts.windowLoad || false,
+                history: opts.history || false,
+                interceptLinks: opts.interceptLinks || 'none',
+                debugMode: opts.debug === true,
+            });
         }
 
         if (!opts.rootApp) {
@@ -129,7 +135,7 @@ class App extends Modifiable {
             throw new TypeError(ctorName(this) + '#mount() did not return an object.');
         }
 
-        if (this._rootApp._debugMode) {
+        if (this._rootApp._config.debugMode) {
             let empty = true;
             for (let crumb in mounts) {
                 if (mounts.hasOwnProperty(crumb)) {
