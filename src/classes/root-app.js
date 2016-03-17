@@ -163,7 +163,7 @@ class RootApp extends App {
 
     _linksClickDelegatedHandler(event) {
         let target = event.target;
-        if (target.nodeName !== 'A') {
+        if (target.nodeName !== 'A' || event.button !== 0) {
             return;
         }
         let path = this._getNavigationPath(target.href);

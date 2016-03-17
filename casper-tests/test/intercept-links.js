@@ -56,7 +56,7 @@ function expectRoute(opts) {
 // log all client-side console messages and thrown Errors
 casper.on('remote.message', function(msg) {
     this.log('client-side message: ' + msg);
-})
+});
 
 /*
 * interceptLinks: "all" tests
