@@ -78,6 +78,14 @@ describe('linkTo', () => {
         expect(rootRoute.linkTo(rootRouteAddress, params)).to.equal('/');
     });
 
+    it('defaults params to empty object if one was not passed in', () => {
+        let rootApp = new MyRootApp(defaultOpts);
+        let route   = rootApp._atAddress(routeAddress);
+        let address = rootRouteAddress;
+        expect(() => route.linkTo(address)).to.not.throw();
+        expect(route.linkTo(address)).to.equal('/');
+    });
+
     it('escapes params with encodeURIComponent()', () => {
         let rootApp   = new MyRootApp(defaultOpts);
         let myRoute   = rootApp._atAddress(routeAddress);

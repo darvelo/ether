@@ -114,15 +114,12 @@ class Route extends Modifiable {
         return path;
     }
 
-    linkTo(address, params, opts) {
+    linkTo(address, params = {}, opts = {}) {
         if (isnt(address, 'String')) {
             throw new TypeError(`${ctorName(this)}#linkTo(): Address given was not a string.`);
         }
         if (isnt(params, 'Object')) {
             throw new TypeError(`${ctorName(this)}#linkTo(): Params given was not an object.`);
-        }
-        if (isnt(opts, 'Object')) {
-            opts = {};
         }
 
         let destination = this._rootApp._atAddress(address);
