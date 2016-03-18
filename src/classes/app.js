@@ -53,11 +53,6 @@ class App extends Modifiable {
         this._rootApp = opts.rootApp;
         this._parentApp = opts.parentApp;
         registerAddresses(this, opts.addresses);
-        if (this !== this._rootApp) {
-            // only the creator of a MutableOutlet
-            // should have control over its mutability
-            this._makeOutletsImmutable(opts.outlets);
-        }
         this.outlets = this.createOutlets(opts.outlets);
         this._mountMapper = new MountMapper();
         this._conditionalMountMapper = new ConditionalMountMapper();
@@ -105,14 +100,6 @@ class App extends Modifiable {
     expectedSetup(setup) {
         // user can throw if `setup` is not as expected
         return;
-    }
-
-    _makeOutletsImmutable(outlets) {
-        for (let prop in outlets) {
-            if (outlets.hasOwnProperty(prop) && outlets[prop] instanceof MutableOutlet) {
-                outlets[prop] = new Outlet(outlets[prop].get());
-            }
-        }
     }
 
     _setState(state) {

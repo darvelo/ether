@@ -122,29 +122,6 @@ describe('App', function() {
             expect(app.outlets.third).to.be.an.instanceof(MutableOutlet);
         });
 
-        it('MutableOutlets received are rewrapped into Outlets', () => {
-            class AppWithOutlets extends App {
-                expectedOutlets() {
-                    return ['first'];
-                }
-            }
-            let parent = document.createElement('div');
-            let child = document.createElement('div');
-            defaultOpts.outlets = {
-                first: new MutableOutlet(parent),
-            };
-            let app = new AppWithOutlets(defaultOpts);
-            expect(app).to.have.property('outlets');
-            expect(app.outlets).to.be.an('object');
-            expect(app.outlets.first).to.be.an.instanceof(Outlet);
-            expect(app.outlets.first).to.not.be.an.instanceof(MutableOutlet);
-            // we have no direct access to an Outlet's element,
-            // so to make sure we still have the same element as the
-            // passed-in MutableOutlet, we need to check for it indirectly
-            app.outlets.first.append(child);
-            expect(child.parentNode).to.equal(parent);
-        });
-
         it('calls init() after outlets are available', () => {
             let outlet = new MutableOutlet(document.createElement('div'));
             let spy = sinon.spy(function(instance) {
