@@ -146,7 +146,7 @@ class RootApp extends App {
     _popstate(event) {
         let path = this._getNavigationPath(window.location.href);
         if (path) {
-            let promise = this.navigate(path);
+            let promise = this.navigate(path, {pushState: false});
             let handler = this._config.history;
             if (is(handler, 'Function')) {
                 handler.call(this, event, promise);
@@ -264,11 +264,12 @@ class RootApp extends App {
     /**
      * Navigates to a new URL path on the Ether application. Called manually or, if configured to, on: popstate, page landing, or intercepted links.
      * @param {string} destination The navigation destination. Can be a URL string with or without a querystring.
+     * @param {object} opts Options for navigation, such as whether to perform a pushState or replaceState on success.
      * @return {Promise} A promise that resolves if navigation succeeded, and rejects if it failed, with the details of the failure (404 or navigation error).
      */
-    navigate(destination) {
+    navigate(destination, opts={pushState: true}) {
         let currentTransition = this.getCurrentTransition();
-        let nextTransition = new Transition(destination, this._navigate.bind(this));
+        let nextTransition = new Transition(destination, opts, this._navigate.bind(this));
 
         if (!currentTransition) {
             this._currentTransition = nextTransition;
@@ -287,9 +288,10 @@ class RootApp extends App {
      * Performs the navigation that was scheduled with a call to the non-private version of this function, `navigate()`.
      * @private
      * @param {string} destination The navigation destination. A URL path with or without a querystring.
+     * @param {object} opts Options for navigation, such as whether to perform a pushState or replaceState on success.
      * @return {Promise} A promise that resolves if navigation succeeded, and rejects if it failed, with the details of the failure (404 or navigation error).
      */
-    _navigate(destination) {
+    _navigate(destination, opts) {
         let { path, queryString } = this._splitDestination(destination);
         let queryParams = this.parseQueryString(queryString);
         let queryParamsDiff = null;
@@ -332,12 +334,10 @@ class RootApp extends App {
                 this._fullUrl = destination;
                 this._lastQueryParams = queryParams;
                 if (this._config.history) {
-                    let urlPath = window.location.href.slice(this._getBasepathHref().length-1);
-                    // if this navigation was the result of a popstate event,
-                    // or the result of the window's `load` event, the URL will
-                    // have already been changed, and pushState isn't necessary
-                    if (destination !== urlPath) {
-                        destination = this._joinBasepathTo(destination);
+                    destination = this._joinBasepathTo(destination);
+                    if (opts.replaceState === true) {
+                        window.history.replaceState({}, '', destination);
+                    } else if (opts.pushState === true) {
                         window.history.pushState({}, '', destination);
                     }
                 }

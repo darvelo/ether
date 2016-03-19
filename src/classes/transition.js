@@ -1,6 +1,7 @@
 class Transition {
-    constructor(url, navigateFn) {
+    constructor(url, navigateOpts, navigateFn) {
         this._url = url;
+        this._navigateOpts = navigateOpts;
         this._navigateFn = navigateFn;
         this._state = 'pending';
         this._promise = null;
@@ -13,7 +14,7 @@ class Transition {
     start() {
         if (this.state === 'pending') {
             this._state = 'started';
-            this._promise = this._navigateFn(this.url).then(val => {
+            this._promise = this._navigateFn(this.url, this._navigateOpts).then(val => {
                 this._state = 'succeeded';
                 return val;
             }, err => {
