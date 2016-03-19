@@ -256,6 +256,11 @@ class RootApp extends App {
         return this._currentTransition.start();
     }
 
+    _splitDestination(destination) {
+        let [ path, queryString='' ] = destination.split('?');
+        return {path, queryString};
+    }
+
     /**
      * Navigates to a new URL path on the Ether application. Called manually or, if configured to, on: popstate, page landing, or intercepted links.
      * @param {string} destination The navigation destination. Can be a URL string with or without a querystring.
@@ -285,7 +290,7 @@ class RootApp extends App {
      * @return {Promise} A promise that resolves if navigation succeeded, and rejects if it failed, with the details of the failure (404 or navigation error).
      */
     _navigate(destination) {
-        let [ path, queryString='' ] = destination.split('?');
+        let { path, queryString } = this._splitDestination(destination);
         let queryParams = this.parseQueryString(queryString);
         let queryParamsDiff = null;
         let trailingSlashRegex = /\/+$/;
@@ -351,8 +356,16 @@ class RootApp extends App {
      * @return {boolean} Whether the navigation would be successful or result in a 404.
      */
     canNavigateTo(destination) {
-        let [ path, queryString ] = destination.split('?');
+        let { path } = this._splitDestination(destination);
         return this._buildPath(path).result === 'success';
+    }
+
+    _routeFor(destination) {
+        let { path } = this._splitDestination(destination);
+        let routingTrace = this._buildPath(path);
+        let steps = routingTrace.steps;
+        let { app, crumb } = steps[steps.length-1];
+        return app._mountMapper.mountFor(crumb);
     }
 
     /**
@@ -469,16 +482,22 @@ class RootApp extends App {
             steps.push({app, crumb, params});
             // get the next mount/node to continue tree traversal
             app = app._mountMapper.mountFor(crumb);
-            path = matchResult.rest;
 
             // if there is no more URL string data to match against,
-            // we have reached the end of the navigation path
+            // we have reached the end of the original full path
             if (is(matchResult.rest, 'Null')) {
-                // navigation must end on a Route
-                if (!(app instanceof Route)) {
-                    matchResult = null;
+                // navigation must end on a Route;
+                // if we're at an App, determine on the next pass
+                // whether it has a mount on the index path
+                if (app instanceof Route) {
+                    break;
+                } else {
+                    path = '';
                 }
-                break;
+            } else {
+                // continue onto the next pass with the
+                // matched portion of the path chopped out
+                path = matchResult.rest;
             }
         }
 

@@ -1,5 +1,5 @@
-import App from '../../src/classes/app';
 import RootApp from '../../src/classes/root-app';
+import App from '../../src/classes/app';
 import Route from '../../src/classes/route';
 import Outlet from '../../src/classes/outlet';
 import MutableOutlet from '../../src/classes/mutable-outlet';
@@ -45,7 +45,6 @@ describe('Mounting Functional Tests', () => {
 
     beforeEach(() => {
         defaultOpts = {
-            rootApp: true,
             outlets: {
                 main: new MutableOutlet(document.createElement('div')),
             },
@@ -634,6 +633,37 @@ describe('Mounting Functional Tests', () => {
                 childAppInitSpy.restore();
                 childRouteInitSpy.restore();
             });
+        });
+    });
+
+    describe('Mounting an App on the index route of RootApp', () => {
+        it('can find a Route index on an App index on a RootApp index', () => {
+            let routeAddress = 'myroute';
+            class MyRoute extends OneAddressRoute {
+                expectedAddresses() {
+                    return [routeAddress];
+                }
+            }
+            class MyApp extends TestApp {
+                mount() {
+                    return {
+                        '': MyRoute.addresses(routeAddress),
+                    };
+                }
+            }
+            class MyRootApp extends RootApp {
+                mount() {
+                    return {
+                        '': MyApp,
+                    };
+                }
+            }
+
+            let rootApp = new MyRootApp(defaultOpts);
+            expect(rootApp.canNavigateTo('')).to.be.true;
+            expect(rootApp.canNavigateTo('/')).to.be.true;
+            expect(rootApp._routeFor('')).to.be.instanceof(MyRoute);
+            expect(rootApp._routeFor('/')).to.be.instanceof(MyRoute);
         });
     });
 });
