@@ -6,6 +6,7 @@ import {
     appAddress,
     rootAppAddress,
     MyRootApp,
+    MyRoute,
 } from '../utils/generic-app-under-test';
 
 describe('linkTo', () => {
@@ -137,5 +138,18 @@ describe('linkTo', () => {
         let expectedPath = 'abc/hixyz/hello/dave123/go';
         params.id = 'hi';
         expect(() => route.linkTo(address, params)).to.throw(Error, `MyRoute#linkTo(): Navigation to "MyRoute" at address "${address}" will fail for constructed URL: "${expectedPath}".`);
+    });
+
+    it('can construct a link within init()', () => {
+        let spy = sinon.spy();
+        let oldInit = MyRoute.prototype.init;
+        MyRoute.prototype.init = function() {
+            let href = this.linkTo(rootRouteAddress);
+            spy(href);
+        };
+        let rootApp = new MyRootApp(defaultOpts);
+        spy.should.have.been.calledOnce;
+        spy.should.have.been.calledWith('/');
+        MyRoute.prototype.init = oldInit;
     });
 });

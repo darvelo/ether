@@ -11,10 +11,11 @@ class TestApp extends App {
 }
 
 describe('App', function() {
-    let defaultOpts;
+    let rootApp, defaultOpts;
 
     beforeEach(() => {
-        let rootApp = new RootApp({
+        rootApp = new RootApp({
+            _pauseInitRunner: true,
             outlets: {
                 main: new MutableOutlet(document.createElement('div')),
             },
@@ -122,7 +123,7 @@ describe('App', function() {
             expect(app.outlets.third).to.be.an.instanceof(MutableOutlet);
         });
 
-        it('calls init() after outlets are available', () => {
+        it('calls init() after outlets are available', done => {
             let outlet = new MutableOutlet(document.createElement('div'));
             let spy = sinon.spy(function(instance) {
                 expect(instance.outlets).to.deep.equal({
@@ -139,8 +140,12 @@ describe('App', function() {
                 }
             }
             let app = new AppWithOutlets(defaultOpts);
-            spy.should.have.been.calledOnce;
-            spy.should.have.been.calledWith(app);
+            rootApp._inits.play();
+            rootApp._inits.then(() => {
+                spy.should.have.been.calledOnce;
+                spy.should.have.been.calledWith(app);
+                done();
+            });
         });
 
         it('passes options.setup to init()', () => {

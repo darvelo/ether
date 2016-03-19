@@ -597,7 +597,6 @@ describe('Mounting Functional Tests', () => {
                 let childRouteInitSpy = sinon.spy(ChildRoute.prototype, 'init');
 
                 let rootApp = new MyRootApp(defaultOpts);
-
                 appExpectedSpy.should.have.been.calledOnce;
                 appExpectedSpy.should.have.been.calledWith({app: 2});
                 routeExpectedSpy.should.have.been.callThrice;

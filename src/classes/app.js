@@ -1,8 +1,7 @@
 import Modifiable from './modifiable';
-import MutableOutlet from './mutable-outlet';
-import Outlet from './outlet';
 import MountMapper from './mount-mapper';
 import ConditionalMountMapper from './conditional-mount-mapper';
+import InitRunner from '../utils/init-runner';
 import registerAddresses from '../utils/register-addresses';
 import ctorName from '../utils/ctor-name';
 import { isnt } from '../utils/is';
@@ -15,6 +14,13 @@ class App extends Modifiable {
 
         if (opts.rootApp === true) {
             opts.rootApp = this;
+            // runs the init() method for all Apps/Routes only
+            // after all their constructors have returned
+            this._inits = new InitRunner();
+            // this is used when unit testing Apps/Routes
+            if (opts._pauseInitRunner === true) {
+                this._inits.pause();
+            }
             this._config = Object.freeze({
                 stripTrailingSlash: !!opts.stripTrailingSlash || false,
                 addTrailingSlash: !!opts.addTrailingSlash || false,
@@ -58,7 +64,7 @@ class App extends Modifiable {
         this._conditionalMountMapper = new ConditionalMountMapper();
         let mountsMetadata = this._instantiateMounts(opts.params);
         this._instantiateConditionalMounts(opts.params, mountsMetadata);
-        this.init(opts.setup);
+        this._rootApp._inits.push(() => this.init(opts.setup));
     }
 
     mount() {

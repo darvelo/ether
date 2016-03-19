@@ -11,11 +11,22 @@ export function resetSpies() {
         'UserRoute',
         'UserConditionalRoute',
         'NotificationsRoute',
+        'InitSendToRoute',
+        'InitReceiveRoute',
+        'InitConditionalSendToRoute',
+        'InitConditionalReceiveRoute',
     ].reduce((memo, key) => {
         memo[key] = memo[key] || {};
         memo[key].sendToSpy = sinon.spy();
         return memo;
     }, spies);
+}
+
+export function deleteInitSpies() {
+    delete spies.InitSendToRoute;
+    delete spies.InitReceiveRoute;
+    delete spies.InitConditionalSendToRoute;
+    delete spies.InitConditionalReceiveRoute;
 }
 
 export function getAllSpyFns(spies) {

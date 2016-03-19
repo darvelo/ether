@@ -10,10 +10,7 @@ export let conditionalRouteAddress = 'myconditionalroute';
 export let appAddress              = 'myapp';
 export let rootAppAddress          = 'myrootapp';
 
-export class MyRoute extends Route {
-    expectedAddresses() {
-        return [routeAddress];
-    }
+class TestRoute extends Route {
     addressesHandlers() {
         return [function(){}];
     }
@@ -22,19 +19,25 @@ export class MyRoute extends Route {
     }
 }
 
-export class RootRoute extends MyRoute {
+export class MyRoute extends TestRoute {
+    expectedAddresses() {
+        return [routeAddress];
+    }
+}
+
+export class RootRoute extends TestRoute {
     expectedAddresses() {
         return [rootRouteAddress];
     }
 }
 
-export class AnythingRoute extends MyRoute {
+export class AnythingRoute extends TestRoute {
     expectedAddresses() {
         return [anythingRouteAddress];
     }
 }
 
-export class MyConditionalRoute extends MyRoute {
+export class MyConditionalRoute extends TestRoute {
     expectedAddresses() {
         return [conditionalRouteAddress];
     }

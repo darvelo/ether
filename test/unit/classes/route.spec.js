@@ -11,10 +11,11 @@ class TestRoute extends Route {
 }
 
 describe('Route', () => {
-    let defaultOpts;
+    let rootApp, defaultOpts;
 
     beforeEach(() => {
-        let rootApp = new RootApp({
+        rootApp = new RootApp({
+            _pauseInitRunner: true,
             outlets: {
                 main: new MutableOutlet(document.createElement('div')),
             },
@@ -81,7 +82,7 @@ describe('Route', () => {
             expect(route.outlets.second).to.equal(secondOutlet);
         });
 
-        it('calls init() after outlets are available', () => {
+        it('calls init() after outlets are available', done => {
             let outlet = new MutableOutlet(document.createElement('div'));
             defaultOpts.outlets.myOutlet = outlet;
             let spy = sinon.spy(function(instance) {
@@ -98,11 +99,15 @@ describe('Route', () => {
                 }
             }
             let route = new RouteWithOutlets(defaultOpts);
-            spy.should.have.been.calledOnce;
-            spy.should.have.been.calledWith(route);
+            rootApp._inits.play();
+            rootApp._inits.then(() => {
+                spy.should.have.been.calledOnce;
+                spy.should.have.been.calledWith(route);
+                done();
+            }).catch(done);
         });
 
-        it('passes options.setup to init()', () => {
+        it('passes options.setup to init()', done => {
             defaultOpts.setup = [1, 2, 3];
             let spy = sinon.spy();
             class RouteWithSetup extends TestRoute {
@@ -112,7 +117,11 @@ describe('Route', () => {
                 }
             }
             let route = new RouteWithSetup(defaultOpts);
-            spy.should.have.been.calledOnce;
+            rootApp._inits.play();
+            rootApp._inits.then(() => {
+                spy.should.have.been.calledOnce;
+                done();
+            }).catch(done);
         });
 
         it('initializes the state object', () => {

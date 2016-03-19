@@ -44,7 +44,7 @@ class Route extends Modifiable {
         registerAddresses(this, opts.addresses);
         this.outlets = opts.outlets;
         this._setState('deactivated');
-        this.init(opts.setup);
+        this._rootApp._inits.push(() => this.init(opts.setup));
     }
 
     // receives setup result if the .setup() modifier
@@ -147,16 +147,15 @@ class Route extends Modifiable {
                 rootAppReached = true;
             }
             let mm = parentApp._mountMapper;
-            stack.push(mm._crumbDataFor(mount))
+            stack.push(mm._crumbDataFor(mount));
             mount = parentApp;
-            parentApp = mount._parentApp;
         }
 
         let transformer;
         if (is(opts.transformer, 'Function')) {
             transformer = opts.transformer;
         } else {
-            transformer = function(paramName) { return paramName; }
+            transformer = function(paramName) { return paramName; };
         }
 
         let crumbs = [];

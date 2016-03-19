@@ -42,6 +42,7 @@ class RootApp extends App {
         // transition-related data
         this._transitionQueue = [];
         this._currentTransition = null;
+        this._inits.run();
     }
 
     fullUrl() {
@@ -74,7 +75,7 @@ class RootApp extends App {
     }
 
     sendTo(address, ...args) {
-        return Promise.resolve().then(() => {
+        return this._inits.then(() => {
             let recipient = this._atAddress(address);
             let handler = recipient._addressHandlers[address];
             return handler.apply(recipient, args);
