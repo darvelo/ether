@@ -4,7 +4,9 @@ class Transition {
         this._navigateOpts = navigateOpts;
         this._navigateFn = navigateFn;
         this._state = 'pending';
-        this._promise = null;
+        this._promise = new Promise((res, rej) => {
+            [ this._resolve, this._reject ] = [ res, rej ];
+        });
     }
 
     get url() { return this._url; }
@@ -14,12 +16,12 @@ class Transition {
     start() {
         if (this.state === 'pending') {
             this._state = 'started';
-            this._promise = this._navigateFn(this.url, this._navigateOpts).then(val => {
+            this._navigateFn(this.url, this._navigateOpts).then(val => {
                 this._state = 'succeeded';
-                return val;
+                this._resolve(val);
             }, err => {
                 this._state = 'failed';
-                return Promise.reject(err);
+                this._reject(err);
             });
         }
 

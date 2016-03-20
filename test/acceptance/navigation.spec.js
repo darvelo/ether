@@ -1098,4 +1098,159 @@ describe('Navigation Acceptance Tests', () => {
             });
         });
     });
+
+    describe('Transition Queueing', () => {
+        it('queues transitions', done => {
+            let spy0 = sinon.spy();
+            let spy1 = sinon.spy();
+            let spy2 = sinon.spy();
+            let spy3 = sinon.spy();
+            let spy4 = sinon.spy();
+
+            let rootApp = new MyRootApp(defaultOpts);
+
+            // spies
+            let root = mountSpies.RootRootRoute;
+            let news = mountSpies.RootNewsRoute;
+            let user = mountSpies.UserIdActionRoute;
+            let todo = mountSpies.TodoIdRenderStyleRoute;
+
+            spy0();
+            rootApp.navigate('/').then(spy1);
+            rootApp.navigate('/news/story').then(spy2);
+            rootApp.navigate('/user/1/action/go').then(spy3);
+            rootApp.navigate('/todos/1/list').then(() => {
+                spy4();
+
+                // all spies should have been called once
+                root.prerenderSpy.should.have.been.calledOnce;
+                root.deactivateSpy.should.have.been.calledOnce;
+                root.renderSpy.should.have.been.calledOnce;
+                news.prerenderSpy.should.have.been.calledOnce;
+                news.deactivateSpy.should.have.been.calledOnce;
+                news.renderSpy.should.have.been.calledOnce;
+                user.prerenderSpy.should.have.been.calledOnce;
+                user.deactivateSpy.should.have.been.calledOnce;
+                user.renderSpy.should.have.been.calledOnce;
+                todo.prerenderSpy.should.have.been.calledOnce;
+                // note: todo.deactivateSpy is never called
+                todo.deactivateSpy.should.not.have.been.called;
+                todo.renderSpy.should.have.been.calledOnce;
+
+                // from here on,
+                // follow the zig-zag ordering; A => B, B => C, C => D
+
+                // to RootRootRoute
+                root.prerenderSpy.should.have.been.calledAfter(spy0);
+                root.renderSpy.should.have.been.calledAfter(root.prerenderSpy);
+                spy1.should.have.been.calledAfter(root.renderSpy);
+
+                // to RootNewsRoute
+                news.prerenderSpy.should.have.been.calledAfter(spy1);
+                root.deactivateSpy.should.have.been.calledAfter(news.prerenderSpy);
+                news.renderSpy.should.have.been.calledAfter(root.deactivateSpy);
+                spy2.should.have.been.calledAfter(news.renderSpy);
+
+                // to UserIdActionRoute
+                user.prerenderSpy.should.have.been.calledAfter(spy2);
+                news.deactivateSpy.should.have.been.calledAfter(user.prerenderSpy);
+                user.renderSpy.should.have.been.calledAfter(news.deactivateSpy);
+                spy3.should.have.been.calledAfter(user.renderSpy);
+
+                // to TodoIdRenderStyleRoute
+                todo.prerenderSpy.should.have.been.calledAfter(spy3);
+                user.deactivateSpy.should.have.been.calledAfter(todo.prerenderSpy);
+                todo.renderSpy.should.have.been.calledAfter(user.deactivateSpy);
+                spy4.should.have.been.calledAfter(todo.renderSpy);
+
+                done();
+            }).catch(done);
+        });
+
+        it('continues transition queue even if some fail', done => {
+            let spy0 = sinon.spy();
+            let spy1 = sinon.spy();
+            let spy2_resolve = sinon.spy();
+            let spy2_reject = sinon.spy();
+            let spy3 = sinon.spy();
+            let spy4 = sinon.spy();
+            let spy5_resolve = sinon.spy();
+            let spy5_reject = sinon.spy();
+            let spy6 = sinon.spy();
+
+            let rootApp = new MyRootApp(defaultOpts);
+
+            // spies
+            let root = mountSpies.RootRootRoute;
+            let news = mountSpies.RootNewsRoute;
+            let user = mountSpies.UserIdActionRoute;
+            let todo = mountSpies.TodoIdRenderStyleRoute;
+
+            spy0();
+            rootApp.navigate('/').then(spy1);
+            rootApp.navigate('non-existent').then(spy2_resolve, spy2_reject);
+            rootApp.navigate('/news/story').then(spy3);
+            rootApp.navigate('/user/1/action/go').then(spy4);
+            rootApp.navigate('non-existent2').then(spy5_resolve, spy5_reject);
+            rootApp.navigate('/todos/1/list').then(() => {
+                spy6();
+
+                // all spies should have been called once
+                root.prerenderSpy.should.have.been.calledOnce;
+                root.deactivateSpy.should.have.been.calledOnce;
+                root.renderSpy.should.have.been.calledOnce;
+                news.prerenderSpy.should.have.been.calledOnce;
+                news.deactivateSpy.should.have.been.calledOnce;
+                news.renderSpy.should.have.been.calledOnce;
+                user.prerenderSpy.should.have.been.calledOnce;
+                user.deactivateSpy.should.have.been.calledOnce;
+                user.renderSpy.should.have.been.calledOnce;
+                todo.prerenderSpy.should.have.been.calledOnce;
+                // note: todo.deactivateSpy is never called
+                todo.deactivateSpy.should.not.have.been.called;
+                todo.renderSpy.should.have.been.calledOnce;
+
+                // reject spies should have been called
+                spy2_reject.should.have.been.called;
+                spy5_reject.should.have.been.called;
+                // resolve spies should not have been called
+                spy2_resolve.should.not.have.been.called;
+                spy5_resolve.should.not.have.been.called;
+
+                // from here on,
+                // follow the zig-zag ordering; A => B, B => C, C => D
+
+                // to RootRootRoute
+                root.prerenderSpy.should.have.been.calledAfter(spy0);
+                root.renderSpy.should.have.been.calledAfter(root.prerenderSpy);
+                spy1.should.have.been.calledAfter(root.renderSpy);
+
+                // to first non-existent route
+                spy2_reject.should.have.been.calledAfter(spy1);
+
+                // to RootNewsRoute
+                news.prerenderSpy.should.have.been.calledAfter(spy2_reject);
+                root.deactivateSpy.should.have.been.calledAfter(news.prerenderSpy);
+                news.renderSpy.should.have.been.calledAfter(root.deactivateSpy);
+                spy3.should.have.been.calledAfter(news.renderSpy);
+
+                // to UserIdActionRoute
+                user.prerenderSpy.should.have.been.calledAfter(spy3);
+                news.deactivateSpy.should.have.been.calledAfter(user.prerenderSpy);
+                user.renderSpy.should.have.been.calledAfter(news.deactivateSpy);
+                spy4.should.have.been.calledAfter(user.renderSpy);
+
+                // to second non-existent route
+                spy5_reject.should.have.been.calledAfter(spy4);
+
+                // to TodoIdRenderStyleRoute
+                todo.prerenderSpy.should.have.been.calledAfter(spy5_reject);
+                user.deactivateSpy.should.have.been.calledAfter(todo.prerenderSpy);
+                todo.renderSpy.should.have.been.calledAfter(user.deactivateSpy);
+                spy6.should.have.been.calledAfter(todo.renderSpy);
+
+                done();
+            }).catch(done);
+        });
+    });
 });

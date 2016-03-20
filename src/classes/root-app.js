@@ -128,6 +128,11 @@ class RootApp extends App {
         return this._config.basePath + destination;
     }
 
+    _splitDestination(destination) {
+        let [ path, queryString='' ] = destination.split('?');
+        return {path, queryString};
+    }
+
     /**
      * Determine if the URL passed in has the same origin and its pathname matches the RootApp's configured `basePath`.
      * @param {string} url The complete URL to be tested.
@@ -252,13 +257,15 @@ class RootApp extends App {
     }
 
     _triggerNextTransition() {
-        this._currentTransition = this._transitionQueue.shift();
-        return this._currentTransition.start();
-    }
-
-    _splitDestination(destination) {
-        let [ path, queryString='' ] = destination.split('?');
-        return {path, queryString};
+        if (!this._transitionQueue.length) {
+            this._currentTransition = null;
+        } else {
+            this._currentTransition = this._transitionQueue.shift();
+            this._currentTransition.start().then(
+                this._triggerNextTransition.bind(this),
+                this._triggerNextTransition.bind(this)
+            );
+        }
     }
 
     /**
@@ -268,20 +275,17 @@ class RootApp extends App {
      * @return {Promise} A promise that resolves if navigation succeeded, and rejects if it failed, with the details of the failure (404 or navigation error).
      */
     navigate(destination, opts={pushState: true}) {
-        let currentTransition = this.getCurrentTransition();
-        let nextTransition = new Transition(destination, opts, this._navigate.bind(this));
-
-        if (!currentTransition) {
-            this._currentTransition = nextTransition;
-            return nextTransition.start();
+        let newTransition = new Transition(destination, opts, this._navigate.bind(this));
+        if (this.getCurrentTransition()) {
+            this._transitionQueue.push(newTransition);
         } else {
-            this._transitionQueue.push(nextTransition);
-            return currentTransition.promise.then(
+            this._currentTransition = newTransition;
+            this._currentTransition.start().then(
                 this._triggerNextTransition.bind(this),
                 this._triggerNextTransition.bind(this)
             );
         }
-
+        return newTransition.promise;
     }
 
     /**
