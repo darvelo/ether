@@ -201,7 +201,7 @@ class RootApp extends App {
             let path = this._getNavigationPath(window.location.href);
             if (path) {
                 window.addEventListener('load', event => {
-                    let promise = this.navigate(path);
+                    let promise = this.navigate(path, {pushState: false});
                     let handler = this._config.windowLoad;
                     if (is(handler, 'Function')) {
                         handler.call(this, event, promise);

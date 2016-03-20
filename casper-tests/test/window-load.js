@@ -41,3 +41,18 @@ casper.test.begin('Window Load honors `basePath` config option', 2, function sui
         test.done();
     });
 });
+
+casper.test.begin('Window Load does not perform pushState', 1, function suite(test) {
+    casper.start(path, function() {
+        var storedHistoryLen = casper.evaluate(function() {
+            return initialHistoryLength;
+        });
+        var newHistoryLen = casper.evaluate(function() {
+            return window.history.length;
+        });
+        test.assert(storedHistoryLen === newHistoryLen, 'did not increment history length');
+    });
+    casper.run(function() {
+        test.done();
+    });
+});

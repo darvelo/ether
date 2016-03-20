@@ -24,6 +24,7 @@
     "quotmark": "single",
     "globals": {
         "window": true,
+        "document": true,
         "Element": true
     }
 }

@@ -12,6 +12,7 @@
     <script src="/ether.global.js" type="text/javascript" charset="utf-8"></script>
     <script src="/app.js"></script>
     <script>
+      var initialHistoryLength = window.history.length;
       var loadHandler = true;
       if (/callback=true/.test(window.location.href)) {
           loadHandler = function(event, promise) {
@@ -34,6 +35,7 @@
 
       var myApp = new MyRootApp({
           windowLoad: loadHandler,
+          history: true,
           basePath: basePath,
           stripTrailingSlash: true,
           outlets: {

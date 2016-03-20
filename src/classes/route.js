@@ -114,7 +114,7 @@ class Route extends Modifiable {
         return path;
     }
 
-    linkTo(address, params = {}, opts = {}) {
+    linkTo(address, params={}, opts={}) {
         if (isnt(address, 'String')) {
             throw new TypeError(`${ctorName(this)}#linkTo(): Address given was not a string.`);
         }
