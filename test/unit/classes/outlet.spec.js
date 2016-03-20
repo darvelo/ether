@@ -7,9 +7,9 @@ describe('Outlet', function() {
             expect(() => new Outlet({})).to.throw(TypeError, 'Outlet constructor was not passed an "Element" instance.');
         });
 
-        it('accepts a html string to construct an empty element', () => {
-            let html = '<span><a href="go.html">Hello!</a></span>';
-            let clearedHTML = '<span></span>';
+        it('accepts a html string to construct an element', () => {
+            let inner = '<a href="go.html">Hello!</a>';
+            let html = `<span>${inner}</span>`;
             let surrogate = document.createElement('div');
             var span;
 
@@ -17,6 +17,13 @@ describe('Outlet', function() {
             // we have to mock the parsing and extraction process
             if (window.EtherTestEnvironment) {
                 span = document.createElement('span');
+                Object.defineProperties(span, {
+                    'innerHTML': {
+                        get() {
+                            return inner;
+                        },
+                    }
+                });
                 Object.defineProperties(surrogate, {
                     'innerHTML': {
                         get() {
@@ -28,7 +35,7 @@ describe('Outlet', function() {
                             // though it's not done on setting
                             // surrogate.innerHTML in a browser env,
                             // we do it here for simplicity's sake.
-                            this._innerHTML = clearedHTML;
+                            this._innerHTML = html;
                             this._children = [span];
                         }
                     },
@@ -40,9 +47,9 @@ describe('Outlet', function() {
             expect(() => outlet = new Outlet(html)).to.not.throw();
             stub.should.have.been.calledOnce;
             stub.should.have.been.calledWith('div');
-            expect(surrogate.innerHTML).to.equal(clearedHTML);
+            expect(surrogate.innerHTML).to.equal(html);
             expect(outlet._element).to.equal(surrogate.children[0]);
-            expect(outlet._element.innerHTML).to.equal('');
+            expect(outlet._element.innerHTML).to.equal(inner);
             stub.restore();
         });
     });
@@ -71,6 +78,7 @@ describe('Outlet', function() {
             outlet.append(appended2);
             stub.should.have.been.calledWith(appended2);
             stub.should.have.been.calledTwice;
+            stub.restore();
         });
 
         it('removes a child element', function() {
@@ -87,6 +95,7 @@ describe('Outlet', function() {
             outlet.remove(appended2);
             stub.should.have.been.calledWith(appended2);
             stub.should.have.been.calledTwice;
+            stub.restore();
         });
 
         it('passes through CSS selectors', function() {

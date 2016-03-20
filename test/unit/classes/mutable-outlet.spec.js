@@ -14,8 +14,8 @@ describe('MutableOutlet', function() {
         });
 
         it('accepts a html string to construct an empty element', () => {
-            let html = '<span><a href="go.html">Hello!</a></span>';
-            let clearedHTML = '<span></span>';
+            let inner = '<a href="go.html">Hello!</a>';
+            let html = `<span>${inner}</span>`;
             let surrogate = document.createElement('div');
             var span;
 
@@ -23,6 +23,13 @@ describe('MutableOutlet', function() {
             // we have to mock the parsing and extraction process
             if (window.EtherTestEnvironment) {
                 span = document.createElement('span');
+                Object.defineProperties(span, {
+                    'innerHTML': {
+                        get() {
+                            return inner;
+                        },
+                    }
+                });
                 Object.defineProperties(surrogate, {
                     'innerHTML': {
                         get() {
@@ -34,7 +41,7 @@ describe('MutableOutlet', function() {
                             // though it's not done on setting
                             // surrogate.innerHTML in a browser env,
                             // we do it here for simplicity's sake.
-                            this._innerHTML = clearedHTML;
+                            this._innerHTML = html;
                             this._children = [span];
                         }
                     },
@@ -46,9 +53,9 @@ describe('MutableOutlet', function() {
             expect(() => outlet = new MutableOutlet(html)).to.not.throw();
             stub.should.have.been.calledOnce;
             stub.should.have.been.calledWith('div');
-            expect(surrogate.innerHTML).to.equal(clearedHTML);
+            expect(surrogate.innerHTML).to.equal(html);
             expect(outlet._element).to.equal(surrogate.children[0]);
-            expect(outlet._element.innerHTML).to.equal('');
+            expect(outlet._element.innerHTML).to.equal(inner);
             stub.restore();
         });
     });
@@ -95,6 +102,7 @@ describe('MutableOutlet', function() {
             let newElement = document.createElement('div');
             outlet.hold(newElement);
             stub.should.have.been.calledOnce;
+            stub.restore();
         });
     });
 
@@ -169,4 +177,3 @@ describe('MutableOutlet', function() {
         });
     });
 });
-
