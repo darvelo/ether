@@ -45,3 +45,24 @@ rollup.rollup({
 }).catch(function (err) {
     console.error(err);
 });
+
+rollup.rollup({
+    entry: 'src/index.js',
+    banner: banner,
+    plugins: [
+        // banner property in bundle.write
+        // doesn't seem to be working after
+        // the uglify plugin has run
+        {transformBundle: addBanner}
+    ],
+}).then(function (bundle) {
+    return Promise.all([
+        bundle.write({
+            format: 'es6',
+            exports: 'named',
+            dest: dest + 'ether.es6.js',
+        }),
+    ]);
+}).catch(function (err) {
+    console.error(err);
+});
