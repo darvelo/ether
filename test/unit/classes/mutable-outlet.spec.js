@@ -1,14 +1,14 @@
 import MutableOutlet from '../../../src/classes/mutable-outlet';
 import Outlet from '../../../src/classes/outlet';
 
-describe('MutableOutlet', function() {
-    describe('Constructor', function() {
-        it('creates an instance of Outlet', function () {
+describe('MutableOutlet', () => {
+    describe('Constructor', () => {
+        it('creates an instance of Outlet', () => {
             let outlet = new MutableOutlet(document.createElement('div'));
             expect(outlet).to.be.an.instanceof(Outlet);
         });
 
-        it('throws when passed a non-Element', function() {
+        it('throws when passed a non-Element', () => {
             expect(() => new MutableOutlet()).to.throw(TypeError, 'MutableOutlet constructor was not passed an "Element" instance.');
             expect(() => new MutableOutlet({})).to.throw(TypeError, 'MutableOutlet constructor was not passed an "Element" instance.');
         });
@@ -60,23 +60,23 @@ describe('MutableOutlet', function() {
         });
     });
 
-    describe('Non-mutating methods', function() {
-        it('returns its element', function() {
+    describe('Non-mutating methods', () => {
+        it('returns its element', () => {
             let element = document.createElement('div');
             let outlet = new MutableOutlet(element);
             expect(outlet.get()).to.equal(element);
         });
     });
 
-    describe('Mutating methods', function() {
-        it('only allows holding an Element', function() {
+    describe('Mutating methods', () => {
+        it('only allows holding an Element', () => {
             let element = document.createElement('div');
             let outlet = new MutableOutlet(element);
             expect(() => outlet.hold()).to.throw(TypeError, 'MutableOutlet#hold() was not passed an "Element" instance.');
             expect(() => outlet.hold({})).to.throw(TypeError, 'MutableOutlet#hold() was not passed an "Element" instance.');
         });
 
-        it('clears its element from internal storage', function() {
+        it('clears its element from internal storage', () => {
             let element = document.createElement('div');
             let outlet = new MutableOutlet(element);
             expect(outlet.get()).to.equal(element);
@@ -84,7 +84,7 @@ describe('MutableOutlet', function() {
             expect(outlet.get()).to.not.be.ok;
         });
 
-        it('clears its element from the DOM', function() {
+        it('clears its element from the DOM', () => {
             let parent = document.createElement('div');
             let element = document.createElement('div');
             parent.appendChild(element);
@@ -95,7 +95,7 @@ describe('MutableOutlet', function() {
             mock.verify();
         });
 
-        it('clears its element when made to hold a new one', function() {
+        it('clears its element when made to hold a new one', () => {
             let element = document.createElement('div');
             let outlet = new MutableOutlet(element);
             let stub = sinon.stub(outlet, 'clear');
@@ -106,36 +106,69 @@ describe('MutableOutlet', function() {
         });
     });
 
-    describe('DOM-delegating methods', function() {
-        it('throws on append() when not holding an element', function() {
+    describe('DOM-delegating methods', () => {
+        it('gets innerHTML', () => {
+            let html = '<span></span>';
+            let element = document.createElement('div');
+            element.innerHTML = html;
+            let outlet = new MutableOutlet(element);
+            expect(outlet.innerHTML).to.equal(html);
+        });
+
+        it('sets innerHTML', () => {
+            let html = '<span></span>';
+            let element = document.createElement('div');
+            let outlet = new MutableOutlet(element);
+            expect(element.innerHTML).to.equal('');
+            outlet.innerHTML = html;
+            expect(element.innerHTML).to.equal(html);
+        });
+
+        it('cannot get innerHTML if outlet is is cleared', () => {
+            let element = document.createElement('div');
+            let outlet = new MutableOutlet(element);
+            outlet.clear();
+            expect(() => outlet.innerHTML).to.throw(Error, 'MutableOutlet.innerHTML was being retrieved but the outlet is not holding an element.');
+        });
+
+        it('cannot set innerHTML if outlet is is cleared', () => {
+            let html = '<span></span>';
+            let element = document.createElement('div');
+            let outlet = new MutableOutlet(element);
+            outlet.clear();
+            expect(() => outlet.innerHTML = html).to.throw(Error, 'MutableOutlet.innerHTML was being set but the outlet is not holding an element.');
+            expect(element.innerHTML).to.equal('');
+        });
+
+        it('throws on append() when not holding an element', () => {
             let element = document.createElement('div');
             let outlet = new MutableOutlet(element);
             outlet.clear();
             expect(() => outlet.append(document.createElement('div'))).to.throw(Error, 'MutableOutlet#append() was called but the outlet is not holding an element.');
         });
 
-        it('throws on remove() when not holding an element', function() {
+        it('throws on remove() when not holding an element', () => {
             let element = document.createElement('div');
             let outlet = new MutableOutlet(element);
             outlet.clear();
             expect(() => outlet.remove(document.createElement('div'))).to.throw(Error, 'MutableOutlet#remove() was called but the outlet is not holding an element.');
         });
 
-        it('throws on querySelector() when not holding an element', function() {
+        it('throws on querySelector() when not holding an element', () => {
             let element = document.createElement('div');
             let outlet = new MutableOutlet(element);
             outlet.clear();
             expect(() => outlet.querySelector(document.createElement('div'))).to.throw(Error, 'MutableOutlet#querySelector() was called but the outlet is not holding an element.');
         });
 
-        it('throws on querySelectorAll() when not holding an element', function() {
+        it('throws on querySelectorAll() when not holding an element', () => {
             let element = document.createElement('div');
             let outlet = new MutableOutlet(element);
             outlet.clear();
             expect(() => outlet.querySelectorAll(element)).to.throw(Error, 'MutableOutlet#querySelectorAll() was called but the outlet is not holding an element.');
         });
 
-        it('appends a child element', function() {
+        it('appends a child element', () => {
             let element = document.createElement('div');
             let appended = document.createElement('div');
             let appended2 = document.createElement('div');
@@ -150,7 +183,7 @@ describe('MutableOutlet', function() {
             spy.should.have.been.calledTwice;
         });
 
-        it('removes a child element', function() {
+        it('removes a child element', () => {
             let element = document.createElement('div');
             let appended = document.createElement('div');
             let appended2 = document.createElement('div');
@@ -165,7 +198,7 @@ describe('MutableOutlet', function() {
             spy.should.have.been.calledTwice;
         });
 
-        it('passes through CSS selectors', function() {
+        it('passes through CSS selectors', () => {
             let element = document.createElement('div');
             let outlet = new MutableOutlet(element);
             let mock = sinon.mock(element);

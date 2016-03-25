@@ -23,6 +23,14 @@ class Outlet {
         }
     }
 
+    get innerHTML() {
+        return this._element.innerHTML;
+    }
+
+    set innerHTML(html) {
+        throw new Error(ctorName(this) + '.innerHTML cannot be set. Try using a MutableOutlet instead.');
+    }
+
     append(child) {
         if (!(child instanceof Element)) {
             throw new TypeError(ctorName(this) + '#append() was not passed an "Element" instance.');

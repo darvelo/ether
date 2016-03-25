@@ -21,6 +21,21 @@ class MutableOutlet extends Outlet {
         }
         this._element = null;
     }
+
+    get innerHTML() {
+        if (!this._element) {
+            throw new Error(ctorName(this) + '.innerHTML was being retrieved but the outlet is not holding an element.');
+        }
+        return this._element.innerHTML;
+    }
+
+    set innerHTML(html) {
+        if (!this._element) {
+            throw new Error(ctorName(this) + '.innerHTML was being set but the outlet is not holding an element.');
+        }
+        this._element.innerHTML = html;
+    }
+
 }
 
 export default MutableOutlet;

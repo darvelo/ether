@@ -1,8 +1,8 @@
 import Outlet from '../../../src/classes/outlet';
 
-describe('Outlet', function() {
-    describe('Constructor', function() {
-        it('throws when passed a non-Element', function() {
+describe('Outlet', () => {
+    describe('Constructor', () => {
+        it('throws when passed a non-Element', () => {
             expect(() => new Outlet()).to.throw(TypeError, 'Outlet constructor was not passed an "Element" instance.');
             expect(() => new Outlet({})).to.throw(TypeError, 'Outlet constructor was not passed an "Element" instance.');
         });
@@ -63,8 +63,25 @@ describe('Outlet', function() {
         element.innerHTML.should.equal('');
     });
 
-    describe('DOM-delegating methods', function() {
-        it('appends a child element', function() {
+    describe('DOM-delegating methods', () => {
+        it('gets innerHTML', () => {
+            let html = '<span></span>';
+            let element = document.createElement('div');
+            element.innerHTML = html;
+            let outlet = new Outlet(element);
+            expect(outlet.innerHTML).to.equal(html);
+        });
+
+        it('cannot set innerHTML', () => {
+            let html = '<span></span>';
+            let element = document.createElement('div');
+            let outlet = new Outlet(element);
+            expect(element.innerHTML).to.equal('');
+            expect(() => outlet.innerHTML = html).to.throw(Error, 'Outlet.innerHTML cannot be set. Try using a MutableOutlet instead.');
+            expect(element.innerHTML).to.equal('');
+        });
+
+        it('appends a child element', () => {
             let element = document.createElement('div');
             let appended = document.createElement('div');
             let appended2 = document.createElement('div');
@@ -81,7 +98,7 @@ describe('Outlet', function() {
             stub.restore();
         });
 
-        it('removes a child element', function() {
+        it('removes a child element', () => {
             let element = document.createElement('div');
             let appended = document.createElement('div');
             let appended2 = document.createElement('div');
@@ -98,7 +115,7 @@ describe('Outlet', function() {
             stub.restore();
         });
 
-        it('passes through CSS selectors', function() {
+        it('passes through CSS selectors', () => {
             let element = document.createElement('div');
             let outlet = new Outlet(element);
             let mock = sinon.mock(element);
