@@ -4,12 +4,12 @@ describe('View', () => {
     describe('Constructor', () => {
         it('calls init() with arguments', () => {
             let spy = sinon.spy();
-            class TestView extends View {
+            class InitView extends View {
                 init(...args) {
                     spy(...args);
                 }
             }
-            let view = new TestView(1,2,3);
+            let view = new InitView(1,2,3);
             spy.should.have.been.calledWith(1,2,3);
         });
     });
@@ -23,6 +23,26 @@ describe('View', () => {
             it('throws when DOMListen callback is not a function', () => {
                 let view = new View();
                 expect(() => view.DOMListen(document.createElement('div'), 'click')).to.throw(TypeError,  'View#DOMListen() was not passed a callback that was a function type.');
+            });
+
+            it('allows a string to stand for a method and `this` context', () => {
+                let spy = sinon.spy();
+                class ClickView extends View {
+                    click() {
+                        spy(this);
+                    }
+                }
+                let element = document.createElement('div');
+                let view = new ClickView();
+                view.DOMListen(element, 'click', 'click');
+                spy.should.not.have.been.called;
+                element.click();
+                spy.should.have.been.calledOnce;
+                spy.should.have.been.calledWith(view);
+                view.DOMUnlisten(element, 'click', 'click');
+                element.click();
+                spy.should.have.been.calledOnce;
+                spy.should.have.been.calledWith(view);
             });
 
             it('adds an event callback without a context', () => {

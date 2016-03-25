@@ -1,5 +1,5 @@
 import ctorName from '../utils/ctor-name';
-import { isnt } from '../utils/is';
+import { is, isnt } from '../utils/is';
 
 class View {
     constructor(...args) {
@@ -10,6 +10,10 @@ class View {
     init() { }
 
     DOMListen(element, evtName, callback, context) {
+        if (is(callback, 'String')) {
+            callback = this[callback];
+            context  = this;
+        }
         if (!(element instanceof Element)) {
             throw new TypeError(ctorName(this) + '#DOMListen() was not passed an Element instance.');
         }
@@ -43,6 +47,10 @@ class View {
     }
 
     DOMUnlisten(element, evtName, callback, context) {
+        if (is(callback, 'String')) {
+            callback = this[callback];
+            context  = this;
+        }
         if (!(element instanceof Element)) {
             throw new TypeError(ctorName(this) + '#DOMUnlisten() was not passed an Element instance.');
         }
