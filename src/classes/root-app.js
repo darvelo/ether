@@ -765,7 +765,7 @@ class RootApp extends App {
             app = mm.mountFor(crumb);
             mm = app._mountMapper;
             cmm = app._conditionalMountMapper;
-            routesToDeactivate = this._flattenDeactivationRoutes(cmm, cmm.getCurrentMounts());
+            routesToDeactivate = this._flattenDeactivationRoutes(cmm, cmm.getCurrentMounts() || []);
             steps.push({ app, routesToDeactivate });
             // continue with the next mount
             crumb = mm.getCurrentMount();

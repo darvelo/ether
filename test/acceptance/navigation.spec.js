@@ -1,3 +1,4 @@
+import RootApp from '../../src/classes/root-app';
 import App from '../../src/classes/app';
 import Route from '../../src/classes/route';
 import MutableOutlet from '../../src/classes/mutable-outlet';
@@ -224,6 +225,34 @@ describe('Navigation Acceptance Tests', () => {
                     // if test fails, pass error to Mocha
                     done(err);
                 });
+            });
+
+            genTest('navigates between routes inside apps with no cMounts', [
+                ['a/c', 'd/c']
+            ], (done, dest1, dest2) => {
+                class TestRoute extends Route {
+                    expectedOutlets() { return []; }
+                }
+                class TestApp extends App {
+                    expectedOutlets() { return []; }
+                    mount() {
+                        return {
+                            'c': TestRoute,
+                        };
+                    }
+                }
+                class SimpleRootApp extends RootApp {
+                    mount() {
+                        return {
+                            'a': TestApp,
+                            'd': TestApp,
+                        };
+                    }
+                }
+                let rootApp = new SimpleRootApp(defaultOpts);
+                rootApp.navigate(dest1).then(() => {
+                    return rootApp.navigate(dest2);
+                }).then(done).catch(done);
             });
         });
 
