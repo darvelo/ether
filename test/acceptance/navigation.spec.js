@@ -22,6 +22,13 @@ import {
 
 let freeze = Object.freeze;
 
+class TestRoute extends Route {
+    expectedOutlets() { return []; }
+}
+class TestApp extends App {
+    expectedOutlets() { return []; }
+}
+
 describe('Navigation Acceptance Tests', () => {
     let defaultOpts;
 
@@ -230,11 +237,7 @@ describe('Navigation Acceptance Tests', () => {
             genTest('navigates between routes inside apps with no cMounts', [
                 ['a/c', 'd/c']
             ], (done, dest1, dest2) => {
-                class TestRoute extends Route {
-                    expectedOutlets() { return []; }
-                }
-                class TestApp extends App {
-                    expectedOutlets() { return []; }
+                class SimpleApp extends TestApp {
                     mount() {
                         return {
                             'c': TestRoute,
@@ -244,8 +247,8 @@ describe('Navigation Acceptance Tests', () => {
                 class SimpleRootApp extends RootApp {
                     mount() {
                         return {
-                            'a': TestApp,
-                            'd': TestApp,
+                            'a': SimpleApp,
+                            'd': SimpleApp,
                         };
                     }
                 }
@@ -1124,6 +1127,38 @@ describe('Navigation Acceptance Tests', () => {
                 }).catch(err => {
                     done(err);
                 });
+            });
+
+            genTest('navigates successfully even if a route\'s prerender/render/deactivate functions reject', [
+                ['a', 'b'],
+            ], (done, dest1, dest2) => {
+                class FailRoute extends TestRoute {
+                    prerender() {
+                        return Promise.reject('prerender reject');
+                    }
+                    render() {
+                        throw new Error('render error');
+                    }
+                    deactivate() {
+                        return Promise.reject('deactivate reject');
+                    }
+                }
+                class FailRootApp extends RootApp {
+                    mount() {
+                        return {
+                            'a': FailRoute,
+                            'b': TestRoute,
+                        };
+                    }
+                }
+                let rootApp = new FailRootApp(defaultOpts);
+                rootApp.navigate(dest1).then(() => {
+                    expect(rootApp.fullUrl()).to.equal(dest1);
+                    return rootApp.navigate(dest2);
+                }).then(() => {
+                    expect(rootApp.fullUrl()).to.equal(dest2);
+                    done();
+                }).catch(done);
             });
         });
     });

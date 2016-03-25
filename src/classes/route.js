@@ -247,21 +247,45 @@ class Route extends Modifiable {
         return Promise.resolve().then(() => {
             this._setState('deactivating');
             return this.deactivate();
-        }).then(() => this._setState('deactivated'));
+        }).then(() => {
+            this._setState('deactivated');
+        }, err => {
+            this._setState('deactivated');
+            if (this._rootApp._config.debugMode) {
+                console.warn(`${ctorName(this)}#deactivate() triggered an error:`);
+                console.warn(err);
+            }
+        });
     }
 
     _prerender(params, queryParams, diffs) {
         return Promise.resolve().then(() => {
             this._setState('prerendering');
             return this.prerender(params, queryParams, diffs);
-        }).then(() => this._setState('prerendered'));
+        }).then(() => {
+            this._setState('prerendered');
+        }, err => {
+            this._setState('prerendered');
+            if (this._rootApp._config.debugMode) {
+                console.warn(`${ctorName(this)}#prerender() triggered an error:`);
+                console.warn(err);
+            }
+        });
     }
 
     _render(params, queryParams, diffs) {
         return Promise.resolve().then(() => {
             this._setState('rendering');
             return this.render(params, queryParams, diffs);
-        }).then(() => this._setState('rendered'));
+        }).then(() => {
+            this._setState('rendered');
+        }, err => {
+            this._setState('rendered');
+            if (this._rootApp._config.debugMode) {
+                console.warn(`${ctorName(this)}#render() triggered an error:`);
+                console.warn(err);
+            }
+        });
     }
 
     /**
