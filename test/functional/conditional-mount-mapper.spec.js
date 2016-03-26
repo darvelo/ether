@@ -120,7 +120,6 @@ describe('ConditionalMountMapper', () => {
                 addresses: [],
                 outlets: {},
                 params: ['action'],
-                setup: undefined,
             });
 
             bothParamsSpy.should.have.been.calledOnce;
@@ -138,7 +137,6 @@ describe('ConditionalMountMapper', () => {
                 addresses: [],
                 outlets: {},
                 params: ['id', 'action'],
-                setup: undefined,
             });
 
             addressSpy.should.have.been.calledOnce;
@@ -156,7 +154,6 @@ describe('ConditionalMountMapper', () => {
                 addresses: ['fourth'],
                 outlets: {},
                 params: ['id', 'action'],
-                setup: undefined,
             });
 
             outletSpy.should.have.been.calledOnce;
@@ -177,7 +174,6 @@ describe('ConditionalMountMapper', () => {
                     fifth: parentData.outlets.fifth,
                 },
                 params: ['id', 'action'],
-                setup: undefined,
             });
 
             setupSpy.should.have.been.calledOnce;

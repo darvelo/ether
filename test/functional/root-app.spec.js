@@ -39,6 +39,53 @@ describe('RootApp Functional Tests', () => {
         };
     });
 
+    describe('Modifiable', () => {
+        it('works with the addresses modifier', done => {
+            let spy = sinon.spy();
+            class MyRootApp extends RootApp {
+                expectedAddresses() {
+                    return ['one'];
+                }
+                addressesHandlers() {
+                    return ['receive'];
+                }
+                receive(val) {
+                    spy(val);
+                }
+            }
+            let rootApp = MyRootApp.addresses('one');
+            spy.should.not.have.been.called;
+            rootApp = rootApp.create(defaultOpts);
+            spy.should.not.have.been.called;
+            rootApp.sendTo('one', 2).then(() => {
+                spy.should.have.been.calledOnce;
+                spy.should.have.been.calledWith(2);
+                done();
+            }).catch(done);
+        });
+
+        it('works with the setup modifier', () => {
+            let spy1 = sinon.spy();
+            let spy2 = sinon.spy();
+            class MyRootApp extends RootApp {
+                expectedSetup(setupVal) {
+                    spy1(setupVal);
+                }
+                init(setupVal) {
+                    spy2(setupVal);
+                }
+            }
+            let rootApp = MyRootApp.setup(() => 1, num => num + 1);
+            spy1.should.not.have.been.called;
+            spy2.should.not.have.been.called;
+            rootApp = rootApp.create(defaultOpts);
+            spy1.should.have.been.calledOnce;
+            spy2.should.have.been.calledOnce;
+            spy1.should.have.been.calledWith(2);
+            spy2.should.have.been.calledWith(2);
+        });
+    });
+
     describe('Addresses', () => {
         it('expects no addresses', () => {
             expect(() => new RootApp(defaultOpts)).to.not.throw();

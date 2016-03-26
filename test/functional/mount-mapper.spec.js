@@ -188,7 +188,6 @@ describe('MountMapper', () => {
                 addresses: [],
                 outlets: {},
                 params: ['action', 'id'],
-                setup: undefined,
             });
 
             bothParamsSpy.should.have.been.calledOnce;
@@ -207,7 +206,6 @@ describe('MountMapper', () => {
                 addresses: [],
                 outlets: {},
                 params: ['action', 'id'],
-                setup: undefined,
             });
 
             addressSpy.should.have.been.calledOnce;
@@ -226,7 +224,6 @@ describe('MountMapper', () => {
                 addresses: ['addressRoute'],
                 outlets: {},
                 params: ['action', 'id'],
-                setup: undefined,
             });
 
             outletSpy.should.have.been.calledOnce;
@@ -248,7 +245,6 @@ describe('MountMapper', () => {
                     second: parentData.outlets.second,
                 },
                 params: ['action', 'id'],
-                setup: undefined,
             });
 
             setupSpy.should.have.been.calledOnce;

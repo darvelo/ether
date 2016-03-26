@@ -14,7 +14,7 @@ class Modified {
     }
 
     create(...args) {
-        args = this._argsTransformFns.reduce((memo, fn) => fn(...memo), args);
+        args = this._argsTransformFns.reduce((memo, fn) => fn(memo), args);
         return this.klass.create(...args);
     }
 

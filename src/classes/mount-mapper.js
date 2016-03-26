@@ -235,15 +235,18 @@ class MountMapper extends BaseMountMapper {
         let opts = {
             rootApp: parentData.rootApp,
             parentApp: parentData.parentApp,
-            addresses: this._compileMountAddresses(mount),
             outlets: this._compileMountOutlets(mount, crumb, passedOutlets, parentData),
-            setup: this._compileMountSetupFns(mount),
             params: this._compileMountParams(mount, crumb, mountParams, parentData),
+            // this will be overwritten by Modified
+            // if the mount is an instance of Modified
+            addresses: [],
         };
 
+        let instance = mount.create(opts);
+
         return {
-            addresses: opts.addresses,
-            instance: mount.create(opts),
+            instance,
+            addresses: instance.addresses || [],
         };
     }
 

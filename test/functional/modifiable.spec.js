@@ -11,21 +11,24 @@ class IdentityModifier {
 }
 
 let setupFns = [
-    function () { },
-    function () { },
+    function () { return 1; },
+    function (num) { return num + 1; },
 ];
 
-let transformTestsArgs = [
-    {
-        addresses: ['should-be-overwritten'],
-        outlets: {
-            one: 1,
-            two: 2,
+let transformTestsArgs;
+function resetTransformTestsArgs() {
+    transformTestsArgs = [
+        {
+            addresses: ['should-be-overwritten'],
+            outlets: {
+                one: 1,
+                two: 2,
+            },
+            params: [],
         },
-        params: [],
-    },
-    4, 5, 6,
-];
+        4, 5, 6,
+    ];
+}
 
 let transformTests = {
     address: {
@@ -33,13 +36,16 @@ let transformTests = {
         args: ['addy1', 'addy2'],
         run: function(addressable) {
             let modified = addressable[this.prop](...this.args);
-            expect(modified.addresses).to.deep.equal(this.args);
             // this allows us to bypass Expectable expected*() functions
             // and just check that the arguments are transformed correctly
             let stub = sinon.stub(modified.klass, 'create');
             modified.create(...transformTestsArgs);
             stub.should.have.been.calledOnce;
             let callArgs = stub.getCall(0).args;
+            // set up args to test against.
+            // since we already used transformTestsArgs in the
+            // create() call, we don't need to worry about changing it
+            transformTestsArgs[0].addresses = this.args;
             callArgs.should.deep.equal(transformTestsArgs);
             stub.restore();
             return modified;
@@ -67,13 +73,16 @@ let transformTests = {
         args: setupFns,
         run: function(setupable) {
             let modified = setupable[this.prop](...this.args);
-            expect(modified.setupFns).to.deep.equal(this.args);
             // this allows us to bypass Expectable expected*() functions
             // and just check that the arguments are transformed correctly
             let stub = sinon.stub(modified.klass, 'create');
             modified.create(...transformTestsArgs);
             stub.should.have.been.calledOnce;
             let callArgs = stub.getCall(0).args;
+            // set up args to test against.
+            // since we already used transformTestsArgs in the
+            // create() call, we don't need to worry about changing it
+            transformTestsArgs[0].setup = 2;
             callArgs.should.deep.equal(transformTestsArgs);
             stub.restore();
             return modified;
@@ -111,6 +120,7 @@ describe('Modifiable Functional Tests', () => {
             });
 
             it('applies the proper transformation', () => {
+                resetTransformTestsArgs();
                 transformTests.address.run(Modifiable);
             });
         });
@@ -144,6 +154,7 @@ describe('Modifiable Functional Tests', () => {
             });
 
             it('applies the proper transformation', () => {
+                resetTransformTestsArgs();
                 transformTests.outlets.run(Modifiable);
             });
         });
@@ -177,6 +188,7 @@ describe('Modifiable Functional Tests', () => {
             });
 
             it('applies the proper transformation', () => {
+                resetTransformTestsArgs();
                 transformTests.setup.run(Modifiable);
             });
         });
@@ -219,6 +231,7 @@ describe('Modifiable Functional Tests', () => {
 
             for (let p of permute(modifiers)) {
                 let modified = Modifiable;
+                resetTransformTestsArgs();
                 for (let test of p) {
                     modified = test.run(modified);
                 }

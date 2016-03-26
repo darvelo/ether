@@ -59,7 +59,8 @@ class App extends Modifiable {
 
         this._rootApp = opts.rootApp;
         this._parentApp = opts.parentApp;
-        registerAddresses(this, opts.addresses);
+        this.addresses = opts.addresses;
+        registerAddresses(this, this.addresses);
         this._mountMapper = new MountMapper();
         this._conditionalMountMapper = new ConditionalMountMapper();
         let allOutlets = this.createOutlets(opts.outlets);

@@ -185,10 +185,11 @@ class ConditionalMountMapper extends BaseMountMapper {
         let opts = {
             rootApp: parentData.rootApp,
             parentApp: parentData.parentApp,
-            addresses: this._compileMountAddresses(mount),
             outlets: this._compileMountOutlets(mount, logic, passedOutlets, parentData, isConditionalMapper),
-            setup: this._compileMountSetupFns(mount),
             params: this._compileMountParams(mount, parseResult, parentData),
+            // this will be overwritten by Modified
+            // if the mount is an instance of Modified
+            addresses: [],
         };
 
         return mount.create(opts);

@@ -41,7 +41,8 @@ class Route extends Modifiable {
 
         this._rootApp = opts.rootApp;
         this._parentApp = opts.parentApp;
-        registerAddresses(this, opts.addresses);
+        this.addresses = opts.addresses;
+        registerAddresses(this, this.addresses);
         this.outlets = opts.outlets;
         this._setState('deactivated');
         this._rootApp._inits.push(() => this.init(opts.setup));

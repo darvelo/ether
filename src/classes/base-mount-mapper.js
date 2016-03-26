@@ -2,20 +2,6 @@ import Modified from './modified';
 import ctorName from '../utils/ctor-name';
 
 class BaseMountMapper {
-    _compileMountAddresses(mount) {
-        let addresses = [];
-
-        if (mount instanceof Modified &&
-            // the Addressable modifier,
-            // if the user invoked it, sets this array
-            Array.isArray(mount.addresses))
-        {
-            mount.addresses.forEach(addr => addresses.push(addr));
-        }
-
-        return addresses;
-    }
-
     _compileMountOutlets(mount, crumb, passedOutlets, parentData, isConditionalMapper=false) {
         let missingOutlets = [];
         let outlets = {};
@@ -45,20 +31,6 @@ class BaseMountMapper {
         this._addToPassedOutletsList(outlets, passedOutlets, parentData.parentApp);
 
         return outlets;
-    }
-
-    _compileMountSetupFns(mount) {
-        let setupFns;
-
-        if (mount instanceof Modified &&
-            // the Setupable modifier,
-            // if the user invoked it, sets this array
-            Array.isArray(mount.setupFns))
-        {
-            setupFns = mount.setupFns.reduce((memo, fn) => fn(memo), undefined);
-        }
-
-        return setupFns;
     }
 
     _addToPassedOutletsList(outletsToPass, passedOutlets, parentApp) {
