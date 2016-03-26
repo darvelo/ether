@@ -164,6 +164,9 @@ class RootApp extends App {
         if (target.nodeName !== 'A' || event.button !== 0) {
             return;
         }
+        if (target.getAttribute('target') !== null) {
+            return;
+        }
         let path = this._getNavigationPath(target.href);
         if (path) {
             event.stopPropagation();
