@@ -67,7 +67,7 @@ describe('ConditionalMountMapper', () => {
     let mapper, mountMapper, mountsMetadata, parentData;
 
     beforeEach(() => {
-        MyRootApp.prototype._instantiateConditionalMounts = function(params, mountsMeta) {
+        MyRootApp.prototype._instantiateConditionalMounts = function(allOutlets, params, mountsMeta) {
             mountMapper = this._mountMapper;
             mountsMetadata = mountsMeta;
         };

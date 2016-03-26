@@ -1,10 +1,11 @@
 import Modifiable from './modifiable';
+import Modified from './modified';
 import MountMapper from './mount-mapper';
 import ConditionalMountMapper from './conditional-mount-mapper';
 import InitRunner from '../utils/init-runner';
 import registerAddresses from '../utils/register-addresses';
 import ctorName from '../utils/ctor-name';
-import { isnt } from '../utils/is';
+import { is, isnt } from '../utils/is';
 
 const possibleAppStates = Object.freeze(['active', 'inactive']);
 
@@ -59,11 +60,15 @@ class App extends Modifiable {
         this._rootApp = opts.rootApp;
         this._parentApp = opts.parentApp;
         registerAddresses(this, opts.addresses);
-        this.outlets = this.createOutlets(opts.outlets);
         this._mountMapper = new MountMapper();
         this._conditionalMountMapper = new ConditionalMountMapper();
-        let mountsMetadata = this._instantiateMounts(opts.params);
-        this._instantiateConditionalMounts(opts.params, mountsMetadata);
+        let allOutlets = this.createOutlets(opts.outlets);
+        // instantiate mounts and cMounts and store
+        // this App's own outlets into `this.outlets`
+        // by filtering out outlets that are passed forward
+        let mountsMetadata = this._instantiateMounts(allOutlets, opts.params);
+        this._instantiateConditionalMounts(allOutlets, opts.params, mountsMetadata);
+
         this._rootApp._inits.push(() => this.init(opts.setup));
     }
 
@@ -121,7 +126,7 @@ class App extends Modifiable {
         });
     }
 
-    _instantiateMounts(params) {
+    _instantiateMounts(allOutlets, params) {
         let mounts = this.mount();
 
         if (isnt(mounts, 'Object')) {
@@ -141,12 +146,21 @@ class App extends Modifiable {
             }
         }
 
+        // store outlets that aren't to be passed forward as own outlets
+        this.outlets = Object.assign({}, allOutlets);
+        Object.keys(mounts).forEach(key => {
+            let mount = mounts[key];
+            if (mount instanceof Modified && is(mount.outlets, 'Array')) {
+                mount.outlets.forEach(name => delete this.outlets[name]);
+            }
+        });
+
         // data the MountMapper uses in
         // the creation of the mount instance
         let data = {
             rootApp: this._rootApp,
             parentApp: this,
-            outlets: this.outlets,
+            outlets: allOutlets,
             params,
         };
 
@@ -154,19 +168,33 @@ class App extends Modifiable {
         return this._mountMapper.add(mounts, data);
     }
 
-    _instantiateConditionalMounts(params, mountsMetadata) {
+    _instantiateConditionalMounts(allOutlets, params, mountsMetadata) {
         let cMounts = this.mountConditionals();
 
         if (isnt(cMounts, 'Object')) {
             throw new TypeError(ctorName(this) + '#mountConditionals() did not return an object.');
         }
 
+        // continue the work from _instantiateMounts()
+        // to filter out outlets that aren't own outlets
+        Object.keys(cMounts).forEach(key => {
+            let cMount = cMounts[key];
+            if (isnt(cMount, 'Array')) {
+                cMount = [cMount];
+            }
+            cMount.forEach(route => {
+                if (route instanceof Modified && is(route.outlets, 'Array')) {
+                    route.outlets.forEach(name => delete this.outlets[name]);
+                }
+            });
+        });
+
         // data the ConditionalMountMapper uses in
         // the creation of the conditional mount instance
         let data = {
             rootApp: this._rootApp,
             parentApp: this,
-            outlets: this.outlets,
+            outlets: allOutlets,
             mountMapper: this._mountMapper,
             params,
             mountsMetadata,

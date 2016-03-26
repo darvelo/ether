@@ -264,16 +264,13 @@ describe('Mounting Functional Tests', () => {
                     }
                 }
                 let rootApp = new MyRootApp(defaultOpts);
+                expect(rootApp.outlets).to.be.deep.equal({
+                    'main': defaultOpts.outlets.main,
+                });
                 expect(rootApp._atAddress('1')).to.be.an.instanceof(OutletApp);
                 expect(rootApp._atAddress('1').outlets).to.deep.equal({
                     '1_1': outlet1_1,
                     '1_2': outlet1_2,
-                    '4_1': outlet4_1,
-                    '4_2': outlet4_2,
-                    '5_1': outlet5_1,
-                    '5_2': outlet5_2,
-                    '6_1': outlet6_1,
-                    '6_2': outlet6_2,
                 });
                 expect(rootApp._atAddress('2')).to.be.an.instanceof(OutletRoute);
                 expect(rootApp._atAddress('2').outlets).to.deep.equal({
