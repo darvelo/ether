@@ -160,8 +160,14 @@ class RootApp extends App {
     }
 
     _linksClickDelegatedHandler(event) {
+        if (event.button !== 0) {
+            return;
+        }
         let target = event.target;
-        if (target.nodeName !== 'A' || event.button !== 0) {
+        while (target && target.nodeName !== 'A') {
+            target = target.parentNode;
+        }
+        if (!target) {
             return;
         }
         if (target.getAttribute('target') !== null) {
