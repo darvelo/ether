@@ -6,8 +6,7 @@ import diffObjects from '../../src/utils/diff-objects';
 import finalDiff from '../../src/utils/final-diff';
 
 import genTest from '../utils/test-generator';
-import assertAppState from '../utils/navigation-acceptance-tests/app-state-validator';
-import RoutesStateValidator from '../utils/navigation-acceptance-tests/routes-state-validator/';
+import StateValidator from '../utils/navigation-acceptance-tests/state-validator/';
 import MyRootApp from '../utils/navigation-acceptance-tests/app-under-test/root-app';
 
 // holds Sinon spies that are regenerated
@@ -45,7 +44,7 @@ describe('Navigation Acceptance Tests', () => {
         let rootApp;
 
         beforeEach(() => {
-            rootApp = new MyRootApp(defaultOpts);
+            rootApp = MyRootApp.create(defaultOpts);
         });
 
         it('succeeds when it maches a path in the app hierarchy', () => {
@@ -95,7 +94,7 @@ describe('Navigation Acceptance Tests', () => {
             genTest('resolves a Promise on successful navigation', [
                 '/',
             ], (done, dest) => {
-                let rootApp = new MyRootApp(defaultOpts);
+                let rootApp = MyRootApp.create(defaultOpts);
                 rootApp.navigate(dest).then(() => {
                     done();
                 }).catch(err => {
@@ -110,7 +109,7 @@ describe('Navigation Acceptance Tests', () => {
                 // navigation ends on an App, not a Route
                 '/user/1',
             ], (done, dest) => {
-                let rootApp = new MyRootApp(defaultOpts);
+                let rootApp = MyRootApp.create(defaultOpts);
                 rootApp.navigate(dest).then(null, err => {
                     expect(err).to.be.instanceof(Error);
                     err.message.should.equal(`404 for path: "${dest}".`);
@@ -125,7 +124,7 @@ describe('Navigation Acceptance Tests', () => {
             genTest('sets return val of fullUrl() on the RootApp', [
                 '/',
             ], (done, dest) => {
-                let rootApp = new MyRootApp(defaultOpts);
+                let rootApp = MyRootApp.create(defaultOpts);
                 expect(rootApp.fullUrl()).to.equal(undefined);
                 rootApp.navigate(dest).then(() => {
                     expect(rootApp.fullUrl()).to.equal('/');
@@ -139,7 +138,7 @@ describe('Navigation Acceptance Tests', () => {
             genTest('does not set return val of fullUrl() on the RootApp on nav failure', [
                 '/nope',
             ], (done, dest) => {
-                let rootApp = new MyRootApp(defaultOpts);
+                let rootApp = MyRootApp.create(defaultOpts);
                 expect(rootApp.fullUrl()).to.equal(undefined);
                 rootApp.navigate(dest).then(null, () => {
                     expect(rootApp.fullUrl()).to.equal(undefined);
@@ -155,7 +154,7 @@ describe('Navigation Acceptance Tests', () => {
                 '/?hello=true&goodbye=false',
                 '/user/1/action/go?hello=true&goodbye=false',
             ], (done, dest) => {
-                let rootApp = new MyRootApp(defaultOpts);
+                let rootApp = MyRootApp.create(defaultOpts);
                 expect(rootApp.fullUrl()).to.equal(undefined);
                 rootApp.navigate(dest).then(() => {
                     let queryParams;
@@ -179,7 +178,7 @@ describe('Navigation Acceptance Tests', () => {
             genTest('throws if construction of app state fails', [
                 '/',
             ], (done, dest) => {
-                let rootApp = new MyRootApp(defaultOpts);
+                let rootApp = MyRootApp.create(defaultOpts);
                 let stub = sinon.stub(rootApp, '_constructState').returns(Promise.reject(new Error('fail!')));
                 rootApp.navigate(dest).then(null, err => {
                     expect(err.message).to.equal('fail!');
@@ -195,7 +194,7 @@ describe('Navigation Acceptance Tests', () => {
             genTest('throws if `routingTrace.result` is neither `success` nor `404`', [
                 '/',
             ], (done, dest) => {
-                let rootApp = new MyRootApp(defaultOpts);
+                let rootApp = MyRootApp.create(defaultOpts);
                 let stub = sinon.stub(rootApp, '_buildPath').returns({result: null});
                 expect(() => rootApp.navigate(dest)).to.throw(TypeError, 'MyRootApp#navigate(): routingTrace had in invalid value: null.');
                 stub.restore();
@@ -207,7 +206,7 @@ describe('Navigation Acceptance Tests', () => {
                 ['/news/story?xyz=true&option=1', 'userApp'],
                 ['/user/1/action/go?option=1', 'userApp'],
             ], (done, dest, address) => {
-                let rootApp = new MyRootApp(defaultOpts);
+                let rootApp = MyRootApp.create(defaultOpts);
                 let app = rootApp._atAddress(address);
                 expect(app).to.be.an.instanceof(App);
                 app.navigate(dest).then(() => {
@@ -223,7 +222,7 @@ describe('Navigation Acceptance Tests', () => {
                 ['/news/story?xyz=true&option=1', 'userIdMenuOne'],
                 ['/user/1/action/go?option=1', 'rootRoot'],
             ], (done, dest, address) => {
-                let rootApp = new MyRootApp(defaultOpts);
+                let rootApp = MyRootApp.create(defaultOpts);
                 let route = rootApp._atAddress(address);
                 expect(route).to.be.an.instanceof(Route);
                 route.navigate(dest).then(() => {
@@ -263,7 +262,7 @@ describe('Navigation Acceptance Tests', () => {
             genTest('does not call any prerender/deactivate/render before calling navigate()', [
                 '/',
             ], (done, dest) => {
-                let rootApp = new MyRootApp(defaultOpts);
+                let rootApp = MyRootApp.create(defaultOpts);
                 getAllSpyFns(mountSpies).forEach(spy => spy.should.not.have.been.called);
                 getAllSpyFns(cMountSpies).forEach(spy => spy.should.not.have.been.called);
                 rootApp.navigate(dest).then(() => {
@@ -276,18 +275,31 @@ describe('Navigation Acceptance Tests', () => {
                 });
             });
 
-            genTest('calls prerender/render, in order, only on the navigated-to mount\'s Route', [
+            genTest('calls prerender/render, in order, only on the RootApp and its navigated-to Route', [
                 '/',
             ], (done, dest) => {
-                let rootApp = new MyRootApp(defaultOpts);
+                let rootApp = MyRootApp.create(defaultOpts);
                 rootApp.navigate(dest).then(() => {
-                    let spies = mountSpies.RootRootRoute;
-                    let { prerenderSpy, renderSpy } = spies;
+                    let spies, prerenderSpy, renderSpy;
+
+                    spies = mountSpies.MyRootApp;
+                    prerenderSpy = spies.prerenderSpy;
+                    renderSpy    = spies.renderSpy;
                     prerenderSpy.should.have.been.calledOnce;
                     renderSpy.should.have.been.calledOnce;
                     prerenderSpy.should.have.been.calledBefore(renderSpy);
                     delete spies.prerenderSpy;
                     delete spies.renderSpy;
+
+                    spies = mountSpies.RootRootRoute;
+                    prerenderSpy = spies.prerenderSpy;
+                    renderSpy    = spies.renderSpy;
+                    prerenderSpy.should.have.been.calledOnce;
+                    renderSpy.should.have.been.calledOnce;
+                    prerenderSpy.should.have.been.calledBefore(renderSpy);
+                    delete spies.prerenderSpy;
+                    delete spies.renderSpy;
+
                     getAllSpyFns(mountSpies).forEach(spy => spy.should.not.have.been.called);
                     done();
                 }).catch(err => {
@@ -296,18 +308,41 @@ describe('Navigation Acceptance Tests', () => {
                 });
             });
 
-            genTest('calls prerender/render, in order, only on the navigated-to mount\'s Route that is within a sub-App', [
+            genTest('calls prerender/render, in order, only on the RootApp, sub-App, and its navigated-to Route', [
                 '/user/1/action/go',
             ], (done, dest) => {
-                let rootApp = new MyRootApp(defaultOpts);
+                let rootApp = MyRootApp.create(defaultOpts);
                 rootApp.navigate(dest).then(() => {
-                    let spies = mountSpies.UserIdActionRoute;
-                    let { prerenderSpy, renderSpy } = spies;
+                    let spies, prerenderSpy, renderSpy;
+
+                    spies = mountSpies.MyRootApp;
+                    prerenderSpy = spies.prerenderSpy;
+                    renderSpy    = spies.renderSpy;
                     prerenderSpy.should.have.been.calledOnce;
                     renderSpy.should.have.been.calledOnce;
                     prerenderSpy.should.have.been.calledBefore(renderSpy);
                     delete spies.prerenderSpy;
                     delete spies.renderSpy;
+
+                    spies = mountSpies.UserApp;
+                    prerenderSpy = spies.prerenderSpy;
+                    renderSpy    = spies.renderSpy;
+                    prerenderSpy.should.have.been.calledOnce;
+                    renderSpy.should.have.been.calledOnce;
+                    prerenderSpy.should.have.been.calledBefore(renderSpy);
+                    delete spies.prerenderSpy;
+                    delete spies.renderSpy;
+
+                    spies = mountSpies.UserIdActionRoute;
+                    prerenderSpy = spies.prerenderSpy;
+                    renderSpy    = spies.renderSpy;
+                    prerenderSpy.should.have.been.calledOnce;
+                    renderSpy.should.have.been.calledOnce;
+                    prerenderSpy.should.have.been.calledBefore(renderSpy);
+                    delete spies.prerenderSpy;
+                    delete spies.renderSpy;
+
+
                     getAllSpyFns(mountSpies).forEach(spy => spy.should.not.have.been.called);
                     done();
                 }).catch(err => {
@@ -327,7 +362,7 @@ describe('Navigation Acceptance Tests', () => {
                         queryParams: {sort: [undefined, true], sort_type: [undefined, 'asc'], idx: [undefined, '1']},
                     },
                 ];
-                let rootApp = new MyRootApp(defaultOpts);
+                let rootApp = MyRootApp.create(defaultOpts);
                 rootApp.navigate(dest).then(() => {
                     let spies = mountSpies.UserIdActionRoute;
                     let { prerenderSpy, renderSpy } = spies;
@@ -349,7 +384,7 @@ describe('Navigation Acceptance Tests', () => {
                     }
                 }
                 let lastIdx = dests.length-1;
-                let rootApp = new MyRootApp(defaultOpts);
+                let rootApp = MyRootApp.create(defaultOpts);
                 dests.reduce((memo, dest, idx) => {
                     return memo.then(() => {
                         // only test spy calls after the
@@ -411,7 +446,11 @@ describe('Navigation Acceptance Tests', () => {
                     ['/'],
                     null, null,
                     [
+                        // apps
+                        ['MyRootApp', null, null],
+                        // root-based mounts
                         ['RootRootRoute', null, null],
+                        // root-based conditional mounts
                         ['RootAllConditionalRoute', null, null],
                         ['RootConditionalRoute', null, null],
                     ],
@@ -420,7 +459,11 @@ describe('Navigation Acceptance Tests', () => {
                     ['/?sort=true&sort_type=asc&idx=1'],
                     null, freeze({sort: true, sort_type: 'asc', idx: '1'}),
                     [
+                        // apps
+                        ['MyRootApp', null, null],
+                        // root-based mounts
                         ['RootRootRoute', null, null],
+                        // root-based conditional mounts
                         ['RootAllConditionalRoute', null, null],
                         ['RootConditionalRoute', null, null],
                     ],
@@ -429,7 +472,11 @@ describe('Navigation Acceptance Tests', () => {
                     ['/news/story?'],
                     null, null,
                     [
+                        // apps
+                        ['MyRootApp', null, null],
+                        // root-based mounts
                         ['RootNewsRoute', null, null],
+                        // root-based conditional mounts
                         ['RootAllConditionalRoute', null, null],
                         ['RootNewsConditionalRoute', null, freeze({news: 'story'})],
                     ],
@@ -438,7 +485,11 @@ describe('Navigation Acceptance Tests', () => {
                     ['/news/story?idx=3'],
                     null, freeze({idx: '3'}),
                     [
+                        // apps
+                        ['MyRootApp', null, null],
+                        // root-based mounts
                         ['RootNewsRoute', null, null],
+                        // root-based conditional mounts
                         ['RootAllConditionalRoute', null, null],
                         ['RootNewsConditionalRoute', null, freeze({news: 'story'})],
                     ],
@@ -447,10 +498,16 @@ describe('Navigation Acceptance Tests', () => {
                     ['/user/1/action/go?'],
                     null, null,
                     [
+                        // apps
+                        ['MyRootApp', null, null],
+                        ['UserApp', null, freeze({id: '1'})],
+                        // userApp-based mounts
                         ['UserIdActionRoute', null, freeze({id: '1', action: 'go'})],
+                        // root-based conditional mounts
                         ['RootAllConditionalRoute', null, null],
                         ['RootIdConditionalRouteOne', null, freeze({id: '1'})],
                         ['RootIdConditionalRouteTwo', null, freeze({id: '1'})],
+                        // userApp-based conditional mounts
                         ['UserIdConditionalRouteOne', null, freeze({id: '1'})],
                         ['UserIdConditionalRouteTwo', null, freeze({id: '1'})],
                         ['UserIdConditionalRouteThree', null, freeze({id: '1'})],
@@ -461,10 +518,16 @@ describe('Navigation Acceptance Tests', () => {
                     ['/user/2/menu/stats?'],
                     null, null,
                     [
+                        // apps
+                        ['MyRootApp', null, null],
+                        ['UserApp', null, freeze({id: '2'})],
+                        // userApp-based mounts
                         ['UserIdMenuRouteOne', null, freeze({id: '2', menu: 'stats'})],
+                        // root-based conditional mounts
                         ['RootAllConditionalRoute', null, null],
                         ['RootIdConditionalRouteOne', null, freeze({id: '2'})],
                         ['RootIdConditionalRouteTwo', null, freeze({id: '2'})],
+                        // userApp-based conditional mounts
                         ['UserIdConditionalRouteOne', null, freeze({id: '2'})],
                         ['UserIdConditionalRouteFour', null, freeze({id: '2'})],
                         ['UserIdMenuConditionalRouteOne', null, freeze({id: '2', menu: 'stats'})],
@@ -474,10 +537,16 @@ describe('Navigation Acceptance Tests', () => {
                     ['/user/2/menu/stats?bestFirst=true&limit=10&order=abc'],
                     null, freeze({bestFirst: true, limit: '10', order: 'abc'}),
                     [
+                        // apps
+                        ['MyRootApp', null, null],
+                        ['UserApp', null, freeze({id: '2'})],
+                        // userApp-based mounts
                         ['UserIdMenuRouteOne', null, freeze({id: '2', menu: 'stats'})],
+                        // root-based conditional mounts
                         ['RootAllConditionalRoute', null, null],
                         ['RootIdConditionalRouteOne', null, freeze({id: '2'})],
                         ['RootIdConditionalRouteTwo', null, freeze({id: '2'})],
+                        // userApp-based conditional mounts
                         ['UserIdConditionalRouteOne', null, freeze({id: '2'})],
                         ['UserIdConditionalRouteFour', null, freeze({id: '2'})],
                         ['UserIdMenuConditionalRouteOne', null, freeze({id: '2', menu: 'stats'})],
@@ -487,10 +556,16 @@ describe('Navigation Acceptance Tests', () => {
                     ['/user/2/menu/stats/profile'],
                     null, null,
                     [
+                        // apps
+                        ['MyRootApp', null, null],
+                        ['UserApp', null, freeze({id: '2'})],
+                        // userApp-based mounts
                         ['UserIdMenuRouteTwo', null, freeze({id: '2', menu: 'stats'})],
+                        // root-based conditional mounts
                         ['RootAllConditionalRoute', null, null],
                         ['RootIdConditionalRouteOne', null, freeze({id: '2'})],
                         ['RootIdConditionalRouteTwo', null, freeze({id: '2'})],
+                        // userApp-based conditional mounts
                         ['UserIdConditionalRouteOne', null, freeze({id: '2'})],
                         ['UserIdConditionalRouteFour', null, freeze({id: '2'})],
                         ['UserIdMenuConditionalRouteOne', null, freeze({id: '2', menu: 'stats'})],
@@ -501,10 +576,16 @@ describe('Navigation Acceptance Tests', () => {
                     ['/user/2/menu/stats/profile?bestFirst=true&limit=10&order=abc'],
                     null, freeze({bestFirst: true, limit: '10', order: 'abc'}),
                     [
+                        // apps
+                        ['MyRootApp', null, null],
+                        ['UserApp', null, freeze({id: '2'})],
+                        // userApp-based mounts
                         ['UserIdMenuRouteTwo', null, freeze({id: '2', menu: 'stats'})],
+                        // root-based conditional mounts
                         ['RootAllConditionalRoute', null, null],
                         ['RootIdConditionalRouteOne', null, freeze({id: '2'})],
                         ['RootIdConditionalRouteTwo', null, freeze({id: '2'})],
+                        // userApp-based conditional mounts
                         ['UserIdConditionalRouteOne', null, freeze({id: '2'})],
                         ['UserIdConditionalRouteFour', null, freeze({id: '2'})],
                         ['UserIdMenuConditionalRouteOne', null, freeze({id: '2', menu: 'stats'})],
@@ -518,6 +599,9 @@ describe('Navigation Acceptance Tests', () => {
                     ['/todos/1/list?hello=1&sort=asc', '/todos/2/chart?sort=asc&hello=1'],
                     freeze({hello: '1', sort: 'asc'}), freeze({hello: '1', sort: 'asc'}),
                     [
+                        // apps
+                        ['MyRootApp', null, null],
+                        ['TodoApp', freeze({id: '1'}), freeze({id: '2'})],
                         // root-based conditional mounts
                         ['RootAllConditionalRoute', null, null],
                         // todo-based mounts
@@ -531,6 +615,9 @@ describe('Navigation Acceptance Tests', () => {
                     ['/user/1/action/go?', '/user/2/action/stop'],
                     null, null,
                     [
+                        // apps
+                        ['MyRootApp', null, null],
+                        ['UserApp', freeze({id: '1'}), freeze({id: '2'})],
                         // root-based conditional mounts
                         ['RootAllConditionalRoute', null, null],
                         ['RootIdConditionalRouteOne', freeze({id: '1'}), freeze({id: '2'})],
@@ -549,7 +636,10 @@ describe('Navigation Acceptance Tests', () => {
                     ['/todos/1/list', '/todos/1/list?sort=asc&hello=1'],
                     null, freeze({hello: '1', sort: 'asc'}),
                     [
-                        // root-based conditional mounts
+                        // apps
+                        ['MyRootApp', null, null],
+                        ['TodoApp', freeze({id: '1'}), freeze({id: '1'})],
+                        // root-based conditional mount
                         ['RootAllConditionalRoute', null, null],
                         // todo-based mounts
                         ['TodoIdRenderStyleRoute', freeze({id: '1', renderStyle: 'list'}), freeze({id: '1', renderStyle: 'list'})],
@@ -562,6 +652,9 @@ describe('Navigation Acceptance Tests', () => {
                     ['/user/1/action/go?sort=true&asc=1', '/user/1/action/go?sort=false&list=yes'],
                     freeze({sort: true, asc: '1'}), freeze({sort: false, list: 'yes'}),
                     [
+                        // apps
+                        ['MyRootApp', null, null],
+                        ['UserApp', freeze({id: '1'}), freeze({id: '1'})],
                         // root-based conditional mounts
                         ['RootAllConditionalRoute', null, null],
                         ['RootIdConditionalRouteOne', freeze({id: '1'}), freeze({id: '1'})],
@@ -580,6 +673,9 @@ describe('Navigation Acceptance Tests', () => {
                     ['/todos/1/list?sort=desc&index=1', '/todos/2/chart?sort=asc&hello=1'],
                     freeze({index: '1', sort: 'desc'}), freeze({hello: '1', sort: 'asc'}),
                     [
+                        // apps
+                        ['MyRootApp', null, null],
+                        ['TodoApp', freeze({id: '1'}), freeze({id: '2'})],
                         // root-based conditional mounts
                         ['RootAllConditionalRoute', null, null],
                         // todo-based mounts
@@ -593,6 +689,9 @@ describe('Navigation Acceptance Tests', () => {
                     ['/user/1/action/go?sort=true&asc=1', '/user/2/action/stop?'],
                     freeze({sort: true, asc: '1'}), null,
                     [
+                        // apps
+                        ['MyRootApp', null, null],
+                        ['UserApp', freeze({id: '1'}), freeze({id: '2'})],
                         // root-based conditional mounts
                         ['RootAllConditionalRoute', null, null],
                         ['RootIdConditionalRouteOne', freeze({id: '1'}), freeze({id: '2'})],
@@ -621,6 +720,8 @@ describe('Navigation Acceptance Tests', () => {
                     ['/?hello=1&sort=asc', '/news/story'],
                     freeze({hello: '1', sort: 'asc'}), null,
                     [
+                        // apps
+                        ['MyRootApp', null, null],
                         // root-based mounts
                         ['RootNewsRoute', null, null],
                         // root-based conditional mounts
@@ -635,6 +736,9 @@ describe('Navigation Acceptance Tests', () => {
                     ['/', '/todos/1/list?hello=hi&sort=true'],
                     null, freeze({hello: 'hi', sort: true}),
                     [
+                        // apps
+                        ['MyRootApp', null, null],
+                        ['TodoApp', null, freeze({id: '1'})],
                         // root-based conditional mounts
                         ['RootAllConditionalRoute', null, null],
                         // todo-based mounts
@@ -651,6 +755,8 @@ describe('Navigation Acceptance Tests', () => {
                     ['/user/1/action/go?sort=true&asc=1', '/news/story?list=yes&sort=false'],
                     freeze({sort: true, asc: '1'}), freeze({sort: false, list: 'yes'}),
                     [
+                        // apps
+                        ['MyRootApp', null, null],
                         // root-based mounts
                         ['RootNewsRoute', null, null],
                         // root-based conditional mounts
@@ -665,6 +771,9 @@ describe('Navigation Acceptance Tests', () => {
                     ['/todos/1/list?', '/user/2/menu/stats/profile'],
                     null, null,
                     [
+                        // apps
+                        ['MyRootApp', null, null],
+                        ['UserApp', null, freeze({id: '2'})],
                         // root-based conditional mounts
                         ['RootAllConditionalRoute', null, null],
                         ['RootIdConditionalRouteOne', null, freeze({id: '2'})],
@@ -686,6 +795,9 @@ describe('Navigation Acceptance Tests', () => {
                     ['/todos/1/list?unused=true', '/?hello=1&sort=asc', '/todos/1/list?sort=asc&hello=1'],
                     freeze({hello: '1', sort: 'asc'}), freeze({hello: '1', sort: 'asc'}),
                     [
+                        // apps
+                        ['MyRootApp', null, null],
+                        ['TodoApp', freeze({id: '1'}), freeze({id: '1'})],
                         // root-based conditional mounts
                         ['RootAllConditionalRoute', null, null],
                         // todo-based mounts
@@ -699,6 +811,9 @@ describe('Navigation Acceptance Tests', () => {
                     ['/user/1/action/go?unused=true', '/', '/user/1/action/go?'],
                     null, null,
                     [
+                        // apps
+                        ['MyRootApp', null, null],
+                        ['UserApp', freeze({id: '1'}), freeze({id: '1'})],
                         // root-based conditional mounts
                         ['RootAllConditionalRoute', null, null],
                         ['RootIdConditionalRouteOne', freeze({id: '1'}), freeze({id: '1'})],
@@ -717,6 +832,9 @@ describe('Navigation Acceptance Tests', () => {
                     ['/todos/1/list?unused=true', '/?hello=1&sort=asc', '/todos/2/chart?sort=asc&hello=1'],
                     freeze({hello: '1', sort: 'asc'}), freeze({hello: '1', sort: 'asc'}),
                     [
+                        // apps
+                        ['MyRootApp', null, null],
+                        ['TodoApp', freeze({id: '1'}), freeze({id: '2'})],
                         // root-based conditional mounts
                         ['RootAllConditionalRoute', null, null],
                         // todo-based mounts
@@ -730,37 +848,9 @@ describe('Navigation Acceptance Tests', () => {
                     ['/user/1/action/go?unused=true', '/', '/user/2/action/stop'],
                     null, null,
                     [
-                        // root-based conditional mounts
-                        ['RootAllConditionalRoute', null, null],
-                        ['RootIdConditionalRouteOne', freeze({id: '1'}), freeze({id: '2'})],
-                        ['RootIdConditionalRouteTwo', freeze({id: '1'}), freeze({id: '2'})],
-                        // userApp-based mounts
-                        ['UserIdActionRoute', freeze({id: '1', action: 'go'}), freeze({id: '2', action: 'stop'})],
-                        // userApp-based conditional mounts
-                        ['UserIdConditionalRouteOne', freeze({id: '1'}), freeze({id: '2'})],
-                        ['UserIdConditionalRouteTwo', freeze({id: '1'}), freeze({id: '2'})],
-                        ['UserIdActionConditionalRoute', freeze({id: '1', action: 'go'}), freeze({id: '2', action: 'stop'})],
-                        ['UserIdConditionalRouteThree', freeze({id: '1'}), freeze({id: '2'})],
-                    ],
-                ],
-                // different params, same query params
-                [
-                    ['/todos/1/list?unused=true', '/?hello=1&sort=asc', '/todos/2/chart?sort=asc&hello=1'],
-                    freeze({hello: '1', sort: 'asc'}), freeze({hello: '1', sort: 'asc'}),
-                    [
-                        // root-based conditional mounts
-                        ['RootAllConditionalRoute', null, null],
-                        // todo-based mounts
-                        ['TodoIdRenderStyleRoute', freeze({id: '1', renderStyle: 'list'}), freeze({id: '2', renderStyle: 'chart'})],
-                        // todo-based conditional mounts
-                        ['TodoIdConditionalRoute', freeze({id: '1'}), freeze({id: '2'})],
-                        ['TodoIdRenderStyleConditionalRoute', freeze({id: '1', renderStyle: 'list'}), freeze({id: '2', renderStyle: 'chart'})],
-                    ],
-                ],
-                [
-                    ['/user/1/action/go?unused=true', '/', '/user/2/action/stop'],
-                    null, null,
-                    [
+                        // apps
+                        ['MyRootApp', null, null],
+                        ['UserApp', freeze({id: '1'}), freeze({id: '2'})],
                         // root-based conditional mounts
                         ['RootAllConditionalRoute', null, null],
                         ['RootIdConditionalRouteOne', freeze({id: '1'}), freeze({id: '2'})],
@@ -779,6 +869,9 @@ describe('Navigation Acceptance Tests', () => {
                     ['/todos/1/list?unused=true', '/', '/todos/1/list?sort=asc&hello=1'],
                     null, freeze({hello: '1', sort: 'asc'}),
                     [
+                        // apps
+                        ['MyRootApp', null, null],
+                        ['TodoApp', freeze({id: '1'}), freeze({id: '1'})],
                         // root-based conditional mounts
                         ['RootAllConditionalRoute', null, null],
                         // todo-based mounts
@@ -792,6 +885,9 @@ describe('Navigation Acceptance Tests', () => {
                     ['/user/1/action/go?unused=true', '/?sort=true&asc=1', '/user/1/action/go?sort=false&list=yes'],
                     freeze({sort: true, asc: '1'}), freeze({sort: false, list: 'yes'}),
                     [
+                        // apps
+                        ['MyRootApp', null, null],
+                        ['UserApp', freeze({id: '1'}), freeze({id: '1'})],
                         // root-based conditional mounts
                         ['RootAllConditionalRoute', null, null],
                         ['RootIdConditionalRouteOne', freeze({id: '1'}), freeze({id: '1'})],
@@ -810,6 +906,9 @@ describe('Navigation Acceptance Tests', () => {
                     ['/todos/1/list?unused=true', '/?sort=desc&index=1', '/todos/2/chart?sort=asc&hello=1'],
                     freeze({index: '1', sort: 'desc'}), freeze({hello: '1', sort: 'asc'}),
                     [
+                        // apps
+                        ['MyRootApp', null, null],
+                        ['TodoApp', freeze({id: '1'}), freeze({id: '2'})],
                         // root-based conditional mounts
                         ['RootAllConditionalRoute', null, null],
                         // todo-based mounts
@@ -823,6 +922,9 @@ describe('Navigation Acceptance Tests', () => {
                     ['/user/1/action/go?unused=true', '/?sort=true&asc=1', '/user/2/action/stop?'],
                     freeze({sort: true, asc: '1'}), null,
                     [
+                        // apps
+                        ['MyRootApp', null, null],
+                        ['UserApp', freeze({id: '1'}), freeze({id: '2'})],
                         // root-based conditional mounts
                         ['RootAllConditionalRoute', null, null],
                         ['RootIdConditionalRouteOne', freeze({id: '1'}), freeze({id: '2'})],
@@ -849,6 +951,8 @@ describe('Navigation Acceptance Tests', () => {
                 //   └──o
                 ['/', '/news/story',
                     [
+                        // apps
+                        'MyRootApp',
                         // root-based mounts
                         'RootNewsRoute',
                         // root-based conditional mounts
@@ -861,6 +965,9 @@ describe('Navigation Acceptance Tests', () => {
                         'RootConditionalRoute',
                     ],
                     [
+                        // apps
+                        'TodoApp',
+                        'UserApp',
                         // root-based conditional mounts
                         'RootIdConditionalRouteOne', 'RootIdConditionalRouteTwo',
                         // todo-based mounts
@@ -881,6 +988,9 @@ describe('Navigation Acceptance Tests', () => {
                 //   └──o──o
                 ['/', '/todos/1/list',
                     [
+                        // apps
+                        'MyRootApp',
+                        'TodoApp',
                         // root-based conditional mounts
                         'RootAllConditionalRoute',
                         // todo-based mounts
@@ -895,6 +1005,8 @@ describe('Navigation Acceptance Tests', () => {
                         'RootConditionalRoute',
                     ],
                     [
+                        // apps
+                        'UserApp',
                         // root-based mounts
                         'RootNewsRoute',
                         // root-based conditional mounts
@@ -913,12 +1025,16 @@ describe('Navigation Acceptance Tests', () => {
                 //   └──o
                 ['/user/1/action/go', '/news/story',
                     [
+                        // apps
+                        'MyRootApp',
                         // root-based mounts
                         'RootNewsRoute',
                         // root-based conditional mounts
                         'RootAllConditionalRoute', 'RootNewsConditionalRoute',
                     ],
                     [
+                        // apps
+                        'UserApp',
                         // root-based conditional mounts
                         'RootIdConditionalRouteOne', 'RootIdConditionalRouteTwo',
                         // userApp-based mounts
@@ -928,6 +1044,8 @@ describe('Navigation Acceptance Tests', () => {
                         'UserIdConditionalRouteTwo', 'UserIdConditionalRouteThree', 'UserIdActionConditionalRoute',
                     ],
                     [
+                        // apps
+                        'TodoApp',
                         // root-based mounts
                         'RootRootRoute',
                         // root-based conditional mounts
@@ -948,6 +1066,9 @@ describe('Navigation Acceptance Tests', () => {
                 //   └──o──o
                 ['/todos/1/list', '/user/1/menu/stats/profile',
                     [
+                        // apps
+                        'MyRootApp',
+                        'UserApp',
                         // root-based conditional mounts
                         'RootAllConditionalRoute', 'RootIdConditionalRouteOne', 'RootIdConditionalRouteTwo',
                         // userApp-based mounts
@@ -958,6 +1079,8 @@ describe('Navigation Acceptance Tests', () => {
                         'UserIdMenuConditionalRouteTwo',
                     ],
                     [
+                        // apps
+                        'TodoApp',
                         // todo-based mounts
                         'TodoIdRenderStyleRoute',
                         // todo-based conditional mounts
@@ -975,7 +1098,7 @@ describe('Navigation Acceptance Tests', () => {
                     ],
                 ],
             ], (done, dest1, dest2, expectedRenderedMounts, expectedDeactivatedRoutes, expectedUnaffectedRoutes) => {
-                let rootApp = new MyRootApp(defaultOpts);
+                let rootApp = MyRootApp.create(defaultOpts);
                 rootApp.navigate(dest1).then(() => {
                     // only test spy calls after the
                     // second call to navigate()
@@ -1010,13 +1133,15 @@ describe('Navigation Acceptance Tests', () => {
                 [
                     '/user/1/action/go',
                     [
+                        ['MyRootApp'],
                         ['RootAllConditionalRoute', 'RootIdConditionalRouteOne', 'RootIdConditionalRouteTwo'],
+                        ['UserApp'],
                         ['UserIdConditionalRouteOne', 'UserIdConditionalRouteTwo', 'UserIdActionConditionalRoute', 'UserIdConditionalRouteThree', 'UserIdActionRoute'],
                     ]
                 ],
             ], (done, dest, steps) => {
                 let len = steps.length;
-                let rootApp = new MyRootApp(defaultOpts);
+                let rootApp = MyRootApp.create(defaultOpts);
                 rootApp.navigate(dest).then(() => {
                     steps.forEach((routesStrs, idx) => {
                         if (idx < len-1) {
@@ -1054,12 +1179,13 @@ describe('Navigation Acceptance Tests', () => {
                     '/user/1/action/go', '/',
                     [
                         ['UserIdConditionalRouteOne', 'UserIdConditionalRouteTwo', 'UserIdActionConditionalRoute', 'UserIdConditionalRouteThree', 'UserIdActionRoute'],
+                        ['UserApp'],
                         ['RootIdConditionalRouteOne', 'RootIdConditionalRouteTwo'],
                     ]
                 ],
             ], (done, dest1, dest2, steps) => {
                 let len = steps.length;
-                let rootApp = new MyRootApp(defaultOpts);
+                let rootApp = MyRootApp.create(defaultOpts);
                 rootApp.navigate(dest1).then(() => {
                     resetSpies();
                     return rootApp.navigate(dest2);
@@ -1091,35 +1217,24 @@ describe('Navigation Acceptance Tests', () => {
 
             genTest('sets the correct state for Apps and Routes during all transitions', [
                 [
-                    ['/todos/1/list', { active: ['todoApp'], inactive: ['userApp']}],
-                    // same exact Routes will already be rendered, so
-                    // tests should check that Route states and their
-                    // outlets' CSS classes are correctly applied
-                    ['/todos/2/list', { active: ['todoApp'], inactive: ['userApp']}],
+                    '/todos/1/list',
+                    // same exact Apps/Routes will be rerendered, so
+                    // navigating here tests that Apps'/Routes' states and
+                    // their outlets' CSS classes are correctly applied
+                    '/todos/2/list',
 
-                    ['/user/1/menu/stats', { active: ['userApp'], inactive: ['todoApp']}],
-                    ['/news/story', { active: [], inactive: ['todoApp', 'userApp']}],
+                    '/user/1/menu/stats',
+                    '/news/story',
                 ]
-            ], (done, ...expectations) => {
-                let validator = new RoutesStateValidator(MyRootApp, {log: false});
+            ], (done, ...destinations) => {
+                let validator = new StateValidator(MyRootApp, {log: false});
                 validator.injectAssertions();
 
                 let rootApp = MyRootApp.create(defaultOpts);
 
-                function checkAppAtAddressHasState(state) {
-                    return function(address) {
-                        assertAppState(rootApp._atAddress(address), state);
-                    };
-                }
-
-                expectations.reduce((promise, [ dest, appExpectations ]) => {
+                destinations.reduce((promise, dest) => {
                     return promise.then(() => {
-                        return rootApp.navigate(dest).then(() => {
-                            for (let state of Object.keys(appExpectations)) {
-                                let appAddresses = appExpectations[state];
-                                appAddresses.forEach(checkAppAtAddressHasState(state));
-                            }
-                        });
+                        return rootApp.navigate(dest);
                     });
                 }, Promise.resolve()).then(() => {
                     validator.restoreMethods();
@@ -1165,153 +1280,216 @@ describe('Navigation Acceptance Tests', () => {
 
     describe('Transition Queueing', () => {
         it('queues transitions', done => {
-            let spy0 = sinon.spy();
-            let spy1 = sinon.spy();
-            let spy2 = sinon.spy();
-            let spy3 = sinon.spy();
-            let spy4 = sinon.spy();
+            // transition spies
+            let navBegin = sinon.spy();
+            let navRoot  = sinon.spy();
+            let navNews  = sinon.spy();
+            let navActn  = sinon.spy();
+            let navMenu  = sinon.spy();
 
-            let rootApp = new MyRootApp(defaultOpts);
+            let rootApp = MyRootApp.create(defaultOpts);
 
-            // spies
+            // render cycle spies
+            let rApp = mountSpies.MyRootApp;
+            let uApp = mountSpies.UserApp;
+            let tApp = mountSpies.TodoApp;
             let root = mountSpies.RootRootRoute;
             let news = mountSpies.RootNewsRoute;
-            let user = mountSpies.UserIdActionRoute;
+            let actn = mountSpies.UserIdActionRoute;
+            let menu = mountSpies.UserIdMenuRouteOne;
             let todo = mountSpies.TodoIdRenderStyleRoute;
 
-            spy0();
-            rootApp.navigate('/').then(spy1);
-            rootApp.navigate('/news/story').then(spy2);
-            rootApp.navigate('/user/1/action/go').then(spy3);
+            navBegin();
+            rootApp.navigate('/').then(() => {
+                rApp.prerenderSpy.should.have.been.calledAfter(navBegin);
+                root.prerenderSpy.should.have.been.calledAfter(rApp.prerenderSpy);
+                rApp.renderSpy.should.have.been.calledAfter(root.prerenderSpy);
+                root.renderSpy.should.have.been.calledAfter(rApp.renderSpy);
+                navRoot();
+            });
+            rootApp.navigate('/news/story').then(() => {
+                rApp.prerenderSpy.should.have.been.calledAfter(navRoot);
+                news.prerenderSpy.should.have.been.calledAfter(rApp.prerenderSpy);
+                root.deactivateSpy.should.have.been.calledAfter(news.prerenderSpy);
+                rApp.renderSpy.should.have.been.calledAfter(root.deactivateSpy);
+                news.renderSpy.should.have.been.calledAfter(rApp.renderSpy);
+                navNews();
+            });
+            rootApp.navigate('/user/1/action/go').then(() => {
+                rApp.prerenderSpy.should.have.been.calledAfter(navNews);
+                uApp.prerenderSpy.should.have.been.calledAfter(rApp.prerenderSpy);
+                actn.prerenderSpy.should.have.been.calledAfter(uApp.prerenderSpy);
+                news.deactivateSpy.should.have.been.calledAfter(actn.prerenderSpy);
+                rApp.renderSpy.should.have.been.calledAfter(news.deactivateSpy);
+                uApp.renderSpy.should.have.been.calledAfter(rApp.renderSpy);
+                actn.renderSpy.should.have.been.calledAfter(uApp.renderSpy);
+                navActn();
+            });
+            rootApp.navigate('/user/1/menu/list').then(() => {
+                rApp.prerenderSpy.should.have.been.calledAfter(navActn);
+                uApp.prerenderSpy.should.have.been.calledAfter(rApp.prerenderSpy);
+                menu.prerenderSpy.should.have.been.calledAfter(uApp.prerenderSpy);
+                actn.deactivateSpy.should.have.been.calledAfter(menu.prerenderSpy);
+                // a divergence point (App) deactivate is never called
+                // since another branch will be rendered on it
+                uApp.deactivateSpy.should.not.have.been.called;
+                rApp.renderSpy.should.have.been.calledAfter(actn.deactivateSpy);
+                uApp.renderSpy.should.have.been.calledAfter(rApp.renderSpy);
+                menu.renderSpy.should.have.been.calledAfter(uApp.renderSpy);
+                navMenu();
+            });
             rootApp.navigate('/todos/1/list').then(() => {
-                spy4();
+                rApp.prerenderSpy.should.have.been.calledAfter(navMenu);
+                tApp.prerenderSpy.should.have.been.calledAfter(rApp.prerenderSpy);
+                todo.prerenderSpy.should.have.been.calledAfter(tApp.prerenderSpy);
+                menu.deactivateSpy.should.have.been.calledAfter(todo.prerenderSpy);
+                uApp.deactivateSpy.should.have.been.calledAfter(menu.deactivateSpy);
+                rApp.renderSpy.should.have.been.calledAfter(uApp.deactivateSpy);
+                tApp.renderSpy.should.have.been.calledAfter(rApp.renderSpy);
+                todo.renderSpy.should.have.been.calledAfter(tApp.renderSpy);
 
-                // all spies should have been called once
+                // app spies
+                rApp.prerenderSpy.should.have.callCount(5);
+                // RootApp#deactivate() is never called under any circumstance
+                rApp.deactivateSpy.should.not.have.been.called;
+                rApp.renderSpy.should.have.callCount(5);
+                uApp.prerenderSpy.should.have.callCount(2);
+                uApp.deactivateSpy.should.have.been.calledOnce;
+                uApp.renderSpy.should.have.callCount(2);
+                tApp.prerenderSpy.should.have.callCount(1);
+                tApp.deactivateSpy.should.not.have.been.called;
+                tApp.renderSpy.should.have.callCount(1);
+
+                // all route spies should have been called once
                 root.prerenderSpy.should.have.been.calledOnce;
                 root.deactivateSpy.should.have.been.calledOnce;
                 root.renderSpy.should.have.been.calledOnce;
                 news.prerenderSpy.should.have.been.calledOnce;
                 news.deactivateSpy.should.have.been.calledOnce;
                 news.renderSpy.should.have.been.calledOnce;
-                user.prerenderSpy.should.have.been.calledOnce;
-                user.deactivateSpy.should.have.been.calledOnce;
-                user.renderSpy.should.have.been.calledOnce;
+                actn.prerenderSpy.should.have.been.calledOnce;
+                actn.deactivateSpy.should.have.been.calledOnce;
+                actn.renderSpy.should.have.been.calledOnce;
+                menu.prerenderSpy.should.have.been.calledOnce;
+                menu.deactivateSpy.should.have.been.calledOnce;
+                menu.renderSpy.should.have.been.calledOnce;
                 todo.prerenderSpy.should.have.been.calledOnce;
                 // note: todo.deactivateSpy is never called
                 todo.deactivateSpy.should.not.have.been.called;
                 todo.renderSpy.should.have.been.calledOnce;
-
-                // from here on,
-                // follow the zig-zag ordering; A => B, B => C, C => D
-
-                // to RootRootRoute
-                root.prerenderSpy.should.have.been.calledAfter(spy0);
-                root.renderSpy.should.have.been.calledAfter(root.prerenderSpy);
-                spy1.should.have.been.calledAfter(root.renderSpy);
-
-                // to RootNewsRoute
-                news.prerenderSpy.should.have.been.calledAfter(spy1);
-                root.deactivateSpy.should.have.been.calledAfter(news.prerenderSpy);
-                news.renderSpy.should.have.been.calledAfter(root.deactivateSpy);
-                spy2.should.have.been.calledAfter(news.renderSpy);
-
-                // to UserIdActionRoute
-                user.prerenderSpy.should.have.been.calledAfter(spy2);
-                news.deactivateSpy.should.have.been.calledAfter(user.prerenderSpy);
-                user.renderSpy.should.have.been.calledAfter(news.deactivateSpy);
-                spy3.should.have.been.calledAfter(user.renderSpy);
-
-                // to TodoIdRenderStyleRoute
-                todo.prerenderSpy.should.have.been.calledAfter(spy3);
-                user.deactivateSpy.should.have.been.calledAfter(todo.prerenderSpy);
-                todo.renderSpy.should.have.been.calledAfter(user.deactivateSpy);
-                spy4.should.have.been.calledAfter(todo.renderSpy);
 
                 done();
             }).catch(done);
         });
 
         it('continues transition queue even if some fail', done => {
-            let spy0 = sinon.spy();
-            let spy1 = sinon.spy();
-            let spy2_resolve = sinon.spy();
-            let spy2_reject = sinon.spy();
-            let spy3 = sinon.spy();
-            let spy4 = sinon.spy();
-            let spy5_resolve = sinon.spy();
-            let spy5_reject = sinon.spy();
-            let spy6 = sinon.spy();
+            // transition spies
+            let navBegin = sinon.spy();
+            let navRoot  = sinon.spy();
+            let navNews  = sinon.spy();
+            let navActn  = sinon.spy();
+            let navMenu  = sinon.spy();
+            let navBadResolve = sinon.spy();
+            let navBadReject  = sinon.spy();
+            let navBad2Resolve = sinon.spy();
+            let navBad2Reject  = sinon.spy();
 
-            let rootApp = new MyRootApp(defaultOpts);
+            let rootApp = MyRootApp.create(defaultOpts);
 
-            // spies
+            // render cycle spies
+            let rApp = mountSpies.MyRootApp;
+            let uApp = mountSpies.UserApp;
+            let tApp = mountSpies.TodoApp;
             let root = mountSpies.RootRootRoute;
             let news = mountSpies.RootNewsRoute;
-            let user = mountSpies.UserIdActionRoute;
+            let actn = mountSpies.UserIdActionRoute;
+            let menu = mountSpies.UserIdMenuRouteOne;
             let todo = mountSpies.TodoIdRenderStyleRoute;
 
-            spy0();
-            rootApp.navigate('/').then(spy1);
-            rootApp.navigate('non-existent').then(spy2_resolve, spy2_reject);
-            rootApp.navigate('/news/story').then(spy3);
-            rootApp.navigate('/user/1/action/go').then(spy4);
-            rootApp.navigate('non-existent2').then(spy5_resolve, spy5_reject);
+            navBegin();
+            rootApp.navigate('/').then(() => {
+                rApp.prerenderSpy.should.have.been.calledAfter(navBegin);
+                root.prerenderSpy.should.have.been.calledAfter(rApp.prerenderSpy);
+                rApp.renderSpy.should.have.been.calledAfter(root.prerenderSpy);
+                root.renderSpy.should.have.been.calledAfter(rApp.renderSpy);
+                navRoot();
+            });
+            rootApp.navigate('/non-existent').then(navBadResolve, navBadReject);
+            rootApp.navigate('/news/story').then(() => {
+                navBadResolve.should.not.have.been.called;
+                navBadReject.should.have.been.calledAfter(navRoot);
+                rApp.prerenderSpy.should.have.been.calledAfter(navBadReject);
+                news.prerenderSpy.should.have.been.calledAfter(rApp.prerenderSpy);
+                root.deactivateSpy.should.have.been.calledAfter(news.prerenderSpy);
+                rApp.renderSpy.should.have.been.calledAfter(root.deactivateSpy);
+                news.renderSpy.should.have.been.calledAfter(rApp.renderSpy);
+                navNews();
+            });
+            rootApp.navigate('/user/1/action/go').then(() => {
+                rApp.prerenderSpy.should.have.been.calledAfter(navNews);
+                uApp.prerenderSpy.should.have.been.calledAfter(rApp.prerenderSpy);
+                actn.prerenderSpy.should.have.been.calledAfter(uApp.prerenderSpy);
+                news.deactivateSpy.should.have.been.calledAfter(actn.prerenderSpy);
+                rApp.renderSpy.should.have.been.calledAfter(news.deactivateSpy);
+                uApp.renderSpy.should.have.been.calledAfter(rApp.renderSpy);
+                actn.renderSpy.should.have.been.calledAfter(uApp.renderSpy);
+                navActn();
+            });
+            rootApp.navigate('/non/existent2').then(navBad2Resolve, navBad2Reject);
+            rootApp.navigate('/user/1/menu/list').then(() => {
+                navBad2Resolve.should.not.have.been.called;
+                navBad2Reject.should.have.been.calledAfter(navActn);
+                rApp.prerenderSpy.should.have.been.calledAfter(navBad2Reject);
+                uApp.prerenderSpy.should.have.been.calledAfter(rApp.prerenderSpy);
+                menu.prerenderSpy.should.have.been.calledAfter(uApp.prerenderSpy);
+                actn.deactivateSpy.should.have.been.calledAfter(menu.prerenderSpy);
+                // a divergence point (App) deactivate is never called
+                // since another branch will be rendered on it
+                uApp.deactivateSpy.should.not.have.been.called;
+                rApp.renderSpy.should.have.been.calledAfter(actn.deactivateSpy);
+                uApp.renderSpy.should.have.been.calledAfter(rApp.renderSpy);
+                menu.renderSpy.should.have.been.calledAfter(uApp.renderSpy);
+                navMenu();
+            });
             rootApp.navigate('/todos/1/list').then(() => {
-                spy6();
+                rApp.prerenderSpy.should.have.been.calledAfter(navMenu);
+                tApp.prerenderSpy.should.have.been.calledAfter(rApp.prerenderSpy);
+                todo.prerenderSpy.should.have.been.calledAfter(tApp.prerenderSpy);
+                menu.deactivateSpy.should.have.been.calledAfter(todo.prerenderSpy);
+                uApp.deactivateSpy.should.have.been.calledAfter(menu.deactivateSpy);
+                rApp.renderSpy.should.have.been.calledAfter(uApp.deactivateSpy);
+                tApp.renderSpy.should.have.been.calledAfter(rApp.renderSpy);
+                todo.renderSpy.should.have.been.calledAfter(tApp.renderSpy);
 
-                // all spies should have been called once
+                // app spies
+                rApp.prerenderSpy.should.have.callCount(5);
+                // RootApp#deactivate() is never called under any circumstance
+                rApp.deactivateSpy.should.not.have.been.called;
+                rApp.renderSpy.should.have.callCount(5);
+                uApp.prerenderSpy.should.have.callCount(2);
+                uApp.deactivateSpy.should.have.been.calledOnce;
+                uApp.renderSpy.should.have.callCount(2);
+                tApp.prerenderSpy.should.have.callCount(1);
+                tApp.deactivateSpy.should.not.have.been.called;
+                tApp.renderSpy.should.have.callCount(1);
+
+                // all route spies should have been called once
                 root.prerenderSpy.should.have.been.calledOnce;
                 root.deactivateSpy.should.have.been.calledOnce;
                 root.renderSpy.should.have.been.calledOnce;
                 news.prerenderSpy.should.have.been.calledOnce;
                 news.deactivateSpy.should.have.been.calledOnce;
                 news.renderSpy.should.have.been.calledOnce;
-                user.prerenderSpy.should.have.been.calledOnce;
-                user.deactivateSpy.should.have.been.calledOnce;
-                user.renderSpy.should.have.been.calledOnce;
+                actn.prerenderSpy.should.have.been.calledOnce;
+                actn.deactivateSpy.should.have.been.calledOnce;
+                actn.renderSpy.should.have.been.calledOnce;
+                menu.prerenderSpy.should.have.been.calledOnce;
+                menu.deactivateSpy.should.have.been.calledOnce;
+                menu.renderSpy.should.have.been.calledOnce;
                 todo.prerenderSpy.should.have.been.calledOnce;
                 // note: todo.deactivateSpy is never called
                 todo.deactivateSpy.should.not.have.been.called;
                 todo.renderSpy.should.have.been.calledOnce;
-
-                // reject spies should have been called
-                spy2_reject.should.have.been.called;
-                spy5_reject.should.have.been.called;
-                // resolve spies should not have been called
-                spy2_resolve.should.not.have.been.called;
-                spy5_resolve.should.not.have.been.called;
-
-                // from here on,
-                // follow the zig-zag ordering; A => B, B => C, C => D
-
-                // to RootRootRoute
-                root.prerenderSpy.should.have.been.calledAfter(spy0);
-                root.renderSpy.should.have.been.calledAfter(root.prerenderSpy);
-                spy1.should.have.been.calledAfter(root.renderSpy);
-
-                // to first non-existent route
-                spy2_reject.should.have.been.calledAfter(spy1);
-
-                // to RootNewsRoute
-                news.prerenderSpy.should.have.been.calledAfter(spy2_reject);
-                root.deactivateSpy.should.have.been.calledAfter(news.prerenderSpy);
-                news.renderSpy.should.have.been.calledAfter(root.deactivateSpy);
-                spy3.should.have.been.calledAfter(news.renderSpy);
-
-                // to UserIdActionRoute
-                user.prerenderSpy.should.have.been.calledAfter(spy3);
-                news.deactivateSpy.should.have.been.calledAfter(user.prerenderSpy);
-                user.renderSpy.should.have.been.calledAfter(news.deactivateSpy);
-                spy4.should.have.been.calledAfter(user.renderSpy);
-
-                // to second non-existent route
-                spy5_reject.should.have.been.calledAfter(spy4);
-
-                // to TodoIdRenderStyleRoute
-                todo.prerenderSpy.should.have.been.calledAfter(spy5_reject);
-                user.deactivateSpy.should.have.been.calledAfter(todo.prerenderSpy);
-                todo.renderSpy.should.have.been.calledAfter(user.deactivateSpy);
-                spy6.should.have.been.calledAfter(todo.renderSpy);
 
                 done();
             }).catch(done);

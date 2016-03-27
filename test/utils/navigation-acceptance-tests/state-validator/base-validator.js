@@ -7,9 +7,9 @@ class BaseValidator {
 
     /**
      * Check whether the existing CSS classes on the element are as expected.
-     * @param {string} stage The stage of calling the render() function on the route, one of `pre`, `in`, or `post`.
-     * @param {object} lastState The state object of the route after the last navigation method was called.
-     * @param {object} currentState The state object of the route now that the current navigation method has been called.
+     * @param {string} stage The stage of calling the render() function on the mount, one of `pre`, `in`, or `post`.
+     * @param {object} lastState The state object of the mount after the last navigation method was called.
+     * @param {object} currentState The state object of the mount now that the current navigation method has been called.
      * @param {string} DOMclassName The result of getting `element.className` on a DOM element.
      * @return {bool} Whether the existing CSS classes on the element are as expected.
      */

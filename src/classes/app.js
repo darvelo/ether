@@ -1,4 +1,4 @@
-import Modifiable from './modifiable';
+import Stateful from './stateful';
 import Modified from './modified';
 import MountMapper from './mount-mapper';
 import ConditionalMountMapper from './conditional-mount-mapper';
@@ -7,9 +7,7 @@ import registerAddresses from '../utils/register-addresses';
 import ctorName from '../utils/ctor-name';
 import { is, isnt } from '../utils/is';
 
-const possibleAppStates = Object.freeze(['active', 'inactive']);
-
-class App extends Modifiable {
+class App extends Stateful {
     constructor(opts) {
         super(opts);
 
@@ -40,23 +38,6 @@ class App extends Modifiable {
             throw new TypeError(ctorName(this) + ' constructor was not given a reference to its parentApp.');
         }
 
-        Object.defineProperty(this, 'state', {
-            value: {},
-            configurable: false,
-            enumerable: true,
-        });
-        Object.defineProperties(this.state, possibleAppStates.reduce((memo, state) => {
-            // create descriptor for each property on this.state
-            memo[state] = {
-                value: false,
-                writable: true,
-                enumerable: true,
-            };
-            return memo;
-        }, {}));
-        Object.seal(this.state);
-        this._setState('inactive');
-
         this._rootApp = opts.rootApp;
         this._parentApp = opts.parentApp;
         this.addresses = opts.addresses;
@@ -70,6 +51,7 @@ class App extends Modifiable {
         let mountsMetadata = this._instantiateMounts(allOutlets, opts.params);
         this._instantiateConditionalMounts(allOutlets, opts.params, mountsMetadata);
 
+        this._setState('deactivated');
         this._rootApp._inits.push(() => this.init(opts.setup));
     }
 
@@ -112,19 +94,6 @@ class App extends Modifiable {
     expectedSetup(setup) {
         // user can throw if `setup` is not as expected
         return;
-    }
-
-    _setState(state) {
-        if (!this.state.hasOwnProperty(state)) {
-            throw new Error(`${ctorName(this)}#_setState(): Tried to set app state to an unsupported value: ${JSON.stringify(state)}.`);
-        }
-        possibleAppStates.forEach(possibleState => {
-            if (state === possibleState) {
-                this.state[possibleState] = true;
-            } else {
-                this.state[possibleState] = false;
-            }
-        });
     }
 
     _instantiateMounts(allOutlets, params) {

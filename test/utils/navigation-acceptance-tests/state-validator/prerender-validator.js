@@ -68,15 +68,15 @@ class PrerenderValidator extends BaseValidator {
         if (this._wasLastRendered(lastState)) {
             expectedState = expectedStatesLastRendered[stage];
         } else if (stage === 'pre' && !this._wasLastDeactivated(lastState)){
-            // the last state for a to-be-prerendered route
+            // the last state for a to-be-prerendered mount
             // must be one of "rendered" or "deactivated"
-            throw new Error(`PrerenderValidator getExpectedState(): For stage "pre", invalid lastState... was neither last rendered nor last deactivated. ${JSON.stringify(lastState)}`);
+            throw new Error(`PrerenderValidator._getExpectedState(): For stage "pre", invalid lastState... was neither last rendered nor last deactivated. ${JSON.stringify(lastState)}`);
         } else {
-            // default to this if we know the route wasn't last rendered
+            // default to this if we know the mount wasn't last rendered
             expectedState = expectedStatesLastDeactivated[stage];
         }
         if (!expectedState) {
-            throw new Error(`PrerenderValidator getExpectedState(): Invalid stage "${stage}".`);
+            throw new Error(`PrerenderValidator._getExpectedState(): Invalid stage "${stage}".`);
         }
         return expectedState;
     }

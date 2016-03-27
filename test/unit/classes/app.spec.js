@@ -162,8 +162,12 @@ describe('App', function() {
             let app = new TestApp(defaultOpts);
             expect(app.state).to.be.an('object');
             expect(Object.keys(app.state).sort()).to.deep.equal([
-                'active',
-                'inactive',
+                'deactivating',
+                'deactivated',
+                'prerendering',
+                'prerendered',
+                'rendering',
+                'rendered',
             ].sort());
         });
 
@@ -186,11 +190,15 @@ describe('App', function() {
             expect(Object.isSealed(app.state)).to.equal(true);
         });
 
-        it('sets state to "inactive"', () => {
+        it('sets state to "deactivated"', () => {
             let app = new TestApp(defaultOpts);
             expect(app.state).to.deep.equal({
-                inactive: true,
-                active: false,
+                deactivating: false,
+                deactivated: true,
+                prerendering: false,
+                prerendered: false,
+                rendering: false,
+                rendered: false,
             });
         });
     });
@@ -199,7 +207,13 @@ describe('App', function() {
         it('throws when setting state to an unsupported value', () => {
             let state = 'nope';
             let app = new TestApp(defaultOpts);
-            expect(() => app._setState(state)).to.throw(Error, `TestApp#_setState(): Tried to set app state to an unsupported value: ${JSON.stringify(state)}.`);
+            expect(() => app._setState(state)).to.throw(Error, `TestApp#_setState(): Tried to set state to an unsupported value: ${JSON.stringify(state)}.`);
+        });
+
+        it('throws when setting state CSS class to an unsupported value', () => {
+            let state = 'nope';
+            let app = new TestApp(defaultOpts);
+            expect(() => app._setOutletsState(state)).to.throw(Error, `TestApp#_setOutletsState(): Tried to set outlets state to an unsupported value: ${JSON.stringify(state)}.`);
         });
     });
 });

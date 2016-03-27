@@ -67,7 +67,7 @@ class RenderValidator extends BaseValidator {
             expectedState = expectedStatesLastDeactivated[stage];
         }
         if (!expectedState) {
-            throw new Error(`RenderValidator getExpectedState(): Invalid stage "${stage}".`);
+            throw new Error(`RenderValidator._getExpectedState(): Invalid stage "${stage}".`);
         }
         return expectedState;
     }

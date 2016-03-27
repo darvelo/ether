@@ -31,7 +31,7 @@ class DeactivateValidator extends BaseValidator {
     static _getExpectedState(stage) {
         let expectedState = expectedStates[stage];
         if (!expectedState) {
-            throw new Error(`DeactivateValidator getExpectedState(): Invalid stage "${stage}".`);
+            throw new Error(`DeactivateValidator._getExpectedState(): Invalid stage "${stage}".`);
         }
         return expectedStates[stage];
     }

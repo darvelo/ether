@@ -156,7 +156,7 @@ describe('Route', () => {
             expect(Object.isSealed(route.state)).to.equal(true);
         });
 
-        it('sets state to "inactive"', () => {
+        it('sets state to "deactivated"', () => {
             let route = new TestRoute(defaultOpts);
             expect(route.state).to.deep.equal({
                 deactivating: false,
@@ -191,7 +191,7 @@ describe('Route', () => {
         it('throws when setting state to an unsupported value', () => {
             let state = 'nope';
             let route = new TestRoute(defaultOpts);
-            expect(() => route._setState(state)).to.throw(Error, `TestRoute#_setState(): Tried to set route state to an unsupported value: ${JSON.stringify(state)}.`);
+            expect(() => route._setState(state)).to.throw(Error, `TestRoute#_setState(): Tried to set state to an unsupported value: ${JSON.stringify(state)}.`);
         });
 
         it('throws when setting state CSS class to an unsupported value', () => {

@@ -8,6 +8,10 @@ export function resetSpies() {
     // exist since Routes will always reference the originally passed
     // in objects.
     [
+        'MyRootApp',
+        'TodoApp',
+        'UserApp',
+
         'RootRootRoute',
         'RootNewsRoute',
         'TodoIdRenderStyleRoute',

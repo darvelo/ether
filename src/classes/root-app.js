@@ -36,6 +36,9 @@ class RootApp extends App {
         super(opts);
         // the last URL that was navigated to successfully
         this._fullUrl = undefined;
+        // the params for the RootApp's render methods,
+        // parsed from the last URL that was navigated to successfully
+        this._lastParams = null;
         // the querystring params parsed from the
         // last URL that was navigated to successfully
         this._lastQueryParams = null;
@@ -345,7 +348,6 @@ class RootApp extends App {
         } else if (routingTrace.result === 'success'){
             return this._constructState(routingTrace, queryParams, queryParamsDiff).then(() => {
                 this._fullUrl = destination;
-                this._lastQueryParams = queryParams;
                 if (this._config.history) {
                     destination = this._joinBasepathTo(destination);
                     if (opts.replaceState === true) {
@@ -580,10 +582,59 @@ class RootApp extends App {
      * @typedef NavigationData
      * @private
      * @type {object}
-     * @property {App} app The App that holds the mounts and conditional mounts in this object.
-     * @property {MountNavigationData} mountData All the information needed to prerender/render the mount if it's an instance of Route.
+     * @property {App} app The App that holds the mount and conditional mounts in this object.
+     * @property {MountNavigationData} mountData All the information needed to prerender/render the mount.
      * @property {Object.<string, Array.<ConditionalMountNavigationData>>} cMountsRenderData All the information needed to prerender/render the conditional mounts that correspond to the mount in `mountData`.
      */
+
+    /**
+     * Filters all the params expected for a RootApp/App from its to-be-rendered mount's
+     * available params, as well as creates a diff of the aforementioned
+     * filtered params against the last params sent to the RootApp/App on
+     * the last successful navigation. This diff is combined with the
+     * mount's diff of the queryParams to make a single object holding
+     * both diffs.
+     * @private
+     * @property {App} app The RootApp/App to compile data for in order to have it rendered.
+     * @property {MountNavigationData} mountData All the information from the RootApp/App's mount needed to prerender/render the RootApp/App.
+     * @return {crumb: string, lastParams: object, params: object, diff: Diff} The combination of: the crumb of the App on its parent App if it's not a RootApp; the params used when last rendering this RootApp/App; the params to use when rendering this RootApp/App; and a combination of both the diff for both the params for this RootApp/App vs. those sent in the last navigation, and the diff of the global querystring params in the URL vs. those in the last successful navigation. `Null` if neither the params nor queryParams diffs were different than what they were on last navigation.
+     */
+    _buildAppRenderDataFromMountRenderData(app, mountData) {
+        let crumb;
+        let lastParams;
+
+        if (app instanceof RootApp) {
+            lastParams = app._lastParams;
+        } else {
+            let mm = app._parentApp._mountMapper;
+            let crumbData = mm._crumbDataFor(app);
+            crumb = crumbData.crumb;
+            lastParams = mm.lastParamsFor(crumbData.crumb);
+        }
+
+        lastParams = lastParams || {};
+
+        let { params, diff } = this._buildRenderData(
+            // this will also contain the mount's own params,
+            // but the expectedParams for the app won't be
+            // allowed to access them unless *all* of its mounts'
+            // crumbs contain the same param name. so although we're
+            // passing more params here than necessary, it's safe.
+            mountData.params,
+            app.expectedParams(),
+            lastParams,
+            // if diff is null, that means the queryParams haven't changed
+            // (as well as the mount's params, but that part's not important here)
+            mountData.diff ? mountData.diff.queryParams : mountData.diff
+        );
+
+        return {
+            crumb,
+            lastParams,
+            params,
+            diff,
+        };
+    }
 
     /**
      * Call `_prerender` or `_render` on all activating cMounts' routes
@@ -592,9 +643,9 @@ class RootApp extends App {
      * `_prerender`/`_render` are called for each step in order, step by
      * step, visiting the next step/node only after all activating
      * cMounts' routes' `_prerender`/`render` are called at that step/node.
-     * At the last step, also call `_prerender`/`_render` on the leaf mount's Route.
+     * At the last step, also call `_prerender`/`_render` on the leaf Route.
      * @private
-     * @param {string} renderType The method to call on the route, either `_prerender` or `_render`.
+     * @param {string} renderType The method to call on the mount, either `_prerender` or `_render`.
      * @param {Array.<NavigationData>} steps All the information needed to successfully traverse and navigate Apps to the leaf Route.
      * @param {?object} queryParams The query params parsed from the URL passed to `navigate()`. Null if there were none.
      * @return {Promise} A promise that resolves when all `_prerender`/`_render` functions at every step have resolved, or rejects if any one of them has rejected.
@@ -606,41 +657,53 @@ class RootApp extends App {
         return steps.reduce((promise, step) => {
             return promise.then(() => {
                 let { app, cMountsRenderData, mountData } = step;
-                let cMountsRenderDataLogics = Object.keys(cMountsRenderData);
-                // call all `renderType` fns for all cMounts' routes
-                let promises = cMountsRenderDataLogics.reduce((memo, logic) => {
-                    let cMountsNavData = cMountsRenderData[logic];
-                    cMountsNavData.forEach(data => {
-                        let { route, params, diff } = data;
-                        memo.push(route[renderType](params, queryParams, diff));
-                    });
-                    return memo;
-                }, []);
-                // call `renderType` fn on the leaf mount's route
-                if (mountData.mount instanceof Route) {
-                    let { mount, params, diff } = mountData;
-                    promises.push(mount[renderType](params, queryParams, diff));
-                }
-                // resolve when all `renderType` fns resolve for this step
-                return Promise.all(promises).then(() => {
-                    if (renderType === '_render') {
-                        // on the App in this step, set ConditionalMountMapper's currentMounts
-                        if (cMountsRenderDataLogics.length) {
-                            let currentCondMounts = cMountsRenderDataLogics.reduce((memo, logic) => {
-                                memo[logic] = cMountsRenderData[logic].map(data => data.params || {});
-                                return memo;
-                            }, {});
-                            app._conditionalMountMapper.setCurrentMounts(currentCondMounts);
-                        } else {
-                            app._conditionalMountMapper.setCurrentMounts(null);
-                        }
-                        // on the App in this step, set MountMapper's currentMounts
-                        let { mount, crumb, params } = mountData;
-                        app._mountMapper.setCurrentMount(crumb, params);
-                        if (mount instanceof App) {
-                            mount._setState('active');
-                        }
+                let { crumb, mount, params, diff } = mountData;
+                let appData = this._buildAppRenderDataFromMountRenderData(app, mountData);
+                return app[renderType](appData.params, queryParams, appData.diff).then(() =>  {
+                    let cMountsRenderDataLogics = Object.keys(cMountsRenderData);
+                    // call all `renderType` fns for all cMounts' routes
+                    let promises = cMountsRenderDataLogics.reduce((memo, logic) => {
+                        let cMountsNavData = cMountsRenderData[logic];
+                        cMountsNavData.forEach(data => {
+                            let { route, params, diff } = data;
+                            memo.push(route[renderType](params, queryParams, diff));
+                        });
+                        return memo;
+                    }, []);
+
+                    // call `renderType` fn on the leaf route
+                    if (mount instanceof Route) {
+                        promises.push(mount[renderType](params, queryParams, diff));
                     }
+
+                    // resolve when all `renderType` fns resolve for this step
+                    return Promise.all(promises).then(() => {
+                        if (renderType === '_render') {
+                            // on the App in this step, store its current params
+                            if (app instanceof RootApp) {
+                                app._lastParams = appData.params;
+                                app._lastQueryParams = queryParams;
+                            } else if (app instanceof App) {
+                                app._parentApp._mountMapper.setCurrentMount(appData.crumb, appData.params);
+                            }
+
+                            // on the App in this step, set its MountMapper's currentMounts
+                            if (mount instanceof Route) {
+                                app._mountMapper.setCurrentMount(crumb, params);
+                            }
+
+                            // on the App in this step, set ConditionalMountMapper's currentMounts
+                            if (cMountsRenderDataLogics.length) {
+                                let currentCondMounts = cMountsRenderDataLogics.reduce((memo, logic) => {
+                                    memo[logic] = cMountsRenderData[logic].map(data => data.params || {});
+                                    return memo;
+                                }, {});
+                                app._conditionalMountMapper.setCurrentMounts(currentCondMounts);
+                            } else {
+                                app._conditionalMountMapper.setCurrentMounts(null);
+                            }
+                        }
+                    });
                 });
             });
         }, Promise.resolve());
@@ -658,7 +721,7 @@ class RootApp extends App {
      * @param {array} expectedParams A list of all the param names expected by the App/Route that need to be plucked from the `accumulatedParams`.
      * @param {object} lastParams The params sent to the App/Route on the last successful navigation.
      * @param {object} queryParamsDiff A diff of the current querystring parameters in the URL against the querystring params available in the URL of the last successful navigation.
-     * @return {params: object, diff: Diff}} The combination of: the params for this App/Route; and a combination of both the diff for both the params for this App/Route vs. those sent in the last navigation, and the diff of the global querystring params in the URL vs those in the last successful navigation. `Null` if neither the params nor queryParams diffs were different than what they were on last navigation.
+     * @return {params: object, diff: Diff} The combination of: the params for this App/Route; and a combination of both the diff for both the params for this App/Route vs. those sent in the last navigation, and the diff of the global querystring params in the URL vs. those in the last successful navigation. `Null` if neither the params nor queryParams diffs were different than what they were on last navigation.
      */
     _buildRenderData(accumulatedParams, expectedParams, lastParams, queryParamsDiff) {
         let params = expectedParams.reduce((memo, paramName) => {
@@ -726,7 +789,7 @@ class RootApp extends App {
      * @param {Array.<string>} logics The logic strings that can be used to get the routes mounted on different mountpoints of the ConditionalMountMapper `cmm`.
      * @return {Array.<Route>} The aggregation of all the routes mounted on each mountpoint represented by each string in `logics`.
      */
-    _flattenDeactivationRoutes(cmm, logics=[]) {
+    _flattenDeactivationData(cmm, logics=[]) {
         return logics
             .map(logic => cmm.routesFor(logic))
             .reduce((memo, routes) => {
@@ -738,12 +801,12 @@ class RootApp extends App {
     /**
      * @typedef DeactivationStep
      * @type {object}
-     * @property {App} app The app whose routes (all conditional routes, except for the leaf mount added to the list of conditional mounts, if any, at the last step) are to be deactivated.
-     * @property {Array.<Route>} routesToDeactivate All routes on the app, conditional or not, to be deactivated.
+     * @property {App} app The app whose mounts and conditional mounts are to be deactivated.
+     * @property {Array.<Route>} routesToDeactivate All mounts on the app, conditional or not, to be deactivated.
      */
 
     /**
-     * Get all the routes to be deactivated, in steps/nodes of the navigation branch to be deactivated, from the divergence point through to the leaf route of the to-be-deactivated branch.
+     * Get all the mounts to be deactivated, in steps/nodes of the navigation branch to be deactivated, from the divergence point through to the leaf route of the to-be-deactivated branch.
      * @private
      * @param {DivergenceRecord} diverge An object that describes where the path in the URL diverged when tracing the new navigation path from the URL passed to `navigate()` as compared to the navigation path of current URL. `undefined` if the path was the same as before and only params or query params changed.
      * @return {Array.<DeactivationStep>} All the information needed to successfully deactivate all to-be-deactivated conditional mounts, as well as the current leaf route, from the divergence point onwards through the to-be-deactivated branch.
@@ -760,7 +823,7 @@ class RootApp extends App {
         // all routes at this step to be deactivated
         let logics = Object.keys(cmm.match(mm.addressesFor(diverge.from)) || {})
             .filter(logic => !cMountsToRender[logic]);
-        let routesToDeactivate = this._flattenDeactivationRoutes(cmm, logics);
+        let routesToDeactivate = this._flattenDeactivationData(cmm, logics);
         steps.push({ app, routesToDeactivate });
 
         let crumb = diverge.from;
@@ -774,7 +837,7 @@ class RootApp extends App {
             app = mm.mountFor(crumb);
             mm = app._mountMapper;
             cmm = app._conditionalMountMapper;
-            routesToDeactivate = this._flattenDeactivationRoutes(cmm, cmm.getCurrentMounts() || []);
+            routesToDeactivate = this._flattenDeactivationData(cmm, cmm.getCurrentMounts() || []);
             steps.push({ app, routesToDeactivate });
             // continue with the next mount
             crumb = mm.getCurrentMount();
@@ -794,7 +857,7 @@ class RootApp extends App {
      * after all deactivating cMounts' routes' `_deactivate` are called
      * at that step/node.
      * At the last step, executed first, also call `_deactivate` on the
-     * leaf mount's Route.
+     * leaf Route.
      * @private
      * @param {Array.<DeactivationStep>} divergenceData All the information needed to successfully deactivate all to-be-deactivated conditional mounts, as well as the current leaf route, from the divergence point onwards through the to-be-deactivated branch.
      * @return {Promise} A promise that resolves when all `_deactivate` functions at every step have resolved, or rejects if any one of them has rejected.
@@ -819,7 +882,11 @@ class RootApp extends App {
                     if (idx === lastStepIdx) {
                         mm.setCurrentMount(null);
                     }
-                    app._setState('inactive');
+                    // don't deactivate the divergence point (App)
+                    // since another branch will be rendered on it
+                    if (idx !== 0) {
+                        return app._deactivate();
+                    }
                 });
             });
         }, Promise.resolve());

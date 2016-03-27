@@ -5,7 +5,7 @@ import {
     cMountSpies,
 } from '../../sinon-spies';
 
-import { TestApp } from '../base-mounts';
+import { SinonSpyApp } from '../base-mounts';
 
 import {
     TodoIdRenderStyleRoute,
@@ -13,7 +13,7 @@ import {
     TodoIdRenderStyleConditionalRoute,
 } from './todo-routes';
 
-class TodoApp extends TestApp {
+class TodoApp extends SinonSpyApp {
     expectedAddresses() {
         return ['todoApp'];
     }
@@ -23,12 +23,14 @@ class TodoApp extends TestApp {
     expectedOutlets() {
         return ['TodoApp'];
     }
+    expectedParams() {
+        return ['id'];
+    }
     createOutlets(outlets) {
-        return {
-            TodoIdRenderStyleRoute: new Outlet(document.createElement('div')),
-            TodoIdConditionalRoute: new Outlet(document.createElement('div')),
-            TodoIdRenderStyleConditionalRoute: new Outlet(document.createElement('div')),
-        };
+        outlets.TodoIdRenderStyleRoute = new Outlet(document.createElement('div'));
+        outlets.TodoIdConditionalRoute = new Outlet(document.createElement('div'));
+        outlets.TodoIdRenderStyleConditionalRoute = new Outlet(document.createElement('div'));
+        return outlets;
     }
     mount() {
         return {

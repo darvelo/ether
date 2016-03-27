@@ -5,7 +5,7 @@ import {
     cMountSpies,
 } from '../../sinon-spies';
 
-import { TestApp } from '../base-mounts';
+import { SinonSpyApp } from '../base-mounts';
 
 import {
     UserIdActionRoute,
@@ -20,7 +20,7 @@ import {
     UserIdMenuConditionalRouteTwo,
 } from './user-routes';
 
-class UserApp extends TestApp {
+class UserApp extends SinonSpyApp {
     expectedAddresses() {
         return ['userApp'];
     }
@@ -30,19 +30,21 @@ class UserApp extends TestApp {
     expectedOutlets() {
         return ['UserApp'];
     }
+    expectedParams() {
+        return ['id'];
+    }
     createOutlets(outlets) {
-        return {
-            UserIdActionRoute: new Outlet(document.createElement('div')),
-            UserIdMenuRouteOne: new Outlet(document.createElement('div')),
-            UserIdMenuRouteTwo: new Outlet(document.createElement('div')),
-            UserIdConditionalRouteOne: new Outlet(document.createElement('div')),
-            UserIdConditionalRouteTwo: new Outlet(document.createElement('div')),
-            UserIdActionConditionalRoute: new Outlet(document.createElement('div')),
-            UserIdConditionalRouteThree: new Outlet(document.createElement('div')),
-            UserIdConditionalRouteFour: new Outlet(document.createElement('div')),
-            UserIdMenuConditionalRouteOne: new Outlet(document.createElement('div')),
-            UserIdMenuConditionalRouteTwo: new Outlet(document.createElement('div')),
-        };
+        outlets.UserIdActionRoute = new Outlet(document.createElement('div'));
+        outlets.UserIdMenuRouteOne = new Outlet(document.createElement('div'));
+        outlets.UserIdMenuRouteTwo = new Outlet(document.createElement('div'));
+        outlets.UserIdConditionalRouteOne = new Outlet(document.createElement('div'));
+        outlets.UserIdConditionalRouteTwo = new Outlet(document.createElement('div'));
+        outlets.UserIdActionConditionalRoute = new Outlet(document.createElement('div'));
+        outlets.UserIdConditionalRouteThree = new Outlet(document.createElement('div'));
+        outlets.UserIdConditionalRouteFour = new Outlet(document.createElement('div'));
+        outlets.UserIdMenuConditionalRouteOne = new Outlet(document.createElement('div'));
+        outlets.UserIdMenuConditionalRouteTwo = new Outlet(document.createElement('div'));
+        return outlets;
     }
     mount() {
         return {

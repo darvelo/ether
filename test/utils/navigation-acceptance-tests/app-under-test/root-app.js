@@ -1,10 +1,11 @@
-import RootApp from '../../../../src/classes/root-app';
 import Outlet from '../../../../src/classes/outlet';
 
 import {
     mountSpies,
     cMountSpies,
 } from '../sinon-spies';
+
+import { SinonSpyRootApp } from './base-mounts';
 
 import {
     RootRootRoute,
@@ -22,21 +23,20 @@ import UserApp from './user-app/';
 // need to make sure to mount each mount class and
 // each conditional mount class exactly once,
 // to ensure spy call counts are unique and correct
-class MyRootApp extends RootApp {
+class MyRootApp extends SinonSpyRootApp {
     createOutlets(outlets) {
-        return {
-            // mounts
-            RootRootRoute: new Outlet(document.createElement('div')),
-            RootNewsRoute: new Outlet(document.createElement('div')),
-            TodoApp: new Outlet(document.createElement('div')),
-            UserApp: new Outlet(document.createElement('div')),
-            // conditional mounts
-            RootAllConditionalRoute: new Outlet(document.createElement('div')),
-            RootNewsConditionalRoute: new Outlet(document.createElement('div')),
-            RootIdConditionalRouteOne: new Outlet(document.createElement('div')),
-            RootIdConditionalRouteTwo: new Outlet(document.createElement('div')),
-            RootConditionalRoute: new Outlet(document.createElement('div')),
-        };
+        // mounts
+        outlets.RootRootRoute = new Outlet(document.createElement('div'));
+        outlets.RootNewsRoute = new Outlet(document.createElement('div'));
+        outlets.TodoApp = new Outlet(document.createElement('div'));
+        outlets.UserApp = new Outlet(document.createElement('div'));
+        // conditional mounts
+        outlets.RootAllConditionalRoute = new Outlet(document.createElement('div'));
+        outlets.RootNewsConditionalRoute = new Outlet(document.createElement('div'));
+        outlets.RootIdConditionalRouteOne = new Outlet(document.createElement('div'));
+        outlets.RootIdConditionalRouteTwo = new Outlet(document.createElement('div'));
+        outlets.RootConditionalRoute = new Outlet(document.createElement('div'));
+        return outlets;
     }
     mount() {
         return {
@@ -52,11 +52,13 @@ class MyRootApp extends RootApp {
             'todos/{id=\\d+}':
                 TodoApp
                     .addresses('todoApp')
-                    .outlets('TodoApp'),
+                    .outlets('TodoApp')
+                    .setup(() => mountSpies),
             'user/{id=\\d+}':
                 UserApp
                     .addresses('userApp')
-                    .outlets('UserApp'),
+                    .outlets('UserApp')
+                    .setup(() => mountSpies),
         };
     }
     mountConditionals() {
@@ -85,4 +87,4 @@ class MyRootApp extends RootApp {
     }
 }
 
-export default MyRootApp;
+export default MyRootApp.setup(() => mountSpies);
