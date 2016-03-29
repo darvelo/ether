@@ -663,4 +663,31 @@ describe('Mounting Functional Tests', () => {
             expect(rootApp._routeFor('/')).to.be.instanceof(MyRoute);
         });
     });
+
+    describe('canNavigateTo()', () => {
+        class MyRoute extends OneAddressRoute {
+            expectedAddresses() { return ['route']; }
+        }
+        class MyApp extends OneAddressApp {
+            expectedAddresses() { return ['app']; }
+            mount() { return {'world': MyRoute.addresses('route')}; }
+        }
+        class MyRootApp extends RootApp {
+            mount() { return {'hello': MyApp.addresses('app')}; }
+        }
+
+        it('exists on App', () => {
+            let rootApp = MyRootApp.create(defaultOpts);
+            let app = rootApp._atAddress('app');
+            expect(app.canNavigateTo('/hello')).to.be.false;
+            expect(app.canNavigateTo('/hello/world')).to.be.true;
+        });
+
+        it('exists on Route', () => {
+            let rootApp = MyRootApp.create(defaultOpts);
+            let route = rootApp._atAddress('route');
+            expect(route.canNavigateTo('/hello')).to.be.false;
+            expect(route.canNavigateTo('/hello/world')).to.be.true;
+        });
+    });
 });
