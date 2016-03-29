@@ -245,7 +245,7 @@ class RootApp extends App {
      * @param {string} queryString A string analogous to window.location.search.
      * @return {?object} An object containing the query params as the object's keys with values. Null if there were no query params.
      */
-    parseQueryString(queryString) {
+    _parseQueryString(queryString) {
         if (queryString[0] === '?') {
             queryString = queryString.slice(1);
         }
@@ -309,7 +309,7 @@ class RootApp extends App {
      */
     _navigate(destination, opts) {
         let { path, queryString } = this._splitDestination(destination);
-        let queryParams = this.parseQueryString(queryString);
+        let queryParams = this._parseQueryString(queryString);
         let queryParamsDiff = null;
         let trailingSlashRegex = /\/+$/;
 

@@ -178,13 +178,13 @@ describe('RootApp', () => {
     describe('Parsing Query String', () => {
         it('returns null if there are no query params', () => {
             let rootApp = new RootApp(defaultOpts);
-            expect(rootApp.parseQueryString('')).to.equal(null);
-            expect(rootApp.parseQueryString('?')).to.equal(null);
+            expect(rootApp._parseQueryString('')).to.equal(null);
+            expect(rootApp._parseQueryString('?')).to.equal(null);
         });
 
         it('parses multiple query params when querystring has a question mark', () => {
             let rootApp = new RootApp(defaultOpts);
-            expect(rootApp.parseQueryString('?x=10&y=20&z=hello')).to.deep.equal({
+            expect(rootApp._parseQueryString('?x=10&y=20&z=hello')).to.deep.equal({
                 x: '10',
                 y: '20',
                 z: 'hello',
@@ -193,7 +193,7 @@ describe('RootApp', () => {
 
         it('parses multiple query params when querystring has no question mark', () => {
             let rootApp = new RootApp(defaultOpts);
-            expect(rootApp.parseQueryString('x=10&y=20&z=hello')).to.deep.equal({
+            expect(rootApp._parseQueryString('x=10&y=20&z=hello')).to.deep.equal({
                 x: '10',
                 y: '20',
                 z: 'hello',
@@ -202,7 +202,7 @@ describe('RootApp', () => {
 
         it('decodes URI components', () => {
             let rootApp = new RootApp(defaultOpts);
-            expect(rootApp.parseQueryString('x=yes%2C%20sir&y=%20&z=%3Chello%3E%20there')).to.deep.equal({
+            expect(rootApp._parseQueryString('x=yes%2C%20sir&y=%20&z=%3Chello%3E%20there')).to.deep.equal({
                 x: 'yes, sir',
                 y: ' ',
                 z: '<hello> there',
@@ -211,14 +211,14 @@ describe('RootApp', () => {
 
         it('does not coerce whitespace to the number 0', () => {
             let rootApp = new RootApp(defaultOpts);
-            expect(rootApp.parseQueryString('x=%20%09%0D%0A')).to.deep.equal({
+            expect(rootApp._parseQueryString('x=%20%09%0D%0A')).to.deep.equal({
                 x: ' \t\r\n',
             });
         });
 
         it('turns strings `true` and `false` into boolean true and false', () => {
             let rootApp = new RootApp(defaultOpts);
-            expect(rootApp.parseQueryString('x=true&y=false')).to.deep.equal({
+            expect(rootApp._parseQueryString('x=true&y=false')).to.deep.equal({
                 x: true,
                 y: false,
             });
