@@ -34,7 +34,7 @@ describe('MakeOutlet Util', () => {
         let element = document.createElement('div');
         let outlet = makeOutlet({el: element, mutable: true});
         expect(outlet).to.be.an.instanceof(MutableOutlet);
-        expect(outlet.get()).to.equal(element);
+        expect(outlet.el).to.equal(element);
     });
 
     it('makes an Outlet that holds the element created from tagName', () => {
@@ -47,8 +47,8 @@ describe('MakeOutlet Util', () => {
     it('makes a MutableOutlet that holds the element created from tagName', () => {
         let outlet = makeOutlet({tagName: 'section', mutable: true});
         expect(outlet).to.be.an.instanceof(MutableOutlet);
-        expect(outlet.get()).to.be.an.instanceof(Element);
-        expect(outlet.get().nodeName).to.equal('SECTION');
+        expect(outlet.el).to.be.an.instanceof(Element);
+        expect(outlet.el.nodeName).to.equal('SECTION');
     });
 
     it('adds CSS classes to its element', () => {

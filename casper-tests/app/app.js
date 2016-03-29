@@ -9,7 +9,7 @@ import LoadingRoute from './loading-route';
 class MyRootApp extends RootApp {
     createOutlets(outlets) {
         outlets.main = makeOutlet({
-            el: outlets.main.get(),
+            el: outlets.main.el,
             append: [
                 outlets.root = makeOutlet({
                     tagName: 'section',

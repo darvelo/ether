@@ -64,7 +64,7 @@ describe('MutableOutlet', () => {
         it('returns its element', () => {
             let element = document.createElement('div');
             let outlet = new MutableOutlet(element);
-            expect(outlet.get()).to.equal(element);
+            expect(outlet.el).to.equal(element);
         });
     });
 
@@ -72,16 +72,16 @@ describe('MutableOutlet', () => {
         it('only allows holding an Element', () => {
             let element = document.createElement('div');
             let outlet = new MutableOutlet(element);
-            expect(() => outlet.hold()).to.throw(TypeError, 'MutableOutlet#hold() was not passed an "Element" instance.');
-            expect(() => outlet.hold({})).to.throw(TypeError, 'MutableOutlet#hold() was not passed an "Element" instance.');
+            expect(() => outlet.el = 1).to.throw(TypeError, 'MutableOutlet.el setter was not passed an "Element" instance.');
+            expect(() => outlet.el = {}).to.throw(TypeError, 'MutableOutlet.el setter was not passed an "Element" instance.');
         });
 
         it('clears its element from internal storage', () => {
             let element = document.createElement('div');
             let outlet = new MutableOutlet(element);
-            expect(outlet.get()).to.equal(element);
+            expect(outlet.el).to.equal(element);
             outlet.clear();
-            expect(outlet.get()).to.not.be.ok;
+            expect(outlet.el).to.not.be.ok;
         });
 
         it('clears its element from the DOM', () => {
@@ -100,7 +100,7 @@ describe('MutableOutlet', () => {
             let outlet = new MutableOutlet(element);
             let stub = sinon.stub(outlet, 'clear');
             let newElement = document.createElement('div');
-            outlet.hold(newElement);
+            outlet.el = newElement;
             stub.should.have.been.calledOnce;
             stub.restore();
         });

@@ -2,13 +2,13 @@ import Outlet from './outlet';
 import ctorName from '../utils/ctor-name';
 
 class MutableOutlet extends Outlet {
-    get() {
+    get el() {
         return this._element;
     }
 
-    hold(element) {
+    set el(element) {
         if (!(element instanceof Element)) {
-            throw new TypeError(ctorName(this) + '#hold() was not passed an "Element" instance.');
+            throw new TypeError(ctorName(this) + '.el setter was not passed an "Element" instance.');
         }
 
         this.clear();
