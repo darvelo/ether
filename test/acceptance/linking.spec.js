@@ -6,6 +6,7 @@ import {
     appAddress,
     rootAppAddress,
     MyRootApp,
+    MyApp,
     MyRoute,
 } from '../utils/generic-app-under-test';
 
@@ -29,35 +30,35 @@ describe('linkTo', () => {
     it('throws if address is not a string', () => {
         let rootApp = new MyRootApp(defaultOpts);
         let route   = rootApp._atAddress(routeAddress);
-        expect(() => route.linkTo([], params)).to.throw(TypeError, 'MyRoute#linkTo(): Address given was not a string.');
+        expect(() => route.linkTo([], params)).to.throw(TypeError, 'Ether linkTo(): Address given was not a string.');
     });
 
     it('throws if params is not an object', () => {
         let rootApp = new MyRootApp(defaultOpts);
         let route   = rootApp._atAddress(routeAddress);
         let address = routeAddress;
-        expect(() => route.linkTo(address, [])).to.throw(TypeError, 'MyRoute#linkTo(): Params given was not an object.');
+        expect(() => route.linkTo(address, [])).to.throw(TypeError, 'Ether linkTo(): Params given was not an object.');
     });
 
     it('throws if address was never registered', () => {
         let rootApp = new MyRootApp(defaultOpts);
         let route   = rootApp._atAddress(routeAddress);
         let address = 'nope';
-        expect(() => route.linkTo(address, params)).to.throw(Error, `MyRoute#linkTo(): Address given was never registered: "${address}".`);
+        expect(() => route.linkTo(address, params)).to.throw(Error, `Ether linkTo(): Address given was never registered: "${address}".`);
     });
 
     it('throws if address does not reference a Route', () => {
         let rootApp = new MyRootApp(defaultOpts);
         let route   = rootApp._atAddress(routeAddress);
         let address = appAddress;
-        expect(() => route.linkTo(appAddress, params)).to.throw(Error, `MyRoute#linkTo(): Address given does not refer to a Route instance: "${address}".`);
+        expect(() => route.linkTo(appAddress, params)).to.throw(Error, `Ether linkTo(): Address given does not refer to a Route instance: "${address}".`);
     });
 
     it('throws if the route is not in parentApp\'s MountMapper', () => {
         let rootApp = new MyRootApp(defaultOpts);
         let route   = rootApp._atAddress(routeAddress);
         let address = conditionalRouteAddress;
-        expect(() => route.linkTo(conditionalRouteAddress, params)).to.throw(Error, `MyRoute#linkTo(): Address given does not refer to a non-conditional Route instance: "${address}". Route was: MyConditionalRoute.`);
+        expect(() => route.linkTo(conditionalRouteAddress, params)).to.throw(Error, `Ether linkTo(): Address given does not refer to a non-conditional Route instance: "${address}". Route was: MyConditionalRoute.`);
     });
 
     it('throws if missing any params needed to navigate', () => {
@@ -66,7 +67,7 @@ describe('linkTo', () => {
         let address = routeAddress;
         delete params.id;
         delete params.action;
-        expect(() => route.linkTo(address, params)).to.throw(Error, `MyRoute#linkTo(): Missing params for destination "MyRoute" at address "${address}": ["action","id"].`);
+        expect(() => route.linkTo(address, params)).to.throw(Error, `Ether linkTo(): Missing params for destination "MyRoute" at address "${address}": ["action","id"].`);
     });
 
     it('constructs the right URL path', () => {
@@ -137,19 +138,47 @@ describe('linkTo', () => {
         let address = routeAddress;
         let expectedPath = 'abc/hixyz/hello/dave123/go';
         params.id = 'hi';
-        expect(() => route.linkTo(address, params)).to.throw(Error, `MyRoute#linkTo(): Navigation to "MyRoute" at address "${address}" will fail for constructed URL: "${expectedPath}".`);
+        expect(() => route.linkTo(address, params)).to.throw(Error, `Ether linkTo(): Navigation to "MyRoute" at address "${address}" will fail for constructed URL: "${expectedPath}".`);
     });
 
-    it('can construct a link within init()', () => {
-        let spy = sinon.spy();
-        let oldInit = MyRoute.prototype.init;
-        MyRoute.prototype.init = function() {
-            let href = this.linkTo(rootRouteAddress);
-            spy(href);
-        };
-        let rootApp = new MyRootApp(defaultOpts);
-        spy.should.have.been.calledOnce;
-        spy.should.have.been.calledWith('/');
-        MyRoute.prototype.init = oldInit;
+    describe('Constructing a link within init()', () => {
+        it('works in RootApp', () => {
+            let spy = sinon.spy();
+            let oldInit = MyRootApp.prototype.init;
+            MyRootApp.prototype.init = function() {
+                let href = this.linkTo(rootRouteAddress);
+                spy(href);
+            };
+            let rootApp = new MyRootApp(defaultOpts);
+            spy.should.have.been.calledOnce;
+            spy.should.have.been.calledWith('/');
+            MyRootApp.prototype.init = oldInit;
+        });
+
+        it('works in App', () => {
+            let spy = sinon.spy();
+            let oldInit = MyApp.prototype.init;
+            MyApp.prototype.init = function() {
+                let href = this.linkTo(rootRouteAddress);
+                spy(href);
+            };
+            let rootApp = new MyRootApp(defaultOpts);
+            spy.should.have.been.calledOnce;
+            spy.should.have.been.calledWith('/');
+            MyApp.prototype.init = oldInit;
+        });
+
+        it('works in Route', () => {
+            let spy = sinon.spy();
+            let oldInit = MyRoute.prototype.init;
+            MyRoute.prototype.init = function() {
+                let href = this.linkTo(rootRouteAddress);
+                spy(href);
+            };
+            let rootApp = new MyRootApp(defaultOpts);
+            spy.should.have.been.calledOnce;
+            spy.should.have.been.calledWith('/');
+            MyRoute.prototype.init = oldInit;
+        });
     });
 });

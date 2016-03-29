@@ -57,6 +57,10 @@ class App extends Stateful {
         return this._rootApp.canNavigateTo(...args);
     }
 
+    linkTo(...args) {
+        return this._rootApp.linkTo(...args);
+    }
+
     sendTo(...args) {
         return this._rootApp.sendTo(...args);
     }
