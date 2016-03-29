@@ -2,7 +2,6 @@ import Stateful from './stateful';
 import Modified from './modified';
 import MountMapper from './mount-mapper';
 import ConditionalMountMapper from './conditional-mount-mapper';
-import InitRunner from '../utils/init-runner';
 import registerAddresses from '../utils/register-addresses';
 import ctorName from '../utils/ctor-name';
 import { is, isnt } from '../utils/is';
@@ -10,26 +9,6 @@ import { is, isnt } from '../utils/is';
 class App extends Stateful {
     constructor(opts) {
         super(opts);
-
-        if (opts.rootApp === true) {
-            opts.rootApp = this;
-            // runs the init() method for all Apps/Routes only
-            // after all their constructors have returned
-            this._inits = new InitRunner();
-            // this is used when unit testing Apps/Routes
-            if (opts._pauseInitRunner === true) {
-                this._inits.pause();
-            }
-            this._config = Object.freeze({
-                stripTrailingSlash: !!opts.stripTrailingSlash || false,
-                addTrailingSlash: !!opts.addTrailingSlash || false,
-                basePath: opts.basePath,
-                windowLoad: opts.windowLoad || false,
-                history: opts.history || false,
-                interceptLinks: opts.interceptLinks || 'none',
-                debugMode: opts.debug === true,
-            });
-        }
 
         if (!opts.rootApp) {
             throw new TypeError(ctorName(this) + ' constructor was not given a reference to the Ether RootApp.');
@@ -41,6 +20,13 @@ class App extends Stateful {
         this._rootApp = opts.rootApp;
         this._parentApp = opts.parentApp;
         this.addresses = opts.addresses;
+        // if this is a child App, don't delay tree construction
+        if (opts.rootApp instanceof App) {
+            this._buildAppTree(opts);
+        }
+    }
+
+    _buildAppTree(opts) {
         registerAddresses(this, this.addresses);
         this._mountMapper = new MountMapper();
         this._conditionalMountMapper = new ConditionalMountMapper();

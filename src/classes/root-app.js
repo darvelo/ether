@@ -1,6 +1,7 @@
 import App from './app';
 import Route from './route';
 import Transition from './transition';
+import InitRunner from '../utils/init-runner';
 import ctorName from '../utils/ctor-name';
 import { is, isnt } from '../utils/is';
 import diffObjects from '../utils/diff-objects';
@@ -12,9 +13,13 @@ class RootApp extends App {
             opts = {};
         }
         opts.rootApp = true;
+        opts.parentApp = true;
         opts.addresses = opts.addresses || [];
         opts.outlets = opts.outlets || {};
         opts.params = [];
+
+        super(opts);
+        opts.rootApp = this;
 
         // enclose basePath between slashes
         if (is(opts.basePath, 'String') && opts.basePath.length) {
@@ -33,7 +38,25 @@ class RootApp extends App {
         }
         opts.basePath = encodeURI(opts.basePath);
 
-        super(opts);
+        this._rootApp = this;
+        this._parentApp = null;
+        // runs the init() method for all Apps/Routes only
+        // after all their constructors have returned
+        this._inits = new InitRunner();
+        // this is used when unit testing Apps/Routes
+        if (opts._pauseInitRunner === true) {
+            this._inits.pause();
+        }
+        this._config = Object.freeze({
+            stripTrailingSlash: !!opts.stripTrailingSlash || false,
+            addTrailingSlash: !!opts.addTrailingSlash || false,
+            basePath: opts.basePath,
+            windowLoad: opts.windowLoad || false,
+            history: opts.history || false,
+            interceptLinks: opts.interceptLinks || 'none',
+            debugMode: opts.debug === true,
+        });
+
         // the last URL that was navigated to successfully
         this._fullUrl = undefined;
         // the params for the RootApp's render methods,
@@ -45,6 +68,9 @@ class RootApp extends App {
         // transition-related data
         this._transitionQueue = [];
         this._currentTransition = null;
+
+        // construct the App hierarchy
+        this._buildAppTree(opts);
         this._inits.run();
     }
 
