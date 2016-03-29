@@ -48,7 +48,7 @@ class RootApp extends App {
         this._inits.run();
     }
 
-    fullUrl() {
+    get fullUrl() {
         return this._fullUrl;
     }
 
@@ -138,6 +138,7 @@ class RootApp extends App {
 
     /**
      * Determine if the URL passed in has the same origin and its pathname matches the RootApp's configured `basePath`.
+     * @private
      * @param {string} url The complete URL to be tested.
      * @return {?string} The path in the URL that can be used for navigation: `url` minus the origin and RootApp's `basePath`. `Null` if the origin and basePath didn't match the URL.
      */
@@ -242,6 +243,7 @@ class RootApp extends App {
 
     /**
      * Parses a query string.
+     * @private
      * @param {string} queryString A string analogous to window.location.search.
      * @return {?object} An object containing the query params as the object's keys with values. Null if there were no query params.
      */
@@ -331,8 +333,8 @@ class RootApp extends App {
 
         // check if we're navigating to the same URL as the one we're
         // currently on. this can happen if a link was clicked twice
-        if (this.fullUrl()) {
-            let [ lastPath ] = this.fullUrl().split('?');
+        if (this.fullUrl) {
+            let [ lastPath ] = this.fullUrl.split('?');
             if (path === lastPath && is(queryParamsDiff, 'Null')) {
                 return Promise.resolve({sameUrl: true});
             }
@@ -366,7 +368,6 @@ class RootApp extends App {
      * Returns whether the path given results in a successful trace
      * through the app hierarchy down to the target route, found by
      * parsing the URL.
-     * @private
      * @param {string} destination The navigation destination. A URL path with or without a querystring.
      * @return {boolean} Whether the navigation would be successful or result in a 404.
      */

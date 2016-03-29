@@ -121,13 +121,13 @@ describe('Navigation Acceptance Tests', () => {
                 });
             });
 
-            genTest('sets return val of fullUrl() on the RootApp', [
+            genTest('sets return val of fullUrl on the RootApp', [
                 '/',
             ], (done, dest) => {
                 let rootApp = MyRootApp.create(defaultOpts);
-                expect(rootApp.fullUrl()).to.equal(undefined);
+                expect(rootApp.fullUrl).to.equal(undefined);
                 rootApp.navigate(dest).then(() => {
-                    expect(rootApp.fullUrl()).to.equal('/');
+                    expect(rootApp.fullUrl).to.equal('/');
                     done();
                 }).catch(err => {
                     // if test fails, pass error to Mocha
@@ -135,13 +135,13 @@ describe('Navigation Acceptance Tests', () => {
                 });
             });
 
-            genTest('does not set return val of fullUrl() on the RootApp on nav failure', [
+            genTest('does not set return val of fullUrl on the RootApp on nav failure', [
                 '/nope',
             ], (done, dest) => {
                 let rootApp = MyRootApp.create(defaultOpts);
-                expect(rootApp.fullUrl()).to.equal(undefined);
+                expect(rootApp.fullUrl).to.equal(undefined);
                 rootApp.navigate(dest).then(null, () => {
-                    expect(rootApp.fullUrl()).to.equal(undefined);
+                    expect(rootApp.fullUrl).to.equal(undefined);
                     done();
                 }).catch(err => {
                     // if test fails, pass error to Mocha
@@ -155,7 +155,7 @@ describe('Navigation Acceptance Tests', () => {
                 '/user/1/action/go?hello=true&goodbye=false',
             ], (done, dest) => {
                 let rootApp = MyRootApp.create(defaultOpts);
-                expect(rootApp.fullUrl()).to.equal(undefined);
+                expect(rootApp.fullUrl).to.equal(undefined);
                 rootApp.navigate(dest).then(() => {
                     let queryParams;
                     [ dest, queryParams ] = dest.split('?');
@@ -1268,10 +1268,10 @@ describe('Navigation Acceptance Tests', () => {
                 }
                 let rootApp = new FailRootApp(defaultOpts);
                 rootApp.navigate(dest1).then(() => {
-                    expect(rootApp.fullUrl()).to.equal(dest1);
+                    expect(rootApp.fullUrl).to.equal(dest1);
                     return rootApp.navigate(dest2);
                 }).then(() => {
-                    expect(rootApp.fullUrl()).to.equal(dest2);
+                    expect(rootApp.fullUrl).to.equal(dest2);
                     done();
                 }).catch(done);
             });
