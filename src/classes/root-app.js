@@ -449,17 +449,24 @@ class RootApp extends App {
         let queryParams = this._parseQueryString(queryString);
         let queryParamsDiff = null;
         let trailingSlashRegex = /\/+$/;
+        let pathAltered = false;
 
         if (this._config.stripTrailingSlash === true) {
             if (trailingSlashRegex.test(path)) {
                 path = path.replace(trailingSlashRegex, '');
+                pathAltered = true;
             }
         }
 
         if (this._config.addTrailingSlash === true) {
             if (!trailingSlashRegex.test(path)) {
                 path += '/';
+                pathAltered = true;
             }
+        }
+
+        if (pathAltered) {
+            destination = path + (queryString ? `?${queryString}` : '');
         }
 
         if (isnt(queryParams, 'Null') || isnt(this._lastQueryParams, 'Null')) {

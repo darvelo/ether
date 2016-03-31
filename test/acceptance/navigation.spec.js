@@ -175,7 +175,7 @@ describe('Navigation Acceptance Tests', () => {
                 });
             });
 
-            genTest('throws if construction of app state fails', [
+            genTest('rejects with Error if construction of app state fails', [
                 '/',
             ], (done, dest) => {
                 let rootApp = MyRootApp.create(defaultOpts);
