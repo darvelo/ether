@@ -356,10 +356,10 @@ describe('Navigation Acceptance Tests', () => {
             ], (done, dest) => {
                 let expectedArgs = [
                     {id: '1', action: 'go'},
-                    {sort: true, sort_type: 'asc', idx: '1'},
+                    {sort: 'true', sort_type: 'asc', idx: '1'},
                     {
                         params: {id: [undefined, '1'], action: [undefined, 'go']},
-                        queryParams: {sort: [undefined, true], sort_type: [undefined, 'asc'], idx: [undefined, '1']},
+                        queryParams: {sort: [undefined, 'true'], sort_type: [undefined, 'asc'], idx: [undefined, '1']},
                     },
                 ];
                 let rootApp = MyRootApp.create(defaultOpts);
@@ -457,7 +457,7 @@ describe('Navigation Acceptance Tests', () => {
                 ],
                 [
                     ['/?sort=true&sort_type=asc&idx=1'],
-                    null, freeze({sort: true, sort_type: 'asc', idx: '1'}),
+                    null, freeze({sort: 'true', sort_type: 'asc', idx: '1'}),
                     [
                         // apps
                         ['MyRootApp', null, null],
@@ -535,7 +535,7 @@ describe('Navigation Acceptance Tests', () => {
                 ],
                 [
                     ['/user/2/menu/stats?bestFirst=true&limit=10&order=abc'],
-                    null, freeze({bestFirst: true, limit: '10', order: 'abc'}),
+                    null, freeze({bestFirst: 'true', limit: '10', order: 'abc'}),
                     [
                         // apps
                         ['MyRootApp', null, null],
@@ -574,7 +574,7 @@ describe('Navigation Acceptance Tests', () => {
                 ],
                 [
                     ['/user/2/menu/stats/profile?bestFirst=true&limit=10&order=abc'],
-                    null, freeze({bestFirst: true, limit: '10', order: 'abc'}),
+                    null, freeze({bestFirst: 'true', limit: '10', order: 'abc'}),
                     [
                         // apps
                         ['MyRootApp', null, null],
@@ -650,7 +650,7 @@ describe('Navigation Acceptance Tests', () => {
                 ],
                 [
                     ['/user/1/action/go?sort=true&asc=1', '/user/1/action/go?sort=false&list=yes'],
-                    freeze({sort: true, asc: '1'}), freeze({sort: false, list: 'yes'}),
+                    freeze({sort: 'true', asc: '1'}), freeze({sort: 'false', list: 'yes'}),
                     [
                         // apps
                         ['MyRootApp', null, null],
@@ -687,7 +687,7 @@ describe('Navigation Acceptance Tests', () => {
                 ],
                 [
                     ['/user/1/action/go?sort=true&asc=1', '/user/2/action/stop?'],
-                    freeze({sort: true, asc: '1'}), null,
+                    freeze({sort: 'true', asc: '1'}), null,
                     [
                         // apps
                         ['MyRootApp', null, null],
@@ -734,7 +734,7 @@ describe('Navigation Acceptance Tests', () => {
                 //   └──o──o
                 [
                     ['/', '/todos/1/list?hello=hi&sort=true'],
-                    null, freeze({hello: 'hi', sort: true}),
+                    null, freeze({hello: 'hi', sort: 'true'}),
                     [
                         // apps
                         ['MyRootApp', null, null],
@@ -753,7 +753,7 @@ describe('Navigation Acceptance Tests', () => {
                 //   └──o
                 [
                     ['/user/1/action/go?sort=true&asc=1', '/news/story?list=yes&sort=false'],
-                    freeze({sort: true, asc: '1'}), freeze({sort: false, list: 'yes'}),
+                    freeze({sort: 'true', asc: '1'}), freeze({sort: 'false', list: 'yes'}),
                     [
                         // apps
                         ['MyRootApp', null, null],
@@ -883,7 +883,7 @@ describe('Navigation Acceptance Tests', () => {
                 ],
                 [
                     ['/user/1/action/go?unused=true', '/?sort=true&asc=1', '/user/1/action/go?sort=false&list=yes'],
-                    freeze({sort: true, asc: '1'}), freeze({sort: false, list: 'yes'}),
+                    freeze({sort: 'true', asc: '1'}), freeze({sort: 'false', list: 'yes'}),
                     [
                         // apps
                         ['MyRootApp', null, null],
@@ -920,7 +920,7 @@ describe('Navigation Acceptance Tests', () => {
                 ],
                 [
                     ['/user/1/action/go?unused=true', '/?sort=true&asc=1', '/user/2/action/stop?'],
-                    freeze({sort: true, asc: '1'}), null,
+                    freeze({sort: 'true', asc: '1'}), null,
                     [
                         // apps
                         ['MyRootApp', null, null],

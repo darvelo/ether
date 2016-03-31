@@ -184,7 +184,8 @@ describe('RootApp', () => {
 
         it('parses multiple query params when querystring has a question mark', () => {
             let rootApp = new RootApp(defaultOpts);
-            expect(rootApp._parseQueryString('?x=10&y=20&z=hello')).to.deep.equal({
+            expect(rootApp._parseQueryString('?v=true&x=10&y=20&z=hello')).to.deep.equal({
+                v: 'true',
                 x: '10',
                 y: '20',
                 z: 'hello',
@@ -193,7 +194,8 @@ describe('RootApp', () => {
 
         it('parses multiple query params when querystring has no question mark', () => {
             let rootApp = new RootApp(defaultOpts);
-            expect(rootApp._parseQueryString('x=10&y=20&z=hello')).to.deep.equal({
+            expect(rootApp._parseQueryString('v=true&x=10&y=20&z=hello')).to.deep.equal({
+                v: 'true',
                 x: '10',
                 y: '20',
                 z: 'hello',
@@ -213,14 +215,6 @@ describe('RootApp', () => {
             let rootApp = new RootApp(defaultOpts);
             expect(rootApp._parseQueryString('x=%20%09%0D%0A')).to.deep.equal({
                 x: ' \t\r\n',
-            });
-        });
-
-        it('turns strings `true` and `false` into boolean true and false', () => {
-            let rootApp = new RootApp(defaultOpts);
-            expect(rootApp._parseQueryString('x=true&y=false')).to.deep.equal({
-                x: true,
-                y: false,
             });
         });
     });

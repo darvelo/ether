@@ -359,11 +359,6 @@ class MountMapper extends BaseMountMapper {
         for (let i = 0; i < namesLen; ++i) {
             let group = regexMatch[i+1];
             group = decodeURIComponent(group);
-            if (group === 'true') {
-                group = true;
-            } else if (group === 'false') {
-                group = false;
-            }
             ret.params[paramNames[i]] = group;
         }
         return ret;

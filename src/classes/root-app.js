@@ -400,13 +400,6 @@ class RootApp extends App {
         return queryString.split('&').reduce((memo, pairStr) => {
             let [ key, val ] = pairStr.split('=');
             val = decodeURIComponent(val);
-            // isNaN will coerce empty string or all spaces to 0
-            // so we need to guard against that case with regex
-            if (val === 'true') {
-                val = true;
-            } else if (val === 'false') {
-                val = false;
-            }
             memo[key] = val;
             return memo;
         }, {});

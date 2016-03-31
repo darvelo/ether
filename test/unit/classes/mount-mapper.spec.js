@@ -630,7 +630,7 @@ describe('MountMapper', () => {
             });
         });
 
-        it('turns strings `true` and `false` into boolean true and false', () => {
+        it('does not turn strings `true` and `false` into boolean true and false', () => {
             let crumb = '/user/{id=[^/]+}/{action=[^/]+}';
             let result;
 
@@ -641,8 +641,8 @@ describe('MountMapper', () => {
                 crumb,
                 rest: null,
                 params: {
-                    id: true,
-                    action: false,
+                    id: 'true',
+                    action: 'false',
                 },
             });
         });
