@@ -1,5 +1,7 @@
 import {
+    myAppRootRouteAddress,
     routeAddress,
+    slashRouteAddress,
     rootRouteAddress,
     anythingRouteAddress,
     conditionalRouteAddress,
@@ -54,7 +56,7 @@ describe('linkTo', () => {
         expect(() => route.linkTo(appAddress, params)).to.throw(Error, `Ether linkTo(): Address given does not refer to a Route instance: "${address}".`);
     });
 
-    it('throws if the route is not in parentApp\'s MountMapper', () => {
+    it('throws if the route is a conditional mount', () => {
         let rootApp = new MyRootApp(defaultOpts);
         let route   = rootApp._atAddress(routeAddress);
         let address = conditionalRouteAddress;
@@ -103,20 +105,6 @@ describe('linkTo', () => {
         expect(rootRoute.linkTo(address, params)).to.equal(expected);
     });
 
-    it('honors basePath option', () => {
-        defaultOpts.basePath = 'base';
-        let rootApp = new MyRootApp(defaultOpts);
-        let route   = rootApp._atAddress(routeAddress);
-        let expectedPathWithBasepath    = '/base/abc/10xyz/hello/dave123/go';
-        let expectedPathWithoutBasepath = '/abc/10xyz/hello/dave123/go';
-        let opts = {basePath: false};
-        expect(route.linkTo(routeAddress, params, opts)).to.equal(expectedPathWithoutBasepath);
-        opts.basePath = true;
-        expect(route.linkTo(routeAddress, params, opts)).to.equal(expectedPathWithBasepath);
-        delete opts.basePath;
-        expect(route.linkTo(routeAddress, params, opts)).to.equal(expectedPathWithBasepath);
-    });
-
     it('uses transformer fn option to get param values', () => {
         let rootApp = new MyRootApp(defaultOpts);
         let route   = rootApp._atAddress(routeAddress);
@@ -136,9 +124,52 @@ describe('linkTo', () => {
         let rootApp = new MyRootApp(defaultOpts);
         let route   = rootApp._atAddress(routeAddress);
         let address = routeAddress;
-        let expectedPath = 'abc/hixyz/hello/dave123/go';
+        let expectedPath = '/abc/hixyz/hello/dave123/go';
         params.id = 'hi';
         expect(() => route.linkTo(address, params)).to.throw(Error, `Ether linkTo(): Navigation to "MyRoute" at address "${address}" will fail for constructed URL: "${expectedPath}".`);
+    });
+
+    it('honors basePath option', () => {
+        defaultOpts.basePath = 'base';
+        let rootApp = new MyRootApp(defaultOpts);
+        let route   = rootApp._atAddress(routeAddress);
+        let expectedPathWithBasepath    = '/base/abc/10xyz/hello/dave123/go';
+        let expectedPathWithoutBasepath = '/abc/10xyz/hello/dave123/go';
+        let opts = {basePath: false};
+        expect(route.linkTo(routeAddress, params, opts)).to.equal(expectedPathWithoutBasepath);
+        opts.basePath = true;
+        expect(route.linkTo(routeAddress, params, opts)).to.equal(expectedPathWithBasepath);
+        delete opts.basePath;
+        expect(route.linkTo(routeAddress, params, opts)).to.equal(expectedPathWithBasepath);
+    });
+
+    it('honors stripTrailingSlash option', () => {
+        defaultOpts.stripTrailingSlash = true;
+        let rootApp = new MyRootApp(defaultOpts);
+        let route   = rootApp._atAddress(routeAddress);
+        expect(route.linkTo(rootRouteAddress)).to.equal('/');
+        expect(() => route.linkTo(slashRouteAddress)).to.throw(Error, `Ether linkTo(): Navigation to "SlashRoute" at address "${slashRouteAddress}" will fail for constructed URL: "/slash".`);
+        expect(route.linkTo(anythingRouteAddress, params)).to.equal(`/a10b/c${params.name}d/e${params.action}f`);
+        expect(route.linkTo(routeAddress, params)).to.equal(`/abc/${params.id}xyz/hello/${params.name}123/${params.action}`);
+        expect(route.linkTo(myAppRootRouteAddress, params)).to.equal(`/abc/${params.id}xyz`);
+    });
+
+    it('with stripTrailingSlash, keeps a single trailing slash if URL is root URL', () => {
+        defaultOpts.stripTrailingSlash = true;
+        let rootApp = new MyRootApp(defaultOpts);
+        let route   = rootApp._atAddress(routeAddress);
+        expect(route.linkTo(rootRouteAddress)).to.equal('/');
+    });
+
+    it('honors addTrailingSlash option', () => {
+        defaultOpts.addTrailingSlash = true;
+        let rootApp = new MyRootApp(defaultOpts);
+        let route   = rootApp._atAddress(routeAddress);
+        expect(route.linkTo(rootRouteAddress)).to.equal('/');
+        expect(route.linkTo(slashRouteAddress)).to.equal('/slash/');
+        expect(route.linkTo(myAppRootRouteAddress, params)).to.equal(`/abc/${params.id}xyz/`);
+        expect(() => route.linkTo(anythingRouteAddress, params)).to.throw(Error, `Ether linkTo(): Navigation to "AnythingRoute" at address "${anythingRouteAddress}" will fail for constructed URL: "/a10b/c${params.name}d/e${params.action}f/".`);
+        expect(() => route.linkTo(routeAddress, params)).to.throw(Error, `Ether linkTo(): Navigation to "MyRoute" at address "${routeAddress}" will fail for constructed URL: "/abc/${params.id}xyz/hello/${params.name}123/${params.action}/".`);
     });
 
     describe('Constructing a link within init()', () => {

@@ -4,6 +4,8 @@ import Route from '../../../src/classes/route';
 import MutableOutlet from '../../../src/classes/mutable-outlet';
 
 export let routeAddress            = 'myroute';
+export let slashRouteAddress       = 'slashroute';
+export let myAppRootRouteAddress   = 'myapprootroute';
 export let rootRouteAddress        = 'rootroute';
 export let anythingRouteAddress    = 'anythingroute';
 export let conditionalRouteAddress = 'myconditionalroute';
@@ -22,6 +24,18 @@ class TestRoute extends Route {
 export class MyRoute extends TestRoute {
     expectedAddresses() {
         return [routeAddress];
+    }
+}
+
+export class SlashRoute extends TestRoute {
+    expectedAddresses() {
+        return [slashRouteAddress];
+    }
+}
+
+export class MyAppRootRoute extends TestRoute {
+    expectedAddresses() {
+        return [myAppRootRouteAddress];
     }
 }
 
@@ -55,6 +69,7 @@ export class MyApp extends App {
     }
     mount() {
         return {
+            '': MyAppRootRoute.addresses(myAppRootRouteAddress),
             'hello/{name=\\w+}123/{action=\\w+}': MyRoute.addresses(routeAddress),
         };
     }
@@ -78,6 +93,7 @@ export class MyRootApp extends RootApp {
     mount() {
         return {
             '': RootRoute.addresses(rootRouteAddress),
+            'slash/': SlashRoute.addresses(slashRouteAddress),
             'a{id=\\d+}b/c{name=[^\\/]+}d/e{action=[^\\/]+}f': AnythingRoute.addresses(anythingRouteAddress),
             'abc/{id=\\d+}xyz': MyApp.addresses(appAddress),
         };

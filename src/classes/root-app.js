@@ -6,6 +6,11 @@ import ctorName from '../utils/ctor-name';
 import { is, isnt } from '../utils/is';
 import diffObjects from '../utils/diff-objects';
 import finalDiff from '../utils/final-diff';
+import {
+    hasTrailingSlash,
+    addTrailingSlash,
+    removeTrailingSlash
+} from '../utils/alter-trailing-slash';
 
 class RootApp extends App {
     constructor(opts) {
@@ -145,6 +150,17 @@ class RootApp extends App {
         if (is(path, 'Array')) {
             path = path.join('/');
         }
+        // add/remove trailing slash as needed based on
+        // config options stripTrailingSlash/addTrailingSlash
+        if (this._config.stripTrailingSlash === true && hasTrailingSlash(path)) {
+            path = removeTrailingSlash(path);
+        }
+        if (this._config.addTrailingSlash === true && !hasTrailingSlash(path)) {
+            path = addTrailingSlash(path);
+        }
+        if (path === '') {
+            path = '/';
+        }
         return path;
     }
 
@@ -192,7 +208,8 @@ class RootApp extends App {
             transformer = function(paramName) { return paramName; };
         }
 
-        let crumbs = [];
+        // start off crumbs with a slash since any href starts at the root
+        let crumbs = ['/'];
         let missingParams  = [];
         while (stack.length) {
             let { crumb, paramNames } = stack.pop();
@@ -212,11 +229,10 @@ class RootApp extends App {
             throw new Error(`Ether linkTo(): Navigation to "${ctorName(destination)}" at address "${address}" will fail for constructed URL: "${constructedURL}".`);
         }
 
-        if (opts.basePath === false) {
-            return this._joinPath(['/', constructedURL]);
-        } else {
-            return this._joinPath([rootApp._config.basePath, constructedURL]);
+        if (opts.basePath !== false) {
+            constructedURL = this._joinPath([rootApp._config.basePath, constructedURL]);
         }
+        return constructedURL;
     }
 
     sendTo(address, ...args) {
@@ -448,21 +464,16 @@ class RootApp extends App {
         let { path, queryString } = this._splitDestination(destination);
         let queryParams = this._parseQueryString(queryString);
         let queryParamsDiff = null;
-        let trailingSlashRegex = /\/+$/;
         let pathAltered = false;
 
-        if (this._config.stripTrailingSlash === true) {
-            if (trailingSlashRegex.test(path)) {
-                path = path.replace(trailingSlashRegex, '');
-                pathAltered = true;
-            }
+        if (this._config.stripTrailingSlash === true && hasTrailingSlash(path)) {
+            path = removeTrailingSlash(path);
+            pathAltered = true;
         }
 
-        if (this._config.addTrailingSlash === true) {
-            if (!trailingSlashRegex.test(path)) {
-                path += '/';
-                pathAltered = true;
-            }
+        if (this._config.addTrailingSlash === true && !hasTrailingSlash(path)) {
+            path = addTrailingSlash(path);
+            pathAltered = true;
         }
 
         if (pathAltered) {
