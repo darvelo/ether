@@ -113,7 +113,7 @@ class RootApp extends App {
             return;
         }
         paramNames.forEach(name => {
-            if (!params.hasOwnProperty(transformer(name))) {
+            if (is(transformer(name, params), 'Undefined')) {
                 missingParams.push(name);
             }
         });
@@ -121,7 +121,7 @@ class RootApp extends App {
 
     _constructURLCrumb(crumb, params, transformer) {
         return crumb.replace(/\{([^=]+)=[^}]+\}/g, (match, group) => {
-            return encodeURIComponent(params[transformer(group)]);
+            return encodeURIComponent(transformer(group, params));
         });
     }
 
@@ -205,7 +205,7 @@ class RootApp extends App {
         if (is(opts.transformer, 'Function')) {
             transformer = opts.transformer;
         } else {
-            transformer = function(paramName) { return paramName; };
+            transformer = function(paramName, params) { return params[paramName]; };
         }
 
         // start off crumbs with a slash since any href starts at the root

@@ -113,11 +113,24 @@ describe('linkTo', () => {
             model_name: 'bob',
             model_action: 'start',
         };
-        function transformer(paramName) {
-            return `model_${paramName}`;
+        function transformer(paramName, model) {
+            return model[`model_${paramName}`];
         }
         let opts = {transformer};
         expect(route.linkTo(routeAddress, params, opts)).to.equal('/abc/25xyz/hello/bob123/start');
+    });
+
+    it('throws if transformer returns undefined for param needed to navigate (param missing)', () => {
+        let rootApp = new MyRootApp(defaultOpts);
+        let route   = rootApp._atAddress(routeAddress);
+        let params  = {
+            model_name: 'bob',
+        };
+        function transformer(paramName, model) {
+            return model[`model_${paramName}`];
+        }
+        let opts = {transformer};
+        expect(() => route.linkTo(routeAddress, params, opts)).to.throw(Error, `Ether linkTo(): Missing params for destination "MyRoute" at address "${routeAddress}": ["action","id"].`);
     });
 
     it('throws if the link cannot be navigated to', () => {
