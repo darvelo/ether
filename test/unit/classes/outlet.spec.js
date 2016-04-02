@@ -54,15 +54,6 @@ describe('Outlet', () => {
         });
     });
 
-    it('empties its HTML', () => {
-        let element = document.createElement('div');
-        let outlet = new Outlet(element);
-        outlet.append(document.createElement('div'));
-        outlet.append(document.createElement('div'));
-        outlet.empty();
-        element.innerHTML.should.equal('');
-    });
-
     describe('DOM-delegating methods', () => {
         it('gets innerHTML', () => {
             let html = '<span></span>';

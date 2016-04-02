@@ -17,12 +17,6 @@ class Outlet {
         this._element = element;
     }
 
-    empty() {
-        if (this._element) {
-            this._element.innerHTML = '';
-        }
-    }
-
     get innerHTML() {
         return this._element.innerHTML;
     }
