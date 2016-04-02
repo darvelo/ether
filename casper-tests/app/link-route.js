@@ -15,7 +15,7 @@ class LinkRoute extends Route {
             <a id="to-basepath-root" href="${basePath}">To basePath root!</a>
             <a id="to-basepath-alternate" href="${basePath}alternate">To basePath alternate!</a>
         `;
-        this.outlets.link.append(paragraph);
+        this.outlets.link.appendChild(paragraph);
     }
 }
 

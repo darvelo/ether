@@ -25,22 +25,22 @@ class Outlet {
         throw new Error(ctorName(this) + '.innerHTML cannot be set. Try using a MutableOutlet instead.');
     }
 
-    append(child) {
+    appendChild(child) {
         if (!(child instanceof Element)) {
-            throw new TypeError(ctorName(this) + '#append() was not passed an "Element" instance.');
+            throw new TypeError(ctorName(this) + '#appendChild() was not passed an "Element" instance.');
         }
         if (!this._element) {
-            throw new Error(ctorName(this) + '#append() was called but the outlet is not holding an element.');
+            throw new Error(ctorName(this) + '#appendChild() was called but the outlet is not holding an element.');
         }
         this._element.appendChild(child);
     }
 
-    remove(child) {
+    removeChild(child) {
         if (!(child instanceof Element)) {
-            throw new TypeError(ctorName(this) + '#remove() was not passed an "Element" instance.');
+            throw new TypeError(ctorName(this) + '#removeChild() was not passed an "Element" instance.');
         }
         if (!this._element) {
-            throw new Error(ctorName(this) + '#remove() was called but the outlet is not holding an element.');
+            throw new Error(ctorName(this) + '#removeChild() was called but the outlet is not holding an element.');
         }
         this._element.removeChild(child);
     }

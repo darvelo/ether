@@ -8,7 +8,7 @@ class AlternateRoute extends Route {
         let h1 = document.createElement('h1');
         h1.id = 'alternate-route-title';
         h1.textContent = 'AlternateRoute';
-        this.outlets.alternate.append(h1);
+        this.outlets.alternate.appendChild(h1);
     }
 }
 

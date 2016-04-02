@@ -140,18 +140,18 @@ describe('MutableOutlet', () => {
             expect(element.innerHTML).to.equal('');
         });
 
-        it('throws on append() when not holding an element', () => {
+        it('throws on appendChild() when not holding an element', () => {
             let element = document.createElement('div');
             let outlet = new MutableOutlet(element);
             outlet.clear();
-            expect(() => outlet.append(document.createElement('div'))).to.throw(Error, 'MutableOutlet#append() was called but the outlet is not holding an element.');
+            expect(() => outlet.appendChild(document.createElement('div'))).to.throw(Error, 'MutableOutlet#appendChild() was called but the outlet is not holding an element.');
         });
 
-        it('throws on remove() when not holding an element', () => {
+        it('throws on removeChild() when not holding an element', () => {
             let element = document.createElement('div');
             let outlet = new MutableOutlet(element);
             outlet.clear();
-            expect(() => outlet.remove(document.createElement('div'))).to.throw(Error, 'MutableOutlet#remove() was called but the outlet is not holding an element.');
+            expect(() => outlet.removeChild(document.createElement('div'))).to.throw(Error, 'MutableOutlet#removeChild() was called but the outlet is not holding an element.');
         });
 
         it('throws on querySelector() when not holding an element', () => {
@@ -175,10 +175,10 @@ describe('MutableOutlet', () => {
             let spy = element.appendChild = sinon.spy();
             let outlet = new MutableOutlet(element);
 
-            expect(() => outlet.append({})).to.throw(TypeError, 'MutableOutlet#append() was not passed an "Element" instance.');
-            outlet.append(appended);
+            expect(() => outlet.appendChild({})).to.throw(TypeError, 'MutableOutlet#appendChild() was not passed an "Element" instance.');
+            outlet.appendChild(appended);
             spy.should.have.been.calledWith(appended);
-            outlet.append(appended2);
+            outlet.appendChild(appended2);
             spy.should.have.been.calledWith(appended2);
             spy.should.have.been.calledTwice;
         });
@@ -190,10 +190,10 @@ describe('MutableOutlet', () => {
             let spy = element.removeChild = sinon.spy();
             let outlet = new MutableOutlet(element);
 
-            expect(() => outlet.remove({})).to.throw(TypeError, 'MutableOutlet#remove() was not passed an "Element" instance.');
-            outlet.remove(appended);
+            expect(() => outlet.removeChild({})).to.throw(TypeError, 'MutableOutlet#removeChild() was not passed an "Element" instance.');
+            outlet.removeChild(appended);
             spy.should.have.been.calledWith(appended);
-            outlet.remove(appended2);
+            outlet.removeChild(appended2);
             spy.should.have.been.calledWith(appended2);
             spy.should.have.been.calledTwice;
         });

@@ -14,7 +14,7 @@ class LoadingRoute extends Route {
         this.spinner = document.createElement('p');
         this.spinner.id = 'loading-spinner';
         this.spinner.textContent = 'LOADING!';
-        this.outlets.loading.append(this.spinner);
+        this.outlets.loading.appendChild(this.spinner);
         this.unspin();
     }
     spin() {

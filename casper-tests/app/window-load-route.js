@@ -8,7 +8,7 @@ class WindowLoadRoute extends Route {
         let h1 = document.createElement('h1');
         h1.id = 'window-load-route-title';
         h1.textContent = 'WindowLoadRoute';
-        this.outlets.windowLoad.append(h1);
+        this.outlets.windowLoad.appendChild(h1);
     }
 }
 

@@ -79,11 +79,11 @@ describe('Outlet', () => {
             let stub = sinon.stub(element, 'appendChild');
             let outlet = new Outlet(element);
 
-            expect(() => outlet.append({})).to.throw(TypeError, 'Outlet#append() was not passed an "Element" instance.');
+            expect(() => outlet.appendChild({})).to.throw(TypeError, 'Outlet#appendChild() was not passed an "Element" instance.');
 
-            outlet.append(appended);
+            outlet.appendChild(appended);
             stub.should.have.been.calledWith(appended);
-            outlet.append(appended2);
+            outlet.appendChild(appended2);
             stub.should.have.been.calledWith(appended2);
             stub.should.have.been.calledTwice;
             stub.restore();
@@ -96,11 +96,11 @@ describe('Outlet', () => {
             let stub = sinon.stub(element, 'removeChild');
             let outlet = new Outlet(element);
 
-            expect(() => outlet.remove({})).to.throw(TypeError, 'Outlet#remove() was not passed an "Element" instance.');
+            expect(() => outlet.removeChild({})).to.throw(TypeError, 'Outlet#removeChild() was not passed an "Element" instance.');
 
-            outlet.remove(appended);
+            outlet.removeChild(appended);
             stub.should.have.been.calledWith(appended);
-            outlet.remove(appended2);
+            outlet.removeChild(appended2);
             stub.should.have.been.calledWith(appended2);
             stub.should.have.been.calledTwice;
             stub.restore();
