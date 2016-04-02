@@ -76,33 +76,13 @@ describe('MutableOutlet', () => {
             expect(() => outlet.el = {}).to.throw(TypeError, 'MutableOutlet.el setter was not passed an "Element" instance.');
         });
 
-        it('clears its element from internal storage', () => {
+        it('can set its element', () => {
             let element = document.createElement('div');
             let outlet = new MutableOutlet(element);
             expect(outlet.el).to.equal(element);
-            outlet.clear();
-            expect(outlet.el).to.not.be.ok;
-        });
-
-        it('clears its element from the DOM', () => {
-            let parent = document.createElement('div');
-            let element = document.createElement('div');
-            parent.appendChild(element);
-            let outlet = new MutableOutlet(element);
-            let mock = sinon.mock(parent);
-            mock.expects('removeChild').once().withArgs(element);
-            outlet.clear();
-            mock.verify();
-        });
-
-        it('clears its element when made to hold a new one', () => {
-            let element = document.createElement('div');
-            let outlet = new MutableOutlet(element);
-            let stub = sinon.stub(outlet, 'clear');
             let newElement = document.createElement('div');
             outlet.el = newElement;
-            stub.should.have.been.calledOnce;
-            stub.restore();
+            expect(outlet.el).to.equal(newElement);
         });
     });
 
@@ -122,50 +102,6 @@ describe('MutableOutlet', () => {
             expect(element.innerHTML).to.equal('');
             outlet.innerHTML = html;
             expect(element.innerHTML).to.equal(html);
-        });
-
-        it('cannot get innerHTML if outlet is is cleared', () => {
-            let element = document.createElement('div');
-            let outlet = new MutableOutlet(element);
-            outlet.clear();
-            expect(() => outlet.innerHTML).to.throw(Error, 'MutableOutlet.innerHTML was being retrieved but the outlet is not holding an element.');
-        });
-
-        it('cannot set innerHTML if outlet is is cleared', () => {
-            let html = '<span></span>';
-            let element = document.createElement('div');
-            let outlet = new MutableOutlet(element);
-            outlet.clear();
-            expect(() => outlet.innerHTML = html).to.throw(Error, 'MutableOutlet.innerHTML was being set but the outlet is not holding an element.');
-            expect(element.innerHTML).to.equal('');
-        });
-
-        it('throws on appendChild() when not holding an element', () => {
-            let element = document.createElement('div');
-            let outlet = new MutableOutlet(element);
-            outlet.clear();
-            expect(() => outlet.appendChild(document.createElement('div'))).to.throw(Error, 'MutableOutlet#appendChild() was called but the outlet is not holding an element.');
-        });
-
-        it('throws on removeChild() when not holding an element', () => {
-            let element = document.createElement('div');
-            let outlet = new MutableOutlet(element);
-            outlet.clear();
-            expect(() => outlet.removeChild(document.createElement('div'))).to.throw(Error, 'MutableOutlet#removeChild() was called but the outlet is not holding an element.');
-        });
-
-        it('throws on querySelector() when not holding an element', () => {
-            let element = document.createElement('div');
-            let outlet = new MutableOutlet(element);
-            outlet.clear();
-            expect(() => outlet.querySelector(document.createElement('div'))).to.throw(Error, 'MutableOutlet#querySelector() was called but the outlet is not holding an element.');
-        });
-
-        it('throws on querySelectorAll() when not holding an element', () => {
-            let element = document.createElement('div');
-            let outlet = new MutableOutlet(element);
-            outlet.clear();
-            expect(() => outlet.querySelectorAll(element)).to.throw(Error, 'MutableOutlet#querySelectorAll() was called but the outlet is not holding an element.');
         });
 
         it('appends a child element', () => {

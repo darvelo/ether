@@ -77,28 +77,6 @@ describe('MakeOutlet Util', () => {
             }).to.throw(TypeError, 'makeOutlet(): Tried to append a value to the outlet\'s element that was neither an Outlet nor another HTML Element.');
         });
 
-        it('throws if an outlet in `append` array is not holding an element', () => {
-            let outlet = new MutableOutlet(document.createElement('div'));
-            outlet.clear();
-            expect(() => {
-                 makeOutlet({
-                    tagName: 'div',
-                    append: [outlet],
-                 });
-            }).to.throw(Error, 'makeOutlet(): Tried to append an Outlet that was not holding HTML Element.');
-        });
-
-        it('throws if an outlet in `append` non-array is not holding an element', () => {
-            let outlet = new MutableOutlet(document.createElement('div'));
-            outlet.clear();
-            expect(() => {
-                 makeOutlet({
-                    tagName: 'div',
-                    append: outlet,
-                 });
-            }).to.throw(Error, 'makeOutlet(): Tried to append an Outlet that was not holding HTML Element.');
-        });
-
         it('can take a single value of type Element for `append`', () => {
             let element = document.createElement('div');
             let appendedElement = document.createElement('div');
