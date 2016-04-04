@@ -1,6 +1,8 @@
 # Ether
 
-A minimalistic JavaScript framework for creating modular, *composable* apps.
+A minimalistic framework for creating modular, composable apps.
+
+http://etherjs.com
 
 # License
 

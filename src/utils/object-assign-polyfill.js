@@ -1,3 +1,11 @@
+/* ============================================================================
+ * Ether: object-assign-polyfill.js v1.0.0
+ * http://etherjs.com/
+ * ============================================================================
+ * Copyright 2015-2016 David Arvelo
+ * Licensed under MIT (https://github.com/darvelo/ether/blob/master/LICENSE.md)
+ * ============================================================================ */
+
 // Object.assign polyfill from MDN
 // see: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign#Polyfill
 if (typeof Object.assign != 'function') {

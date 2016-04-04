@@ -1,3 +1,11 @@
+/* ============================================================================
+ * Ether: root-app.js v1.0.0
+ * http://etherjs.com/
+ * ============================================================================
+ * Copyright 2015-2016 David Arvelo
+ * Licensed under MIT (https://github.com/darvelo/ether/blob/master/LICENSE.md)
+ * ============================================================================ */
+
 import App from './app';
 import Route from './route';
 import Transition from './transition';

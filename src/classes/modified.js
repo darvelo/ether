@@ -1,3 +1,11 @@
+/* ============================================================================
+ * Ether: modified.js v1.0.0
+ * http://etherjs.com/
+ * ============================================================================
+ * Copyright 2015-2016 David Arvelo
+ * Licensed under MIT (https://github.com/darvelo/ether/blob/master/LICENSE.md)
+ * ============================================================================ */
+
 import Addressable from './modifiers/addressable';
 import OutletsReceivable from './modifiers/outlets-receivable';
 import Setupable from './modifiers/setupable';

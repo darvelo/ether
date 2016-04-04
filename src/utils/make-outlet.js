@@ -1,3 +1,11 @@
+/* ============================================================================
+ * Ether: make-outlet.js v1.0.0
+ * http://etherjs.com/
+ * ============================================================================
+ * Copyright 2015-2016 David Arvelo
+ * Licensed under MIT (https://github.com/darvelo/ether/blob/master/LICENSE.md)
+ * ============================================================================ */
+
 import Outlet from '../classes/outlet';
 import MutableOutlet from '../classes/mutable-outlet';
 import { is, isnt } from './is';

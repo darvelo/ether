@@ -1,3 +1,11 @@
+/* ============================================================================
+ * Ether: conditional-mount-mapper.js v1.0.0
+ * http://etherjs.com/
+ * ============================================================================
+ * Copyright 2015-2016 David Arvelo
+ * Licensed under MIT (https://github.com/darvelo/ether/blob/master/LICENSE.md)
+ * ============================================================================ */
+
 import BaseMountMapper from './base-mount-mapper';
 import MountMapper from './mount-mapper';
 import Modified from './modified';
